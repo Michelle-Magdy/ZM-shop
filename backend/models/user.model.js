@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import validator from "validator";
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
     userName: {
         type: String,
         required: [true, "User must have a name"],
@@ -32,9 +32,21 @@ const userSchema = mongoose.Schema({
     addresses: [{
         type: mongoose.Schema.ObjectId,
         ref: 'Address'
-    }]
+    }],
+    isDeleted: {
+        type: Boolean,
+        default: false
+    }
+}, {
+    timestamps: true
+});
+
+userSchema.pre(/^find/, function(next){
+    this.find({isDeleted: false});
+    next();
 })
 
-const User = new mongoose.model('User', userSchema);
+
+const User = mongoose.model('User', userSchema);
 
 export default User;

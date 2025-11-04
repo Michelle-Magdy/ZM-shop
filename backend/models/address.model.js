@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const addressSchema = mongoose.Schema({
+const addressSchema = new mongoose.Schema({
     label: {
         type: String,
         trim: true
@@ -20,8 +20,10 @@ const addressSchema = mongoose.Schema({
         type: Boolean,
         default: false
     }
+}, {
+    timestamps: true
 })
 
-const Address = new mongoose.model('Address', addressSchema);
+const Address = mongoose.model('Address', addressSchema);
 
 export default Address;
