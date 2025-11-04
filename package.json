@@ -4,8 +4,8 @@
   "description": "MERN stack E-commerce",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon backend/app.js",
-    "start": "node backend/app.js"
+    "dev": "nodemon backend/server.js",
+    "start": "node backend/server.js"
   },
   "repository": {
     "type": "git",

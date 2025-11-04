@@ -1,10 +1,9 @@
-User  ( id ,username, email, password, role {'user','admin','delivery','moderator'} , addresses :[{
+User  ( id ,username, email, password, role {'user','admin','delivery','vendor'} , addresses :[{
     label,
     address,
     firstname,
     lastname,
     isDefault: boolean,
-    
 }])
 
 Product (title, price: number , olderPrice:number , stock :number diplays if lessthan or equal 5 ,size , color, description , productOverview:[{key,value}], coverImage, images[] , isDeleted: boolean, categoryId ,slug)
