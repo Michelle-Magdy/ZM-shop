@@ -6,7 +6,7 @@ User  ( id ,username, email, password, role {'user','admin','delivery','vendor'}
     isDefault: boolean,
 }])
 
-Product (title, price: number , olderPrice:number , stock :number diplays if lessthan or equal 5 ,size , color, description , productOverview:[{key,value}], coverImage, images[] , isDeleted: boolean, categoryId ,slug)
+Product (title, price: number , olderPrice:number , stock :number diplays if lessthan or equal 5  , description , productOverview:[{key,value}], coverImage, images[] , isDeleted: boolean, categoryId ,slug)
 
 Reviews (productId, userId, username, date :date, rating: number ,title, description , helpful:number)
 
