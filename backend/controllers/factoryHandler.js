@@ -55,8 +55,8 @@ export const getOne = Model => catchAsync(async (req, res, next) => {
     })
 });
 
-export const getAll = Model => catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(Model.find(), req.query);
+export const getAll = (Model, config = {}) => catchAsync(async (req, res, next) => {
+    const features = new APIFeatures(Model.find(config), req.query);
     const documents = await features.executeAll();
     
     res.status(200).json({
