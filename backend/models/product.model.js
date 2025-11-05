@@ -1,6 +1,6 @@
 import mongoose, { mongo } from "mongoose";
 import validator from "validator";
-
+import slugify from "slugify";
 const attributeValueSchema = new mongoose.Schema({
   key: String,
   value: mongoose.Schema.Types.Mixed,
@@ -25,6 +25,14 @@ const productSchema = new mongoose.Schema({
   categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
   slug: { type: String, unique: true },
   isDeleted: { type: Boolean, default: false },
+});
+
+productSchema.pre("save", async function () {
+  this.slug = slugify(this.title, {
+    lower: true,
+    strict: true, // strip special characters except replacements
+    remove: /[*+~.()'"!:@]/g,
+  });
 });
 
 const Product = mongoose.model("Product", productSchema);

@@ -1,5 +1,6 @@
 import express from "express";
 import productType from "../models/product.type.model.js";
+import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 import {
   createProduct,
   getAllProducts,
@@ -9,6 +10,7 @@ import {
   getProduct,
   uploadImages,
   resizeImages,
+  deleteOldImagesOnUpdate,
 } from "../controllers/product.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
 
@@ -28,12 +30,14 @@ router
 
 router
   .route("/:id")
-  .get(getProduct)
+  .get(checkValidMongoId, getProduct)
   .patch(
     protect,
     authorize("admin", "vendor"),
+    checkValidMongoId,
     uploadImages,
     resizeImages,
+    deleteOldImagesOnUpdate,
     productSanitizer,
     updateProduct
   )

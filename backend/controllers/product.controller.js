@@ -7,13 +7,11 @@ import {
   softDeleteOne,
 } from "./factoryHandler.js";
 import { upload } from "../util/multer.config.js";
-import multer from "multer";
 import sharp from "sharp";
 import catchAsync from "../util/catchAsync.js";
+import { deleteFile } from "../util/deleteFile.js";
 
 export const productSanitizer = (req, res, next) => {
-  console.log(req.body);
-
   const {
     title,
     price,
@@ -82,6 +80,45 @@ export const resizeImages = catchAsync(async (req, res, next) => {
     })
   );
   req.body.images = images;
+  next();
+});
+
+export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
+  const productId = req.params.id;
+
+  // 1. Get the current product data
+  const product = await Product.findById(productId).select(
+    "+coverImage +images"
+  );
+
+  if (!product) {
+    // If product not found, clean up any newly uploaded files
+    if (req.body.coverImage) deleteFile(req.body.coverImage);
+
+    if (req.body.images) {
+      req.body.images.forEach((imageName) => {
+        deleteFile(imageName);
+      });
+    }
+    return next(new Error("No product found with that ID"));
+  }
+
+  // 2. Check for new coverImage and delete old one if present
+  if (req.body.coverImage && product.coverImage) {
+    // req.body.coverImage will be set by resizeImages if a new file was uploaded
+    deleteFile(product.coverImage);
+  }
+
+  if (
+    req.body.images &&
+    req.body.images.length > 0 &&
+    product.images.length > 0
+  ) {
+    product.images.forEach((imageName) => {
+      deleteFile(imageName);
+    });
+  }
+
   next();
 });
 
