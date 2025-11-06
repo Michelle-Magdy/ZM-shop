@@ -10,17 +10,15 @@ const reviewSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'User'
     },
-    userName: {
-        type: String,
-        required: [true, "Review must have a userName"]
-    },
     date: {
         type: Date,
         default: Date.now
     },
     rating: {
         type: Number,
-        required: [true, "Review must have a rating"]
+        required: [true, "Review must have a rating"],
+        min: 1,
+        max: 5
     },
     title: String,
     description: String,
@@ -32,9 +30,13 @@ const reviewSchema = new mongoose.Schema({
 
 reviewSchema.statics.calcProductRatingAvg = async function (productId) {
     try {
+        const objectId = typeof productId === 'string'
+        ? mongoose.Types.ObjectId.createFromHexString(productId)
+        : productId;
+
         const stats = await this.aggregate([
             {
-                $match: { productId }
+                $match: { productId: objectId }
             },
             {
                 $group: {
@@ -63,15 +65,15 @@ reviewSchema.post('save', function () {
     this.constructor.calcProductRatingAvg(this.productId);
 })
 
-reviewSchema.post('findOneAndDelete', function (doc) {
+reviewSchema.post(/^findOneAnd/, function (doc) {
     if(doc)
         doc.constructor.calcProductRatingAvg(doc.productId);
 })
 
-reviewSchema.post('findOneAndUpdate', function (doc) {
-    if(doc)
-        doc.constructor.calcProductRatingAvg(doc.productId);
-})
+reviewSchema.pre(/^find/, function(next) {
+    this.populate('userId', 'name');
+    next();
+});
 
 const Review = mongoose.model('Review', reviewSchema);
 
