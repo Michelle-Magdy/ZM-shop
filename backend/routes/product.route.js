@@ -11,6 +11,7 @@ import {
   uploadImages,
   resizeImages,
   deleteOldImagesOnUpdate,
+  getProductsByCategory,
 } from "../controllers/product.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
 
@@ -28,19 +29,26 @@ router
     createProduct
   );
 
+router.get("/category/:categoryId", getProductsByCategory);
+
 router
   .route("/:id")
-  .get(checkValidMongoId, getProduct)
+  .get(checkValidMongoId("id"), getProduct)
   .patch(
     protect,
     authorize("admin", "vendor"),
-    checkValidMongoId,
+    checkValidMongoId("id"),
     uploadImages,
     resizeImages,
     deleteOldImagesOnUpdate,
     productSanitizer,
     updateProduct
   )
-  .delete(protect, authorize("admin", "vendor"), deleteProduct);
+  .delete(
+    protect,
+    authorize("admin", "vendor"),
+    checkValidMongoId("id"),
+    deleteProduct
+  );
 
 export default router;

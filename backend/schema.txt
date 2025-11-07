@@ -8,7 +8,11 @@ User  ( id ,username, email, password, role {'user','admin','delivery','vendor'}
 
 Product (title, price: number , olderPrice:number , stock :number diplays if lessthan or equal 5  , description , productOverview:[{key,value}], coverImage, images[] , isDeleted: boolean, categoryId ,slug)
 
-Reviews (productId, userId, username, date :date, rating: number ,title, description , helpful:number)
+
+FAQ (question,answer)
+
+Reviews (productId, userId, date :date, rating: number ,title, description , helpful:number)
+
 
 Cart (userId, items: [
     {
@@ -21,13 +25,16 @@ Cart (userId, items: [
     }
 ])
 
+
+Category (title,slug,parentId ,virtualChlidren , image )
+------------------------------- Done ---------------------------------
+
 WishList (userId, items: [
     {
      productId,
     }
 ])
 
-Category (title,slug,parentId ,virtualChlidren , image ,depth)
 
 Copoun (userId ,code , discountPercentage ,isActive, expirationDate)
 
@@ -44,10 +51,10 @@ shippingStatus: enum {
 }
 )
 
-FAQ (question,answer)
 
 Contact us using socket don't do it now
 
+send emails and forget password
 
 
 

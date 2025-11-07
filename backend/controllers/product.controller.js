@@ -10,6 +10,8 @@ import { upload } from "../util/multer.config.js";
 import sharp from "sharp";
 import catchAsync from "../util/catchAsync.js";
 import { deleteFile } from "../util/deleteFile.js";
+import { findCategoryDescendantsIDs } from "../util/category.utils.js";
+import Category from "../models/category.model.js";
 
 export const productSanitizer = (req, res, next) => {
   const {
@@ -93,11 +95,11 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
 
   if (!product) {
     // If product not found, clean up any newly uploaded files
-    if (req.body.coverImage) deleteFile(req.body.coverImage);
+    if (req.body.coverImage) deleteFile("products", req.body.coverImage);
 
     if (req.body.images) {
       req.body.images.forEach((imageName) => {
-        deleteFile(imageName);
+        deleteFile("products", imageName);
       });
     }
     return next(new Error("No product found with that ID"));
@@ -106,7 +108,7 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
   // 2. Check for new coverImage and delete old one if present
   if (req.body.coverImage && product.coverImage) {
     // req.body.coverImage will be set by resizeImages if a new file was uploaded
-    deleteFile(product.coverImage);
+    deleteFile("products", product.coverImage);
   }
 
   if (
@@ -115,7 +117,7 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
     product.images.length > 0
   ) {
     product.images.forEach((imageName) => {
-      deleteFile(imageName);
+      deleteFile("products", imageName);
     });
   }
 
@@ -127,3 +129,15 @@ export const updateProduct = updateOne(Product);
 export const deleteProduct = softDeleteOne(Product);
 export const getProduct = getOne(Product);
 export const getAllProducts = getAll(Product);
+export const getProductsByCategory = catchAsync(async (req, res, next) => {
+  const categoryId = req.params.categoryId;
+  const allCategories = await findCategoryDescendantsIDs(categoryId);
+  allCategories.push(categoryId);
+
+  const filter = {
+    isDeleted: false,
+    categoryId: { $in: allCategories },
+  };
+
+  return getAll(Product, filter)(req, res, next);
+});

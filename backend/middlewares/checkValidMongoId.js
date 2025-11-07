@@ -1,9 +1,9 @@
 import AppError from "../util/appError.js";
 
 // Function to check if a string is a valid MongoDB ObjectId format
-const checkValidMongoId = (req, res, next) => {
+const checkValidMongoId = (id) => (req, res, next) => {
   // We are checking the ID passed in the URL parameters
-  const itemID = req.params.id;
+  const itemID = req.params[id];
 
   // 1. Check if the ID exists
   if (!itemID) {

@@ -1,7 +1,5 @@
 import multer from "multer";
-import sharp from "sharp";
 import AppError from "./appError.js";
-import catchAsync from "./catchAsync.js";
 
 const multerStorage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {

@@ -9,17 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define the base path for product images
-const PRODUCT_IMAGES_BASE_PATH = path.join(
-  __dirname,
-  "..",
-  "public",
-  "images",
-  "products"
-);
+const PRODUCT_IMAGES_BASE_PATH = path.join(__dirname, "..", "public", "images");
 
 // New utility function to delete a single file
-export const deleteFile = (filename) => {
-  const filePath = path.join(PRODUCT_IMAGES_BASE_PATH, filename);
+export const deleteFile = (baseFolder, filename) => {
+  const filePath = path.join(PRODUCT_IMAGES_BASE_PATH, baseFolder, filename);
   // Check if the file exists before attempting to delete
   if (fs.existsSync(filePath)) {
     fs.unlink(filePath, (err) => {
