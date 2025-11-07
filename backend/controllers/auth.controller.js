@@ -4,6 +4,7 @@ import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
+import Cart from "../models/cart.model.js";
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -54,6 +55,9 @@ export const signup = catchAsync(async (req, res, next) => {
     roles: [process.env.USER_ROLE_ID],
   });
   user.password = undefined;
+
+  //Create a cart for new user
+  await Cart.create({ userId: user._id, items: [] });
 
   createAndSendToken(user, 201, res);
 });

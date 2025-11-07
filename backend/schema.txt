@@ -17,11 +17,9 @@ Reviews (productId, userId, date :date, rating: number ,title, description , hel
 Cart (userId, items: [
     {
      productId,
-     productName,
-     coverImage,
      addToCartPrice,
      quantity,
-     deliveryPice
+     deliveryPrice
     }
 ])
 
