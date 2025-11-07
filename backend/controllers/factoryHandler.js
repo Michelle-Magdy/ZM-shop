@@ -11,14 +11,18 @@ export const deleteOne = (Model) =>
     });
   });
 
-export const updateOne = (Model) =>
+export const updateOne = (Model, filter = null, newDoc = null) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
     const update = req.body;
-    const updatedDocument = await Model.findByIdAndUpdate(id, update, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedDocument = await Model.findOneAndUpdate(
+      filter ? filter : { _id: id },
+      newDoc ? newDoc : update,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
     res.status(200).json({
       status: "Success",
       data: {
@@ -41,10 +45,11 @@ export const createOne = (Model, object = null) =>
     });
   });
 
-export const getOne = (Model) =>
+export const getOne = (Model, filter = null) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const document = await Model.findById(id);
+    const document = await Model.find(filter ? filter : { _id: id });
+    console.log(filter);
 
     if (!document) {
       return res.status(404).json({

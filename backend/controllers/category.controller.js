@@ -64,14 +64,14 @@ export const getOneCategory = catchAsync(async (req, res, next) => {
     subCategories: [...tree],
   };
   res.status(200).json({
-    body: returnCategory,
+    data: returnCategory,
   });
 });
 export const getCategoryTree = catchAsync(async (req, res, next) => {
   const tree = await buildCategoryTree();
   if (!tree) return next(new AppError("failed to get the category tree", 500));
   res.status(200).json({
-    body: tree,
+    data: tree,
   });
 });
 
