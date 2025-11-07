@@ -29,8 +29,6 @@ export const updateOne = (Model) =>
 
 export const createOne = (Model, object = null) =>
   catchAsync(async (req, res, next) => {
-    console.log("cat", object);
-
     const newDocument = await Model.create(object ? object : req.body);
 
     res.status(201).json({

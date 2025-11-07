@@ -34,7 +34,7 @@ WishList (userId, items: [
 ])
 
 
-Copoun (userId ,code , discountPercentage ,isActive, expirationDate)
+Coupon (code , discountPercentage ,isActive, expirationDate)
 
 
 Order (userId , orderNumber , items [{
