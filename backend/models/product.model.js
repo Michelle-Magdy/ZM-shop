@@ -1,5 +1,4 @@
 import mongoose, { mongo } from "mongoose";
-import validator from "validator";
 import slugify from "slugify";
 const attributeValueSchema = new mongoose.Schema({
   key: String,
