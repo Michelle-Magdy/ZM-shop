@@ -7,7 +7,7 @@ const checkValidMongoId = (id) => (req, res, next) => {
 
   // 1. Check if the ID exists
   if (!itemID) {
-    return next(new Error("Product ID is missing in the request URL."));
+    return next(new Error("Mongo ID is missing in the request URL."));
   }
 
   // 2. Check the format: a 24-character hexadecimal string
@@ -20,7 +20,7 @@ const checkValidMongoId = (id) => (req, res, next) => {
     // This provides a cleaner error than the Mongoose CastError
     return next(
       new AppError(
-        `Invalid Product ID format: "${itemID}". ID must be a valid 24-character hexadecimal string.`
+        `Invalid Mongo ID format: "${itemID}". ID must be a valid 24-character hexadecimal string.`
       )
     );
   }

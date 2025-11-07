@@ -9,15 +9,14 @@ import {
   updateUser,
 } from "../controllers/user.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
+import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 
 const router = express.Router();
 
 router.use(protect, authorize("admin"));
 
 router.route("/").get(getAllUsers).post(addUser);
-
-router.route("/:id").get(getUser).patch(updateUser).delete(deleteUser);
-
 router.get("/me/permissions", getUserPermissions);
+router.route("/:id").get(checkValidMongoId("id"),getUser).patch(checkValidMongoId("id"),updateUser).delete(checkValidMongoId("id"),deleteUser);
 
 export default router;

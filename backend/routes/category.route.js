@@ -17,36 +17,20 @@ const router = express.Router();
 router
   .route("/")
   .get(getCategoryTree)
-  .post(
-    protect,
-    authorize("admin", "vendor"),
-    uploadImage,
-    resizeImage,
-    createCategory
-  );
+  .post(uploadImage, resizeImage, createCategory);
+
+router.use(protect, authorize("admin", "vendor"));
 
 router
   .route("/:id")
-  .get(
-    protect,
-    authorize("admin", "vendor"),
-    checkValidMongoId("id"),
-    getOneCategory
-  )
+  .get(checkValidMongoId("id"), getOneCategory)
   .patch(
-    protect,
-    authorize("admin", "vendor"),
     checkValidMongoId("id"),
     uploadImage,
     resizeImage,
     deleteOldImage,
     updateCategory
   )
-  .delete(
-    protect,
-    authorize("admin", "vendor"),
-    checkValidMongoId("id"),
-    deleteCategory
-  );
+  .delete(checkValidMongoId("id"), deleteCategory);
 
 export default router;

@@ -8,6 +8,7 @@ import {
   productTypeSanitizer,
   updateProductType,
 } from "../controllers/product.type.controller.js";
+import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 
 const router = express.Router();
 router.use(protect, authorize("admin", "vendor"));
@@ -19,8 +20,8 @@ router
 
 router
   .route("/:id")
-  .get(getProductType)
-  .patch(productTypeSanitizer, updateProductType)
-  .delete(deleteProductType);
+  .get(checkValidMongoId("id"), getProductType)
+  .patch(checkValidMongoId("id"), productTypeSanitizer, updateProductType)
+  .delete(checkValidMongoId("id"), deleteProductType);
 
 export default router;

@@ -39,7 +39,7 @@ Copoun (code , discountPercentage ,isActive, expirationDate)
 ------------------------------- Done ---------------------------------
 
 
-
+// strip
 Order (userId , orderNumber , items [{
     productId,
 }],
@@ -52,8 +52,8 @@ shippingStatus: enum {
 }
 )
 
-
-
+//? can be delayed
+// socket
 Contact us using socket don't do it now
 
 send emails and forget password

@@ -29,15 +29,19 @@ router
     createProduct
   );
 
-router.get("/category/:categoryId", getProductsByCategory);
+router.get(
+  "/category/:categoryId",
+  checkValidMongoId("categoryId"),
+  getProductsByCategory
+);
 
 router
   .route("/:id")
   .get(checkValidMongoId("id"), getProduct)
   .patch(
+    checkValidMongoId("id"),
     protect,
     authorize("admin", "vendor"),
-    checkValidMongoId("id"),
     uploadImages,
     resizeImages,
     deleteOldImagesOnUpdate,
@@ -45,9 +49,9 @@ router
     updateProduct
   )
   .delete(
+    checkValidMongoId("id"),
     protect,
     authorize("admin", "vendor"),
-    checkValidMongoId("id"),
     deleteProduct
   );
 
