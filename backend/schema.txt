@@ -52,15 +52,20 @@ shippingStatus: enum {
 }
 )
 
+Offers(images);
+
+routes for top selleing products 
+
+update user profile
+
 //? can be delayed
 // socket
 Contact us using socket don't do it now
 
-send emails and forget password
+send emails and forget password and refresh token
 
 handle the permissions
 
-check on every id route that it is a valid mongo Oid
 
 
 
