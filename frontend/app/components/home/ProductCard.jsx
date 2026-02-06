@@ -34,7 +34,7 @@ export default function ProductCard({ product }) {
           <LikeButton />
         </div>
         <div className="p-2 bg-card">
-          <p className="text-primary font-bold">{product.title}</p>
+          <p className="text-primary font-bold dark:text-primary-text">{product.title}</p>
           <div className="bg-badge w-fit rounded-lg flex justify-center items-center gap-1 py-0 px-1 text-xs">
             <FaStar className="text-green-700" />
             <span className="font-bold">{product.avgRating}</span>

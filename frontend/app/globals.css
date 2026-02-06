@@ -38,7 +38,7 @@
         --color-primary: #0b2f3d;
         --color-primary-hover: #167685ad;
         --color-background: #121212;
-        --color-card: #252728;
+        --color-card: #1C1B1D;
         --color-badge: #303030;
         --color-primary-text: #e2e5e9;
         --color-secondary-text: #b0b3b8;
@@ -66,6 +66,3 @@ button {
     @apply bg-primary w-6;
 }
 
-*{
-  transition: all 0.3;
-}

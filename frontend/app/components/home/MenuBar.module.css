@@ -6,6 +6,7 @@
     animation: rightToLeft 0.3s ease-in-out forwards;
 }
 
+
 @keyframes rightToLeft {
     from {
         transform: translateX(0);

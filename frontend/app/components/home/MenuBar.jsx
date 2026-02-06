@@ -34,7 +34,7 @@ export default function MenuBar({ open, onClose, children }) {
                 // click outside
                 if (e.target === dialogRef.current) handleClose();
             }}
-            className={`${closing ? style.dialogueRightLeft : style.dialogueLeftRight} backdrop:bg-black/40 h-dvh max-h-none w-75`}
+            className={`${closing ? style.dialogueRightLeft : style.dialogueLeftRight} backdrop:bg-black/40 h-[93.5dvh] md:h-dvh max-h-none w-75`}
         >
             <div className="flex items-center justify-between p-4 bg-cyan-900 text-white">
                 <h2 className="text-2xl font-bold">Menu</h2>
@@ -42,7 +42,7 @@ export default function MenuBar({ open, onClose, children }) {
                     <RxCross1 size={25} />
                 </button>
             </div>
-            
+
             <Categories />
 
             <div className="md:hidden p-4 mt-5">
@@ -50,4 +50,4 @@ export default function MenuBar({ open, onClose, children }) {
             </div>
         </dialog>
     );
-};
+}
