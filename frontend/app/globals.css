@@ -65,3 +65,7 @@ button {
 .swiper-pagination-bullet-active {
     @apply bg-primary w-6;
 }
+
+*{
+  transition: all 0.3;
+}

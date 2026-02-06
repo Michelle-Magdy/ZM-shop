@@ -33,7 +33,7 @@ export default function Menu() {
                             <Link
                                 key={cat._id}
                                 href={`/category/${cat._id}`}
-                                className="text-md  hover:text-cyan-900 dark:hover:text-primary-text "
+                                className="text-md  hover:text-cyan-700 dark:hover:text-primary-text "
                             >
                                 {cat.name}
                             </Link>

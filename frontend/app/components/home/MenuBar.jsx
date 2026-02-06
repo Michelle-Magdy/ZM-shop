@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import style from "./MenuBar.module.css";
 import { RxCross1 } from "react-icons/rx";
 import Categories from "./Categories";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 export default function MenuBar({ open, onClose, children }) {
     const dialogRef = useRef(null);
@@ -43,6 +44,10 @@ export default function MenuBar({ open, onClose, children }) {
             </div>
             
             <Categories />
+
+            <div className="md:hidden p-4 mt-5">
+                <ThemeSwitcher />
+            </div>
         </dialog>
     );
 };
