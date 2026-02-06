@@ -12,23 +12,23 @@ export default function CategoryListItem({ depth, category }) {
         <>
             <li
                 style={{ marginLeft: 16 + depth * 20 }}
-                className={`border-b border-gray-300 py-3 mr-4 flex justify-between items-center font-medium ${expanded ? 'text-cyan-900 font-semibold' : 'text-gray-700'} ${style.category}`}
+                className={`border-b border-gray-300 py-3 mr-4 flex justify-between items-center dark:text-primary-text font-medium ${expanded ? 'text-cyan-900 font-semibold' : 'text-gray-700'} ${style.category}`}
             >
                 <Link href={`/category/${category._id}`}>
                     {depth > 0 && (
-                        <MdKeyboardArrowRight className="!inline mr-0.5" />
+                        <MdKeyboardArrowRight className="inline! mr-0.5" />
                     )}
                     {category.name}
                 </Link>
                 {category.subcategories.length > 0 && (
                     <button
-                        className="p-1 !bg-gray-200 rounded-full"
+                        className="p-1 bg-gray-200! rounded-full"
                         onClick={() => setExpanded((prev) => !prev)}
                     >
                         {expanded ? (
-                            <FaMinus className="text-[10px]" />
+                            <FaMinus className="text-[10px] dark:text-background" />
                         ) : (
-                            <FaPlus className="text-[10px]" />
+                            <FaPlus className="text-[10px] dark:text-background" />
                         )}
                     </button>
                 )}

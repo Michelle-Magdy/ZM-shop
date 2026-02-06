@@ -1,12 +1,13 @@
-import { API_BASE_URL } from "../apiConfig";
-import { apiClient } from "./axios";
-
 export const getCategories = async () => {
   try {
-    const res = await apiClient.get(`/category`);
-    return res.data;
+    const res = await fetch("http://localhost:5000/api/v1/category", {
+      next: { revalidate: 3600 },
+    });
+    const categories = await res.json();
+
+    return categories;
   } catch (error) {
     console.error("Error fetching categories:", error);
-    return [];
+    throw error;
   }
 };

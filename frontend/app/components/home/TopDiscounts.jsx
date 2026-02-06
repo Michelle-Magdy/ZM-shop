@@ -36,7 +36,7 @@ const data = [
 export default function TopDiscounts() {
     return (
         <div className="py-6 sm:py-8 lg:py-10 w-full">
-            <div className="relative overflow-hidden bg-[#F6F6F6] rounded-lg">
+            <div className="relative overflow-hidden rounded-lg">
                 {/* Slider track */}
                 <Swiper
                     modules={[Navigation, Pagination, Autoplay]}

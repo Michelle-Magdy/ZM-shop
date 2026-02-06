@@ -1,0 +1,4 @@
+{
+    "watch": ["backend"],
+    "ignore": ["frontend"]
+}

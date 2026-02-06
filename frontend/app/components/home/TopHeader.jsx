@@ -1,10 +1,6 @@
 import Link from "next/link";
 import ThemeSwitcher from "./ThemeSwitcher";
-import { CiUser } from "react-icons/ci";
 import { CiShoppingCart } from "react-icons/ci";
-import { FiUser } from "react-icons/fi";
-import { FaRegUserCircle } from "react-icons/fa";
-import { FaUserCircle } from "react-icons/fa";
 import { LuUserRound } from "react-icons/lu";
 import SearchBar from "./SearchBar";
 
@@ -12,19 +8,19 @@ export default function TopHeader() {
     return (
         <div>
             <div className="flex justify-between items-center h-25 px-3 md:px-5 border-b bg-primary text-white">
-                <div className="logo">
+                <Link href={"/"} className="logo">
                     <i>
-                        <h1 className="text-4xl font-bold text-gray-100 whitespace-nowrap mr-2">
+                        <h1 className="text-4xl font-bold text-white dark:text-primary-text whitespace-nowrap mr-2">
                             ZM-Shop
                         </h1>
                     </i>
-                </div>
+                </Link>
 
                 <div className=" hidden md:block w-[70%] text-black">
                     <SearchBar />
                 </div>
 
-                <div className="right flex items-center ml-2">
+                <div className="right flex items-center ml-2 text-white dark:text-primary-text">
                     <div className=" hidden md:block w-[70%]">
                         <ThemeSwitcher />
                     </div>
@@ -41,16 +37,7 @@ export default function TopHeader() {
                         </span>
                     </div>
                 </div>
-
             </div>
         </div>
     );
 }
-
-/*
-                <ThemeSwitcher />
-                <Link href="/login" className="flex items-center">
-                    <CiUser className="mr-1" size={20} />
-                    <span>My account</span>
-                </Link>
-*/

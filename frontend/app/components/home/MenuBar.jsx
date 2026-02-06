@@ -42,7 +42,7 @@ export default function MenuBar({ open, onClose, children }) {
                 </button>
             </div>
             
-            {children}
+            <Categories />
         </dialog>
     );
 };

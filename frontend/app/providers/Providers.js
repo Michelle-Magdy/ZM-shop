@@ -10,5 +10,6 @@ export function Provider({ children }) {
         {children}
       </ThemeProvider>
     </QueryClientProvider>
+
   );
 }

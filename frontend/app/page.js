@@ -1,21 +1,13 @@
-import Categories from "@/components/home/Categories";
-import Header from "@/components/home/Header";
-import Menu from "@/components/home/Menu";
-import ProductCard from "@/components/home/ProductCard";
-import TopHeader from "@/components/home/TopHeader";
-import Image from "next/image";
-import Link from "next/link";
-import { FaMoon, FaSun } from "react-icons/fa";
-import Products from "../components/home/ProductList";
-import TopDiscounts from "@/components/home/TopDiscounts";
-import ShopByCategory from "@/components/home/ShopByCategory";
+import Categories from "@/app/components/home/Categories";
+import Menu from "@/app/components/home/Menu";
+import Products from "./components/home/ProductList";
+import TopDiscounts from "@/app/components/home/TopDiscounts";
+import ShopByCategory from "@/app/components/home/ShopByCategory";
 
 export default function Home() {
   return (
     <>
-      <Menu>
-        <Categories />
-      </Menu>
+      <Menu></Menu>
       <TopDiscounts />
       <Products />
       <ShopByCategory />
