@@ -28,6 +28,7 @@ export const productSanitizer = (req, res, next) => {
     isDeleted,
     nReviews,
     avgRating,
+    isBestSeller,
   } = req.body;
   req.body = {
     title,
@@ -43,6 +44,7 @@ export const productSanitizer = (req, res, next) => {
     isDeleted,
     nReviews,
     avgRating,
+    isBestSeller,
   };
   next();
 };
@@ -79,7 +81,7 @@ export const resizeImages = catchAsync(async (req, res, next) => {
         })
         .toFile(`backend/public/images/products/${imageName}`);
       images.push(imageName);
-    })
+    }),
   );
   req.body.images = images;
   next();
@@ -90,7 +92,7 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
 
   // 1. Get the current product data
   const product = await Product.findById(productId).select(
-    "+coverImage +images"
+    "+coverImage +images",
   );
 
   if (!product) {

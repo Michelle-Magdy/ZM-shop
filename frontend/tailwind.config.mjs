@@ -12,7 +12,7 @@ const tailwindConfi = {
         primary: "#104e64",
         brand: {
           light: "#3b82f6",
-          dark: "#2563eb",
+          dark: "#000000",
         },
         background: {
           light: "#f9fafb",

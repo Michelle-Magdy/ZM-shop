@@ -21,7 +21,7 @@ export const updateOne = (Model, filter = null, newDoc = null) =>
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
     res.status(200).json({
       status: "Success",
@@ -71,9 +71,7 @@ export const getAll = (Model, config = {}) =>
     res.status(200).json({
       status: "Success",
       results: documents.length,
-      data: {
-        documents,
-      },
+      data: documents,
     });
   });
 

@@ -24,6 +24,7 @@ const productSchema = new mongoose.Schema({
   categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
   slug: { type: String, unique: true },
   isDeleted: { type: Boolean, default: false },
+  isBestSeller: { type: Boolean, default: false },
 });
 
 productSchema.pre("save", async function () {

@@ -10,11 +10,19 @@ import categoryRouter from "./routes/category.route.js";
 import cartRouter from "./routes/cart.route.js";
 import wishlistRouter from "./routes/wishlist.route.js";
 import couponRouter from "./routes/coupon.route.js";
+import cors from "cors";
 
 import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your Next.js URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.static("./backend/public"));
