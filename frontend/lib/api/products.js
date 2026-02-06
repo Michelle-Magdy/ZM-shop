@@ -1,4 +1,3 @@
-import { API_BASE_URL } from "../apiConfig";
 import { apiClient } from "./axios";
 export const getAllProducts = async () => {
   try {

@@ -28,8 +28,8 @@ export default function ThemeSwitcher() {
         )
 
     if(resolvedTheme === "dark")
-        return ( <FaSun className="cursor-pointer mr-6" size={20} onClick={() => setTheme("light")} /> );
+        return ( <FaSun className="cursor-pointer mr-3" size={25} onClick={() => setTheme("light")} /> );
     
     if(resolvedTheme === "light")
-        return ( <FaMoon className="cursor-pointer mr-6" size={20} onClick={() => setTheme("dark")} /> );
+        return ( <FaMoon className="cursor-pointer mr-3" size={25} onClick={() => setTheme("dark")} /> );
 }

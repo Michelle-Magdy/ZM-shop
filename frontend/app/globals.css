@@ -49,4 +49,19 @@ html {
   scroll-behavior: smooth;
 }
 
-/* REMOVED THE SECOND BODY BLOCK FROM HERE */
+button{
+  cursor: pointer;
+  outline: none;
+}
+
+.swiper-pagination-bullet{
+  @apply h-2.5 rounded-full transition-all duration-300 cursor-pointer ;
+}
+
+.swiper-pagination-bullet:not(.swiper-pagination-bullet-active){
+  @apply bg-gray-400 hover:bg-gray-500  w-2.5;
+}
+
+.swiper-pagination-bullet-active{
+  @apply bg-primary w-6;
+}

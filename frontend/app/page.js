@@ -13,16 +13,12 @@ import ShopByCategory from "@/components/home/ShopByCategory";
 export default function Home() {
   return (
     <>
-      <TopHeader />
-      <Header />
       <Menu>
         <Categories />
       </Menu>
-      <main className="px-6 lg:px-14">
-        <TopDiscounts />
-        <Products />
-        <ShopByCategory />
-      </main>
+      <TopDiscounts />
+      <Products />
+      <ShopByCategory />
     </>
   );
 }

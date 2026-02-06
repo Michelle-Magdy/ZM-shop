@@ -29,7 +29,7 @@ export default function ShopByCategory() {
   const CATEGORY_IMAGE_URL = "http://localhost:5000/images/categories";
 
   return (
-    <section className="container mx-auto px-4 py-8 my-12 w-full bg-primary ">
+    <section className="px-4 py-8 my-12 w-full bg-primary ">
       <h2 className="text-3xl font-semibold mb-2 text-white">
         Shop By Category
       </h2>
