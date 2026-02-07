@@ -7,3 +7,14 @@ export const getAllProducts = async () => {
     console.log(error);
   }
 };
+
+
+export const searchProducts = async (query) => {
+  try {
+    const res = await apiClient.get(`/product?search=${query}`);
+    return res.data;
+  }catch(error) {
+    console.log(error);
+    throw error;
+  }
+}

@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import style from "./MenuBar.module.css";
+import style from "@/app/UI/Animation.module.css";
 import { RxCross1 } from "react-icons/rx";
 import Categories from "./Categories";
 import ThemeSwitcher from "./ThemeSwitcher";
 
-export default function MenuBar({ open, onClose, children }) {
+export default function MenuBar({ open, onClose }) {
     const dialogRef = useRef(null);
     const [closing, setClosing] = useState(false);
 
@@ -34,7 +34,7 @@ export default function MenuBar({ open, onClose, children }) {
                 // click outside
                 if (e.target === dialogRef.current) handleClose();
             }}
-            className={`${closing ? style.dialogueRightLeft : style.dialogueLeftRight} backdrop:bg-black/40 h-[93.5dvh] md:h-dvh max-h-none w-75`}
+            className={`${closing ? style.fadeRightLeft : style.fadeLeftRight} backdrop:bg-black/40 h-[93.5dvh] md:h-dvh max-h-none w-75`}
         >
             <div className="flex items-center justify-between p-4 bg-cyan-900 text-white">
                 <h2 className="text-2xl font-bold">Menu</h2>

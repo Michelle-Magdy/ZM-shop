@@ -3,7 +3,7 @@ import { MdKeyboardArrowRight } from "react-icons/md";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import { useState } from "react";
 import Link from "next/link";
-import style from "./CategoryListItem.module.css";
+import style from "@/app/UI/Animation.module.css";
 
 export default function CategoryListItem({ depth, category }) {
     const [expanded, setExpanded] = useState(false);
@@ -12,7 +12,7 @@ export default function CategoryListItem({ depth, category }) {
         <>
             <li
                 style={{ marginLeft: 16 + depth * 20 }}
-                className={`border-b border-gray-300 py-3 mr-4 flex justify-between items-center dark:text-primary-text font-medium ${expanded ? 'text-cyan-900 font-semibold' : 'text-gray-700'} ${style.category}`}
+                className={`border-b border-gray-300 py-3 mr-4 flex justify-between items-center dark:text-primary-text font-medium ${expanded ? "text-cyan-900 font-semibold" : "text-gray-700"} ${style.fadeTopDown}`}
             >
                 <Link href={`/category/${category._id}`}>
                     {depth > 0 && (

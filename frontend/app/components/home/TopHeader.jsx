@@ -16,7 +16,7 @@ export default function TopHeader() {
                     </i>
                 </Link>
 
-                <div className=" hidden md:block w-[70%] text-black">
+                <div className=" hidden md:block w-[70%] lg:w-[50%] text-black">
                     <SearchBar />
                 </div>
 

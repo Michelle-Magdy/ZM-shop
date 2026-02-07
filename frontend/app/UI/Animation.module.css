@@ -1,11 +1,14 @@
-.dialogueLeftRight {
+.fadeTopDown {
+    animation: fadeTopDown 0.3s ease-in-out forwards;
+}
+
+.fadeLeftRight {
     animation: leftToRight 0.3s ease-in-out;
 }
 
-.dialogueRightLeft {
+.fadeRightLeft {
     animation: rightToLeft 0.3s ease-in-out forwards;
 }
-
 
 @keyframes rightToLeft {
     from {
@@ -22,5 +25,14 @@
     }
     to {
         transform: translateX(0);
+    }
+}
+
+@keyframes fadeTopDown {
+    from {
+        transform: translateY(-20px);
+    }
+    to {
+        transform: translateY(0);
     }
 }
