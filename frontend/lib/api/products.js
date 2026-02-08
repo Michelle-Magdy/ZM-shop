@@ -18,3 +18,14 @@ export const searchProducts = async (query) => {
     throw error;
   }
 }
+
+export const getProductsByCategory = async (categorySlug) => {
+  try{
+  const res = await apiClient.get(`/category/${categorySlug}`);
+  return res.data;
+  }
+  catch(err){
+    console.log(err)
+    throw err;
+  }
+}

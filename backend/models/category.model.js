@@ -43,5 +43,7 @@ categorySchema.pre("save", async function () {
   this.slug = slugify(this.name);
 });
 
+categorySchema.index({ slug: 1 });
+
 const Category = mongoose.model("Category", categorySchema);
 export default Category;

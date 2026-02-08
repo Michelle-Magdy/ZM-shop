@@ -14,7 +14,7 @@ export default function CategoryListItem({ depth, category }) {
                 style={{ marginLeft: 16 + depth * 20 }}
                 className={`border-b border-gray-300 py-3 mr-4 flex justify-between items-center dark:text-primary-text font-medium ${expanded ? "text-cyan-900 font-semibold" : "text-gray-700"} ${style.fadeTopDown}`}
             >
-                <Link href={`/category/${category._id}`}>
+                <Link href={`/category/${category.slug}`}>
                     {depth > 0 && (
                         <MdKeyboardArrowRight className="inline! mr-0.5" />
                     )}

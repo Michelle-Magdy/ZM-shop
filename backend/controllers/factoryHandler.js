@@ -43,11 +43,17 @@ export const createOne = (Model, object = null) =>
     });
   });
 
-export const getOne = (Model, filter = null) =>
+export const getOne = (Model, filter = null, populateOptions = null) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const document = await Model.find(filter ? filter : { _id: id });
-    console.log(filter);
+
+    let query = Model.findOne(filter ? filter : { _id: id });
+
+    if (populateOptions) {
+      query = query.populate(populateOptions);
+    }
+
+    const document = await query;
 
     if (!document) {
       return res.status(404).json({

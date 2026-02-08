@@ -1,7 +1,8 @@
 import "./globals.css";
 import CategoriesWrapper from "./providers/CategoriesWrapper";
 import { Provider } from "./providers/Providers";
-import TopHeader from "@/app/components/home/TopHeader";
+import TopHeader from "@/app/components/TopHeader";
+import Menu from "./components/Menu";
 
 export const metadata = {
   title: "Zm Shop",
@@ -15,6 +16,7 @@ export default function RootLayout({ children }) {
         <CategoriesWrapper>
           <Provider>
             <TopHeader />
+            <Menu />
             <main className="px-3 m-0 md:px-6 lg:px-14">
               <div className="container mx-auto">{children}</div>
             </main>
