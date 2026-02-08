@@ -43,6 +43,7 @@ Copoun (code , discountPercentage ,isActive, expirationDate)
 Order (userId , orderNumber , items [{
     productId,
 }],
+make review only if product is purchased by the user
 
 shippingStatus: enum {
     'pending',

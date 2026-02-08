@@ -6,48 +6,48 @@ import Categories from "./Categories";
 import ThemeSwitcher from "./ThemeSwitcher";
 
 export default function MenuBar({ open, onClose }) {
-    const dialogRef = useRef(null);
-    const [closing, setClosing] = useState(false);
+  const dialogRef = useRef(null);
+  const [closing, setClosing] = useState(false);
 
-    useEffect(() => {
-        if (open && dialogRef.current && !dialogRef.current.open) {
-            dialogRef.current.showModal();
-        }
+  useEffect(() => {
+    if (open && dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+    }
 
-        if (!open && dialogRef.current?.open) {
-            dialogRef.current.close();
-        }
-    }, [open]);
+    if (!open && dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
+  }, [open]);
 
-    const handleClose = () => {
-        setClosing(true);
-        setTimeout(() => {
-            onClose();
-            setClosing(false);
-        }, 300);
-    };
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(() => {
+      onClose();
+      setClosing(false);
+    }, 300);
+  };
 
-    return (
-        <dialog
-            ref={dialogRef}
-            onClick={(e) => {
-                // click outside
-                if (e.target === dialogRef.current) handleClose();
-            }}
-            className={`${closing ? style.fadeRightLeft : style.fadeLeftRight} backdrop:bg-black/40 h-[93.5dvh] md:h-dvh max-h-none w-75`}
-        >
-            <div className="flex items-center justify-between p-4 bg-cyan-900 text-white">
-                <h2 className="text-2xl font-bold">Menu</h2>
-                <button onClick={handleClose}>
-                    <RxCross1 size={25} />
-                </button>
-            </div>
+  return (
+    <dialog
+      ref={dialogRef}
+      onClick={(e) => {
+        // click outside
+        if (e.target === dialogRef.current) handleClose();
+      }}
+      className={`${closing ? style.fadeRightLeft : style.fadeLeftRight} backdrop:bg-black/40 h-full md:h-dvh max-h-none w-75`}
+    >
+      <div className="flex items-center justify-between p-4 bg-primary text-white">
+        <h2 className="text-2xl font-bold">Menu</h2>
+        <button onClick={handleClose}>
+          <RxCross1 size={25} />
+        </button>
+      </div>
 
-            <Categories />
+      <Categories />
 
-            <div className="md:hidden p-4 mt-5">
-                <ThemeSwitcher />
-            </div>
-        </dialog>
-    );
+      <div className="md:hidden p-4 mt-5">
+        <ThemeSwitcher />
+      </div>
+    </dialog>
+  );
 }

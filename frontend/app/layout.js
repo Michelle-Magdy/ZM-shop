@@ -15,10 +15,8 @@ export default function RootLayout({ children }) {
         <CategoriesWrapper>
           <Provider>
             <TopHeader />
-            <main className="px-3 md:px-6 lg:px-14 mt-1">
-              <div className="container mx-auto">
-                {children}
-              </div>
+            <main className="px-3 m-0 md:px-6 lg:px-14">
+              <div className="container mx-auto">{children}</div>
             </main>
           </Provider>
         </CategoriesWrapper>
