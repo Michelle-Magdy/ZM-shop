@@ -42,19 +42,46 @@ export const createOne = (Model, object = null) =>
       },
     });
   });
-
-export const getOne = (Model, filter = null) =>
+export const getOne = (Model, filter = null, populateOptions = null) =>
   catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const document = await Model.find(filter ? filter : { _id: id });
-    console.log(filter);
+    // Check for id or slug in params
+    const { id, slug } = req.params;
+    let query;
+
+    // If custom filter is provided, use it
+    if (filter) {
+      query = Model.findOne(filter);
+    }
+    // Search by id if present
+    else if (id) {
+      query = Model.findOne({ _id: id });
+    }
+    // Search by slug if present
+    else if (slug) {
+      query = Model.findOne({ slug });
+    }
+    // Neither id nor slug provided
+    else {
+      return res.status(400).json({
+        status: "Fail",
+        message: "Please provide an id or slug",
+      });
+    }
+
+    // Apply population if provided
+    if (populateOptions) {
+      query = query.populate(populateOptions);
+    }
+
+    const document = await query;
 
     if (!document) {
       return res.status(404).json({
         status: "Fail",
-        message: "document not found",
+        message: "Document not found",
       });
     }
+
     res.status(200).json({
       status: "Success",
       data: {

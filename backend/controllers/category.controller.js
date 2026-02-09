@@ -11,6 +11,7 @@ import multer from "multer";
 import sharp from "sharp";
 import { upload } from "../util/multer.config.js";
 import { deleteFile } from "../util/deleteFile.js";
+import mongoose from "mongoose";
 
 export const uploadImage = upload.single("image");
 
@@ -33,7 +34,14 @@ export const resizeImage = catchAsync(async (req, res, next) => {
 });
 
 export const deleteOldImage = catchAsync(async (req, res, next) => {
-  const category = await Category.findById(req.params.id);
+  const { identifier } = req.params;
+  let category;
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    category = await Category.findById(identifier);
+  } else {
+    category = await Category.findOne({ slug: identifier });
+  }
+
   if (!category) {
     if (req.body.image) deleteFile("categories", req.body.image);
     return next(new AppError("category is not found", 404));
@@ -52,12 +60,20 @@ export const deleteOldImage = catchAsync(async (req, res, next) => {
 });
 
 export const getOneCategory = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const category = await Category.findOne({ _id: id }).lean();
+  const { identifier } = req.params;
+  let category;
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    category = await Category.findOne({
+      slug: identifier,
+    }).lean();
+  } else {
+    category = await Category.findOne({ slug: identifier }).lean();
+  }
+
   const tree = await getAllSubcategories(id);
   if (!tree || !category)
     return next(
-      new AppError("cannot ge the subcategories of the category", 404)
+      new AppError("cannot ge the subcategories of the category", 404),
     );
   const returnCategory = {
     ...category,
@@ -92,8 +108,78 @@ export const createCategory = catchAsync(async (req, res, next) => {
 });
 export const updateCategory = updateOne(Category);
 export const deleteCategory = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  const result = await softDeleteCategory(id);
+  const { identifier } = req.params;
+  let result;
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    result = await softDeleteCategory();
+  }
   if (!result) return next(new AppError("cannot delete this category", 500));
   res.status(200).json(result);
+});
+
+export const getAvailableFilters = catchAsync(async (req, res, next) => {
+  const { categoryId } = req.params;
+  // get all products under one category
+  const products = await Product.find({
+    categoryIds: categoryId,
+    status: "active",
+    isDeleted: false,
+  });
+  // get filters
+  const filters = {
+    price: { type: "range", min: Infinity, max: -Infinity },
+    attributes: {},
+    variants: {},
+  };
+  products.forEach((product) => {
+    //price range
+    const range = product.priceRange;
+    filters.price.min = Math.min(filters.price.min, range.min);
+    filters.price.max = Math.max(filters.price.max, range.max);
+
+    // non variant attributes
+    product.attributeDefinitions
+      .filter((def) => !def.isvariantDimentsions && def.isFilterable)
+      .forEach((def) => {
+        const attr = product.attributes.find((a) => a.key === def.key);
+        if (!attr) return;
+
+        if (!filters.attributes[def.key]) {
+          filters.attributes[def.key] = {
+            key: def.key,
+            displayName: def.displayName || def.key,
+            type: def.type,
+            options: new Set(),
+          };
+        }
+        filters.attributes[def.key].options.add(String(attr.value));
+      });
+
+    // variant attributes
+    product.attributeDefinitions
+      .filter((def) => def.isvariantDimentsions && def.isFilterable)
+      .forEach((def) => {
+        if (!filters.variants[def.key]) {
+          filters.variants[def.key] = {
+            key: def.key,
+            displayName: def.displayName || def.key,
+            type: def.type,
+            options: new Set(),
+          };
+        }
+        product.variants.forEach((variant) => {
+          const val = variant.attributeValues.get(def.key);
+          if (val) filters.variants.options.add(String(val));
+        });
+      });
+  });
+
+  Object.values(filters.attributes).forEach(
+    (attr) => (attr.options = [...attr.options]),
+  );
+  Object.values(filters.variants).forEach(
+    (attr) => (attr.options = [...attr.options]),
+  );
+
+  res.json(filters);
 });

@@ -50,7 +50,7 @@ export default function ShopByCategory() {
           {categories?.data?.map((cat) => (
             <SwiperSlide key={cat._id} className="h-fit">
               <Link
-                href={`/category/${cat._id}`}
+                href={`/category/${cat.slug}`}
                 className="flex flex-col items-center gap-3 my-2 h-fit"
               >
                 <div className="relative w-32 h-32 rounded-full bg-white shadow-md overflow-hidden transition-transform hover:scale-105">

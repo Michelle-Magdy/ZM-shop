@@ -3,6 +3,7 @@ import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, deleteOne, getAll, updateOne } from "./factoryHandler.js";
 import mongoose from "mongoose";
+import Product from "../models/product.model.js";
 
 export const productReviewSanitizer = (req, res, next) => {
   const { userId, rating, title, description } = req.body;

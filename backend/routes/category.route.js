@@ -8,6 +8,7 @@ import {
   uploadImage,
   resizeImage,
   deleteOldImage,
+  getAvailableFilters,
 } from "../controllers/category.controller.js";
 import { authorize, protect } from "../controllers/auth.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
@@ -22,15 +23,11 @@ router
 router.use(protect, authorize("admin", "vendor"));
 
 router
-  .route("/:id")
-  .get(checkValidMongoId("id"), getOneCategory)
-  .patch(
-    checkValidMongoId("id"),
-    uploadImage,
-    resizeImage,
-    deleteOldImage,
-    updateCategory
-  )
-  .delete(checkValidMongoId("id"), deleteCategory);
+  .route("/:identifier")
+  .get(getOneCategory)
+  .patch(uploadImage, resizeImage, deleteOldImage, updateCategory)
+  .delete(deleteCategory);
+
+router.get("/:categoryId/filters", getAvailableFilters);
 
 export default router;

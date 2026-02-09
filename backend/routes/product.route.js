@@ -26,33 +26,43 @@ router
     uploadImages,
     resizeImages,
     productSanitizer,
-    createProduct
+    createProduct,
   );
 
-router.get(
-  "/category/:categoryId",
-  checkValidMongoId("categoryId"),
-  getProductsByCategory
-);
+router.get("/category/:identifier", getProductsByCategory);
 
 router
-  .route("/:id")
-  .get(checkValidMongoId("id"), getProduct)
+  .route("/:slug")
+  .get(getProduct)
   .patch(
-    checkValidMongoId("id"),
     protect,
     authorize("admin", "vendor"),
     uploadImages,
     resizeImages,
     deleteOldImagesOnUpdate,
     productSanitizer,
-    updateProduct
+    updateProduct,
   )
-  .delete(
-    checkValidMongoId("id"),
-    protect,
-    authorize("admin", "vendor"),
-    deleteProduct
-  );
+  .delete(protect, authorize("admin", "vendor"), deleteProduct);
+
+// router
+//   .route("/:id")
+//   .get(checkValidMongoId("id"), getProduct)
+//   .patch(
+//     checkValidMongoId("id"),
+//     protect,
+//     authorize("admin", "vendor"),
+//     uploadImages,
+//     resizeImages,
+//     deleteOldImagesOnUpdate,
+//     productSanitizer,
+//     updateProduct,
+//   )
+//   .delete(
+//     checkValidMongoId("id"),
+//     protect,
+//     authorize("admin", "vendor"),
+//     deleteProduct,
+//   );
 
 export default router;

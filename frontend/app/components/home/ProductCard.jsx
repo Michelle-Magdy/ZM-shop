@@ -8,7 +8,7 @@ export default function ProductCard({ product }) {
   return (
     //1. Added 'group' here to track hover state
     <Link
-      href=""
+      href={`/product/${product.slug}`}
       className="border dark:border-0 border-gray-300 rounded-lg cursor-pointer block w-full"
     >
       <div className="group rounded-lg overflow-hidden relative w-full">
