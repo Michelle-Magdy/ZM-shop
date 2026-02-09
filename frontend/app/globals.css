@@ -2,31 +2,11 @@
 @import "tailwindcss";
 
 @theme {
-  --font-ubuntu: "Ubuntu", sans-serif;
+    --font-ubuntu: "Ubuntu", sans-serif;
 
-  /* Light mode defaults */
-  --color-primary: #104e64;
-  --color-primary-hover: #005f78;
-  --color-brand-light: #fff;
-  --color-brand-dark: #2563eb;
-  --color-background: #fff;
-  --color-card: #fff;
-  --color-badge: #d1d1d1;
-  --color-primary-text: #104e64;
-  --color-secondary-text: #6b7280;
-
-  /* Add dark mode strategy */
-  --color-scheme: light dark;
-}
-
-/* Use @custom-variant for class-based dark mode */
-@custom-variant dark (&:is(.dark *));
-
-@layer base {
-  .root {
     /* Light mode defaults */
     --color-primary: #104e64;
-    --color-primary-hover: #46484b;
+    --color-primary-hover: #005f78;
     --color-brand-light: #fff;
     --color-brand-dark: #2563eb;
     --color-background: #fff;
@@ -34,54 +14,74 @@
     --color-badge: #d1d1d1;
     --color-primary-text: #104e64;
     --color-secondary-text: #6b7280;
-  }
-  body {
-    font-family: var(--font-ubuntu);
-    font-style: normal;
-    min-height: 100vh;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: var(--color-background);
-    color: var(--color-primary-text);
-    transition: ease;
-    -webkit-transition: ease;
-    -moz-transition: ease;
-    -ms-transition: ease;
-    -o-transition: ease;
-  }
 
-  .dark {
-    /* --color-primary: #0b2f3d; */
-    --color-primary: #333334;
-    --color-primary-hover: #46484b;
-    /* --color-primary-hover: #167685ad; */
-    --color-background: #121212;
-    --color-card: #1c1b1d;
-    --color-badge: #303030;
-    /* --color-primary-text: #e2e5e9; */
-    --color-primary-text: #e3e3e3;
-    --color-secondary-text: #b0b3b8;
-  }
+    /* Add dark mode strategy */
+    --color-scheme: light dark;
+}
+
+/* Use @custom-variant for class-based dark mode */
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+    .root {
+        /* Light mode defaults */
+        --color-primary: #104e64;
+        --color-primary-hover: #46484b;
+        --color-brand-light: #fff;
+        --color-brand-dark: #2563eb;
+        --color-background: #fff;
+        --color-card: #fff;
+        --color-badge: #d1d1d1;
+        --color-primary-text: #104e64;
+        --color-secondary-text: #6b7280;
+    }
+    body {
+        font-family: var(--font-ubuntu);
+        font-style: normal;
+        min-height: 100vh;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--color-background);
+        color: var(--color-primary-text);
+        transition: ease;
+        -webkit-transition: ease;
+        -moz-transition: ease;
+        -ms-transition: ease;
+        -o-transition: ease;
+    }
+
+    .dark {
+        /* --color-primary: #0b2f3d; */
+        --color-primary: #333334;
+        --color-primary-hover: #46484b;
+        /* --color-primary-hover: #167685ad; */
+        --color-background: #121212;
+        --color-card: #1c1b1d;
+        --color-badge: #303030;
+        /* --color-primary-text: #e2e5e9; */
+        --color-primary-text: #e3e3e3;
+        --color-secondary-text: #b0b3b8;
+    }
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 button {
-  cursor: pointer;
-  outline: none;
+    cursor: pointer;
+    outline: none;
 }
 
 .swiper-pagination-bullet {
-  @apply h-2.5 rounded-full transition-all duration-300 cursor-pointer;
+    @apply h-2.5 rounded-full transition-all duration-300 cursor-pointer;
 }
 
 .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) {
-  @apply bg-gray-400 hover:bg-gray-500 w-2.5;
+    @apply bg-gray-400 hover:bg-gray-500 w-2.5;
 }
 
 .swiper-pagination-bullet-active {
-  @apply bg-primary w-6;
+    @apply bg-primary w-6;
 }
