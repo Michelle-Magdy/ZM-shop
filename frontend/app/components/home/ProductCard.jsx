@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "./LikeButton";
 import { FaStar } from "react-icons/fa";
+import { PRODUCT_IMAGE_URL } from "@/lib/apiConfig";
 
 export default function ProductCard({ product }) {
-  const PRODUCT_IMAGE_URL = "http://localhost:5000/images/products";
 
   return (
     // Single flex container - removed nested wrapper div
@@ -12,7 +12,7 @@ export default function ProductCard({ product }) {
       {/* Image Link - separate from content */}
       <Link
         href={`/product/${product.slug}`}
-        className="block relative overflow-hidden aspect-[4/5] bg-white shrink-0 group"
+        className="block relative overflow-hidden aspect-4/5 bg-white shrink-0 group"
       >
         <div className="absolute top-0 left-0 z-10 ">
           {product.isBestSeller && !product.isFeatured && (
@@ -29,7 +29,7 @@ export default function ProductCard({ product }) {
         <Image
           src={
             product?.coverImage
-              ? `${PRODUCT_IMAGE_URL}/${product.coverImage}`
+              ? `${PRODUCT_IMAGE_URL}/products/${product.coverImage}`
               : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg"
           }
           fill

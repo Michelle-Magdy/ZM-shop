@@ -25,7 +25,6 @@ export const productSanitizer = (req, res, next) => {
     "avgRating",
     "nReviews",
     "description",
-    "productTypeId",
     "categoryIds",
     "attributeDefinitions",
     "attributes",
@@ -135,8 +134,7 @@ export const createProduct = createOne(Product);
 export const updateProduct = updateOne(Product);
 export const deleteProduct = softDeleteOne(Product);
 export const getProduct = getOne(Product, null, [
-  { path: "productTypeId" },
-  { path: "vendorId", select: "name" },
+  { path: "vendorId", select: "name" }
 ]);
 export const getAllProducts = getAll(Product);
 export const getProductsByCategory = catchAsync(async (req, res, next) => {
