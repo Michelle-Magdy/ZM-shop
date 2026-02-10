@@ -7,6 +7,23 @@ export const getAllProducts = async () => {
     console.log(error);
   }
 };
+export const getBestSellerProducts = async () => {
+  try {
+    const res = await apiClient.get("/product/bestsellers");
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getFeaturedProducts = async () => {
+  try {
+    const res = await apiClient.get("/product/featured");
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const searchProducts = async (query) => {
   try {

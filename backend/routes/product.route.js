@@ -12,6 +12,8 @@ import {
   resizeImages,
   deleteOldImagesOnUpdate,
   getProductsByCategory,
+  getBestSellerProducts,
+  getFeaturedProducts,
 } from "../controllers/product.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
 
@@ -28,6 +30,9 @@ router
     productSanitizer,
     createProduct,
   );
+
+router.get("/bestsellers", getBestSellerProducts);
+router.get("/featured", getFeaturedProducts);
 
 router.get("/category/:identifier", getProductsByCategory);
 

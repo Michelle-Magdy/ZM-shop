@@ -161,3 +161,13 @@ export const getProductsByCategory = catchAsync(async (req, res, next) => {
 
   return getAll(Product, filter)(req, res, next);
 });
+
+export const getBestSellerProducts = catchAsync(async (req, res, next) => {
+  const bestSellers = await Product.find({ isBestSeller: true });
+  res.json({ data: bestSellers });
+});
+
+export const getFeaturedProducts = catchAsync(async (req, res, next) => {
+  const featured = await Product.find({ isFeatured: true });
+  res.json({ data: featured });
+});
