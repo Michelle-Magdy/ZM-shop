@@ -1,7 +1,8 @@
 export default function StarRating({ rating, maxStars = 5 }) {
     // Ensure rating is between 0 and maxStars
     const clampedRating = Math.max(0, Math.min(rating, maxStars));
-
+    if(!rating)
+        return <div>No Rating</div>
     return (
         <div className="flex items-center gap-1">
             {[...Array(maxStars)].map((_, index) => {

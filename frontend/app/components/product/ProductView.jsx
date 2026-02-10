@@ -51,6 +51,7 @@ export default function ProductView({ product }) {
         );
         if (newVariant) {
             setSelectedVariant(newVariant);
+            setQuantity(1);
         }
     };
 
@@ -108,14 +109,16 @@ export default function ProductView({ product }) {
                             </h1>
                             <div className="flex items-center gap-3">
                                 <StarRating rating={product.avgRating} />
-                                <span className="text-sm text-secondary-text">
-                                    ({product.avgRating?.toFixed(1) || "0.0"}{" "}
-                                    out of 5)
-                                </span>
+                                {product.avgRating && (
+                                    <span className="text-sm text-secondary-text">
+                                        ({product.avgRating.toFixed(1)} out of
+                                        5)
+                                    </span>
+                                )}
                             </div>
                         </div>
 
-                        {/* Price & SKU */}
+                        {/* Price */}
                         <div className="pt-4 border-t border-badge space-y-2">
                             <div className="flex items-baseline gap-3">
                                 <p className="text-4xl font-bold text-(--color-primary-text)">
@@ -133,12 +136,6 @@ export default function ProductView({ product }) {
                                     </p>
                                 )}
                             </div>
-                            <p className="text-sm text-secondary-text">
-                                SKU:{" "}
-                                <span className="font-mono text-(--color-primary-text)">
-                                    {selectedVariant?.sku}
-                                </span>
-                            </p>
                         </div>
 
                         {/* Variant Selectors */}
@@ -251,7 +248,7 @@ export default function ProductView({ product }) {
                             >
                                 {selectedVariant?.stock === 0
                                     ? "Out of Stock"
-                                    : "Add to Cart"}
+                                    : selectedVariant?.isActive ? "Add to Cart" : "Not active"}
                             </button>
                             <button className="flex-1 bg-badge text-(--color-primary-text) px-8 py-4 rounded-xl font-semibold text-lg hover:bg-badge/80 active:scale-95 transition-all duration-200">
                                 Add to Wishlist
