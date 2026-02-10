@@ -84,9 +84,7 @@ export const getOne = (Model, filter = null, populateOptions = null) =>
 
     res.status(200).json({
       status: "Success",
-      data: {
-        document,
-      },
+      data: document
     });
   });
 

@@ -67,7 +67,6 @@ export const signup = catchAsync(async (req, res, next) => {
 
 export const protect = catchAsync(async (req, res, next) => {
   let token;
-
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")

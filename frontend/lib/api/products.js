@@ -50,3 +50,13 @@ export const getProductsByCategory = async (
     throw err;
   }
 };
+
+export const getProduct = async (productSlug) => {
+  try{
+    const res = await apiClient.get(`/product/${productSlug}`);
+    return res.data;
+  }catch(err){
+    console.log(err);
+    throw err;
+  }
+}

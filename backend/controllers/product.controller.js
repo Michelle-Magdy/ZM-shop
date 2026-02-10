@@ -25,7 +25,6 @@ export const productSanitizer = (req, res, next) => {
     "avgRating",
     "nReviews",
     "description",
-    "productTypeId",
     "categoryIds",
     "attributeDefinitions",
     "attributes",
