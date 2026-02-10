@@ -3,19 +3,16 @@ import Menu from "@/app/components/Menu";
 import Products from "./components/home/ProductList";
 import TopDiscounts from "@/app/components/home/TopDiscounts";
 import ShopByCategory from "@/app/components/home/ShopByCategory";
-import { getBestSellerProducts, getFeaturedProducts } from "@/lib/api/products";
+import BestSellerSection from "./components/home/BestSellerSection";
+import FeaturedSection from "./components/home/FeaturedSection";
 
 export default async function Home() {
-  const [featuredProducts, bestSellerProducts] = await Promise.all([
-    getFeaturedProducts(),
-    getBestSellerProducts(),
-  ]);
   return (
     <>
       <TopDiscounts />
-      <Products products={featuredProducts} type="featured" />
+      <BestSellerSection />
       <ShopByCategory />
-      <Products products={bestSellerProducts} type="bestSeller" />
+      <FeaturedSection />
     </>
   );
 }

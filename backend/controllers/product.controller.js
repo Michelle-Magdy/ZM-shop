@@ -135,7 +135,6 @@ export const createProduct = createOne(Product);
 export const updateProduct = updateOne(Product);
 export const deleteProduct = softDeleteOne(Product);
 export const getProduct = getOne(Product, null, [
-  { path: "productTypeId" },
   { path: "vendorId", select: "name" },
 ]);
 export const getAllProducts = getAll(Product);
@@ -156,7 +155,7 @@ export const getProductsByCategory = catchAsync(async (req, res, next) => {
 
   const filter = {
     isDeleted: false,
-    categoryId: { $in: allCategories },
+    categoryIds: { $in: allCategories },
   };
 
   return getAll(Product, filter)(req, res, next);

@@ -93,15 +93,21 @@ export const getOne = (Model, filter = null, populateOptions = null) =>
 export const getAll = (Model, config = {}) =>
   catchAsync(async (req, res, next) => {
     const features = new APIFeatures(Model.find(config), req.query);
-    const documents = await features.executeAll();
+
+    const [documents, totalCount] = await Promise.all([
+      features.executeAll(),
+      features.getTotalCount(Model, config),
+    ]);
 
     res.status(200).json({
       status: "Success",
       results: documents.length,
+      totalCount,
+      totalPages: Math.ceil(totalCount / (req.query.limit * 1 || 20)),
+      currentPage: req.query.page * 1 || 1,
       data: documents,
     });
   });
-
 export const softDeleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;

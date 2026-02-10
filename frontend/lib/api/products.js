@@ -35,9 +35,15 @@ export const searchProducts = async (query) => {
   }
 };
 
-export const getProductsByCategory = async (categorySlug) => {
+export const getProductsByCategory = async (
+  categorySlug,
+  page = 1,
+  limit = 2,
+) => {
   try {
-    const res = await apiClient.get(`/product/category/${categorySlug}`);
+    const res = await apiClient.get(
+      `/product/category/${categorySlug}?page=${page}&limit=${limit}`,
+    );
     return res.data;
   } catch (err) {
     console.log(err);

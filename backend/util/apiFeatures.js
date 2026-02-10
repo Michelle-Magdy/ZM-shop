@@ -2,6 +2,7 @@ class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
+    this.filterObj = {}; // Store filter for counting
   }
 
   filter() {
@@ -9,18 +10,18 @@ class APIFeatures {
     const excludedFields = ["page", "sort", "limit", "fields", "search"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // 1B) Advanced filtering
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
-    this.query = this.query.find(JSON.parse(queryStr));
+    this.filterObj = JSON.parse(queryStr);
+    this.query = this.query.find(this.filterObj);
 
     return this;
   }
 
   search() {
     if (this.queryString.search) {
-      this.query = this.query.find({
+      const searchQuery = {
         $or: [
           { title: { $regex: `^${this.queryString.search}`, $options: "i" } },
           {
@@ -30,7 +31,10 @@ class APIFeatures {
             },
           },
         ],
-      });
+      };
+      this.query = this.query.find(searchQuery);
+      // Merge with filterObj for counting
+      this.filterObj = { ...this.filterObj, ...searchQuery };
     }
     return this;
   }
@@ -42,18 +46,16 @@ class APIFeatures {
     } else {
       this.query = this.query.sort("-createdAt");
     }
-
     return this;
   }
 
   limitFields() {
     if (this.queryString.fields) {
-      let fields = this.queryString.fields.split(",").join(" ");
+      const fields = this.queryString.fields.split(",").join(" ");
       this.query = this.query.select(fields);
     } else {
       this.query = this.query.select("-__v");
     }
-
     return this;
   }
 
@@ -63,14 +65,23 @@ class APIFeatures {
     const skip = (page - 1) * limit;
 
     this.query = this.query.skip(skip).limit(limit);
+    this.page = page;
+    this.limit = limit;
 
     return this;
+  }
+
+  // NEW: Get total count
+  async getTotalCount(Model, baseFilter = {}) {
+    const combinedFilter = { ...baseFilter, ...this.filterObj };
+    return await Model.countDocuments(combinedFilter);
   }
 
   async executeAll() {
     return await this.filter().search().sort().limitFields().paginate().query;
   }
 }
+
 export default APIFeatures;
 
 /*

@@ -1,9 +1,11 @@
+"use client";
+import { useCategories } from "@/app/context/CategoriesProvider";
 import ProductCard from "../home/ProductCard";
 
 export default function ProductGrid({ products }) {
   return (
-    <div className="">
-      {products.data.map((product) => (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+      {products.map((product) => (
         <ProductCard key={product._id} product={product} />
       ))}
     </div>
