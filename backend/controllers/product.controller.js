@@ -137,6 +137,7 @@ export const getProduct = getOne(Product, null, [
   { path: "vendorId", select: "name" },
 ]);
 export const getAllProducts = getAll(Product);
+
 export const getProductsByCategory = catchAsync(async (req, res, next) => {
   const { identifier } = req.params;
   let category;

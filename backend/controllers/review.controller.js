@@ -3,7 +3,6 @@ import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, deleteOne, getAll, updateOne } from "./factoryHandler.js";
 import mongoose from "mongoose";
-import Product from "../models/product.model.js";
 
 export const productReviewSanitizer = (req, res, next) => {
   const { userId, rating, title, description } = req.body;
@@ -68,46 +67,3 @@ export const addProductReview = createOne(Review);
 export const editProductReview = updateOne(Review);
 
 export const deleteProductReview = deleteOne(Review);
-
-export const getProductStats = catchAsync(async (req, res, next) => {
-  const { productId } = req.params;
-
-  const objectId =
-    typeof productId === "string"
-      ? mongoose.Types.ObjectId.createFromHexString(productId)
-      : productId;
-
-  const stats = await Review.aggregate([
-    {
-      $match: { productId: objectId },
-    },
-    {
-      $group: {
-        _id: { $round: ["$rating", 0] },
-        count: { $sum: 1 },
-      },
-    },
-    {
-      $sort: { _id: 1 },
-    },
-  ]);
-
-  const totalRatings = stats.reduce((sum, curr) => sum + curr.count, 0);
-
-  const result = Array.from({ length: 5 }, (_, i) => {
-    const rating = i + 1;
-    const match = stats.find((r) => r._id === rating);
-    const count = match ? match.count : 0;
-
-    return {
-      rating,
-      count,
-      percent: totalRatings ? Math.round((count / totalRatings) * 100) : 0,
-    };
-  });
-
-  res.status(200).json({
-    status: "success",
-    stats: result,
-  });
-});

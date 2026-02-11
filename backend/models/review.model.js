@@ -28,49 +28,79 @@ const reviewSchema = new mongoose.Schema({
     }
 })
 
-reviewSchema.statics.calcProductRatingAvg = async function (productId) {
-    try {
-        const objectId = typeof productId === 'string'
-        ? mongoose.Types.ObjectId.createFromHexString(productId)
-        : productId;
+reviewSchema.statics.calcProductRatingStats = async function (productId) {
+    const objectId =
+        typeof productId === "string"
+            ? mongoose.Types.ObjectId.createFromHexString(productId)
+            : productId;
 
-        const stats = await this.aggregate([
-            {
-                $match: { productId: objectId }
+    // Aggregate reviews for this product
+    const stats = await this.aggregate([
+        { $match: { productId: objectId } },
+        {
+            $group: {
+                _id: { $round: ["$rating", 0] }, // round rating to nearest integer
+                count: { $sum: 1 },
+                avgRating: { $avg: "$rating" },
             },
-            {
-                $group: {
-                    _id: '$productId',
-                    avgRating: { $avg: '$rating' },
-                    nRating: { $sum: 1 }
-                }
-            }
-        ]);
+        },
+    ]);
 
-        if (stats.length === 0)
-            await Product.findByIdAndUpdate(productId, { avgRating: 0, nReviews: 0 });
-        else
-            await Product.findByIdAndUpdate(productId, {
-                avgRating: parseFloat(stats[0].avgRating.toFixed(1)),
-                nReviews: stats[0].nRating
-            });
-    }
-    catch (err) {
-        console.log(err);
+    // Initialize distribution map with all stars (percentages)
+    const distribution = new Map([
+        ["5", 0],
+        ["4", 0],
+        ["3", 0],
+        ["2", 0],
+        ["1", 0],
+    ]);
+
+    let totalReviews = 0;
+    let totalRatingSum = 0;
+
+    // Fill distribution and calculate totals
+    stats.forEach((item) => {
+        const rating = String(item._id); // Map key must be string
+        const count = item.count;
+
+        if (distribution.has(rating)) {
+            distribution.set(rating, count); // store raw counts for now
+        }
+
+        totalReviews += count;
+        totalRatingSum += item.avgRating * count; // weighted sum
+    });
+
+    // Convert distribution counts to percentages
+    for (const [rating, count] of distribution) {
+        const percent = totalReviews ? Math.round((count / totalReviews) * 100) : 0;
+        distribution.set(rating, percent);
     }
 
-}
+    // Calculate average rating rounded to 1 decimal
+    const average = totalReviews ? Math.round((totalRatingSum / totalReviews) * 10) / 10 : 0;
+
+    // Update the product
+    await Product.findByIdAndUpdate(objectId, {
+        ratingStats: {
+            average,
+            count: totalReviews,
+            distribution,
+        },
+    });
+};
+
 
 reviewSchema.post('save', function () {
-    this.constructor.calcProductRatingAvg(this.productId);
+    this.constructor.calcProductRatingStats(this.productId);
 })
 
 reviewSchema.post(/^findOneAnd/, function (doc) {
-    if(doc)
-        doc.constructor.calcProductRatingAvg(doc.productId);
+    if (doc)
+        doc.constructor.calcProductRatingStats(doc.productId);
 })
 
-reviewSchema.pre(/^find/, function(next) {
+reviewSchema.pre(/^find/, function (next) {
     this.populate('userId', 'name');
     next();
 });

@@ -9,8 +9,6 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 1, min: 0 },
     coverImage: { type: String, required: true },
     images: [String],
-    avgRating: { type: Number },
-    nReviews: Number,
     description: String,
     productTypeId: {
       type: mongoose.Schema.Types.ObjectId,

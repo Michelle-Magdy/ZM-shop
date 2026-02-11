@@ -7,14 +7,12 @@ import {
   productReviewSanitizer,
   canDeleteReview,
   includeReviewParam,
-  getProductStats,
   canAddReview,
 } from "../controllers/review.controller.js";
 import { protect } from "../controllers/auth.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 const router = express.Router();
 
-router.get("/:productId/stats", getProductStats);
 router
   .route("/:productId")
   .get(checkValidMongoId("productId"),getProductReviews)

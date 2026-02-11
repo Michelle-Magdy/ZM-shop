@@ -1,8 +1,4 @@
-import { apiClient } from "@/lib/api/axios";
-import ProductGrid from "@/app/components/category/ProductGrid";
-import { getProductsByCategory } from "@/lib/api/products";
 import Navigation from "@/app/components/category/Navigation.";
-import { useCategories } from "@/app/context/CategoriesProvider";
 import ProductsSection from "@/app/components/category/ProductsSection";
 import Fitlers from "@/app/components/category/Filters";
 

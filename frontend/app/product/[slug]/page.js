@@ -1,4 +1,5 @@
 import ProductView from "@/app/components/product/ProductView";
+import RatingSection from "@/app/components/product/RatingSection";
 import { getProduct } from "@/lib/api/products";
 
 export default async function ProductPage({params}){
@@ -7,6 +8,7 @@ export default async function ProductPage({params}){
     return (
         <>
             <ProductView product={product.data}/>
+            <RatingSection product={product.data}/>
         </>
     )
 }
