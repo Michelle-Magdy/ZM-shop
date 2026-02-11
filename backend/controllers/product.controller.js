@@ -170,3 +170,45 @@ export const getFeaturedProducts = catchAsync(async (req, res, next) => {
   const featured = await Product.find({ isFeatured: true });
   res.json({ data: featured });
 });
+
+export const getTopDiscounts = catchAsync(async (req, res, next) => {
+  const products = await Product.aggregate([
+    {
+      $match: {
+        $expr: { $gt: ["$olderPrice", "$price"] }
+      }
+    },
+    {
+      $addFields: {
+        discountPercentage: {
+          $round: [
+            {
+              $multiply: [
+                {
+                  $divide: [
+                    { $subtract: ["$olderPrice", "$price"] },
+                    "$olderPrice"
+                  ]
+                },
+                100
+              ]
+            },
+            2
+          ]
+        }
+      }
+    },
+    {
+      $sort: { discountPercentage: -1 }
+    },
+    {
+      $limit: 3
+    }
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    data: products
+  });
+});
+

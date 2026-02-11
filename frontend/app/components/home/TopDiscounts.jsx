@@ -3,37 +3,7 @@ import DiscountCard from "./DiscountCards";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
-const data = [
-    {
-        _id: "1234567890",
-        name: "Samsung Galaxy S21 Ultra 5G Excellent Edition",
-        oldPrice: 479,
-        newPrice: 349,
-        badge: "Gorilla Glass Victus",
-        imageUrl:
-            "https://coderplace.net/prestashop/PRS02/PRS02045/demo2/modules/cp_imageslider/views/images/sample-1.webp",
-    },
-    {
-        _id: "0987654321",
-        name: "Apple iPhone 13 Pro Max",
-        oldPrice: 1099,
-        newPrice: 999,
-        badge: "Apple Certified Refurbished",
-        imageUrl:
-            "https://coderplace.net/prestashop/PRS02/PRS02045/demo2/modules/cp_imageslider/views/images/sample-2.webp",
-    },
-    {
-        _id: "0987654322",
-        name: "Apple iPhone 12 Pro Max",
-        oldPrice: 12321,
-        newPrice: 0,
-        badge: "Apple Certified Refurbished",
-        imageUrl:
-            "https://coderplace.net/prestashop/PRS02/PRS02045/demo2/modules/cp_imageslider/views/images/sample-2.webp",
-    },
-];
-
-export default function TopDiscounts() {
+export default function TopDiscounts({data}) {
     return (
         <div className="py-6 sm:py-8 lg:py-10 w-full">
             <div className="relative overflow-hidden rounded-lg">

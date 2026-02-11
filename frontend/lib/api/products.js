@@ -25,6 +25,16 @@ export const getFeaturedProducts = async () => {
   }
 };
 
+export const getTopDiscountedProducts = async() => {
+  try{
+    const res = await apiClient.get("/product/topDiscounts");
+    return res.data;
+  }catch(err){
+    console.log(err);
+    throw err;
+  }
+}
+
 export const searchProducts = async (query) => {
   try {
     const res = await apiClient.get(`/product?search=${query}`);

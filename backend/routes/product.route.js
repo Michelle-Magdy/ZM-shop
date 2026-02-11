@@ -1,6 +1,5 @@
 import express from "express";
-import productType from "../models/product.type.model.js";
-import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
+
 import {
   createProduct,
   getAllProducts,
@@ -14,6 +13,7 @@ import {
   getProductsByCategory,
   getBestSellerProducts,
   getFeaturedProducts,
+  getTopDiscounts,
 } from "../controllers/product.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
 
@@ -33,6 +33,7 @@ router
 
 router.get("/bestsellers", getBestSellerProducts);
 router.get("/featured", getFeaturedProducts);
+router.get("/topDiscounts", getTopDiscounts)
 
 router.get("/category/:identifier", getProductsByCategory);
 
