@@ -20,14 +20,14 @@ router
   .get(getCategoryTree)
   .post(uploadImage, resizeImage, createCategory);
 
+router.get("/:categoryId/filters", getAvailableFilters);
+router.get("/:identifier", getOneCategory);
 router.use(protect, authorize("admin", "vendor"));
 
 router
   .route("/:identifier")
-  .get(getOneCategory)
+
   .patch(uploadImage, resizeImage, deleteOldImage, updateCategory)
   .delete(deleteCategory);
-
-router.get("/:categoryId/filters", getAvailableFilters);
 
 export default router;

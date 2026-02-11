@@ -8,10 +8,12 @@ import catchAsync from "../util/catchAsync.js";
 import { createOne, updateOne } from "./factoryHandler.js";
 import { softDeleteCategory } from "../services/category.service.js";
 import multer from "multer";
+import Product from "../models/product.model.js";
 import sharp from "sharp";
 import { upload } from "../util/multer.config.js";
 import { deleteFile } from "../util/deleteFile.js";
 import mongoose from "mongoose";
+import { log } from "console";
 
 export const uploadImage = upload.single("image");
 
@@ -70,7 +72,7 @@ export const getOneCategory = catchAsync(async (req, res, next) => {
     category = await Category.findOne({ slug: identifier }).lean();
   }
 
-  const tree = await getAllSubcategories(id);
+  const tree = await getAllSubcategories(category._id);
   if (!tree || !category)
     return next(
       new AppError("cannot ge the subcategories of the category", 404),
@@ -119,25 +121,35 @@ export const deleteCategory = catchAsync(async (req, res, next) => {
 
 export const getAvailableFilters = catchAsync(async (req, res, next) => {
   const { categoryId } = req.params;
-  // get all products under one category
+
   const products = await Product.find({
-    categoryIds: categoryId,
+    categoryIds: { $in: [categoryId] },
     status: "active",
     isDeleted: false,
   });
-  // get filters
+
+  if (!products) return next(new AppError("there are no products", 404));
+
   const filters = {
     price: { type: "range", min: Infinity, max: -Infinity },
     attributes: {},
     variants: {},
   };
+
+  // Handle empty products case
+  if (products.length === 0) {
+    filters.price.min = 0;
+    filters.price.max = 0;
+    return res.json(filters);
+  }
+
   products.forEach((product) => {
-    //price range
+    // Price range
     const range = product.priceRange;
     filters.price.min = Math.min(filters.price.min, range.min);
     filters.price.max = Math.max(filters.price.max, range.max);
 
-    // non variant attributes
+    // Non-variant attributes
     product.attributeDefinitions
       .filter((def) => !def.isvariantDimentsions && def.isFilterable)
       .forEach((def) => {
@@ -155,9 +167,9 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
         filters.attributes[def.key].options.add(String(attr.value));
       });
 
-    // variant attributes
+    // Variant attributes
     product.attributeDefinitions
-      .filter((def) => def.isvariantDimentsions && def.isFilterable)
+      .filter((def) => def.isvariantDimensions && def.isFilterable)
       .forEach((def) => {
         if (!filters.variants[def.key]) {
           filters.variants[def.key] = {
@@ -169,11 +181,14 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
         }
         product.variants.forEach((variant) => {
           const val = variant.attributeValues.get(def.key);
-          if (val) filters.variants.options.add(String(val));
+          if (val) {
+            filters.variants[def.key].options.add(String(val));
+          }
         });
       });
   });
 
+  // Convert Sets to Arrays
   Object.values(filters.attributes).forEach(
     (attr) => (attr.options = [...attr.options]),
   );

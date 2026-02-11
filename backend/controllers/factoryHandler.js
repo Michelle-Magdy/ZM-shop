@@ -84,28 +84,32 @@ export const getOne = (Model, filter = null, populateOptions = null) =>
 
     res.status(200).json({
       status: "Success",
-      data: document
+      data: document,
     });
   });
-
 export const getAll = (Model, config = {}) =>
   catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(Model.find(config), req.query);
+    const features = new APIFeatures(Model, req.query)
+      .filter()
+      .search()
+      .attributes()
+      .variants()
+      .sort()
+      .limitFields()
+      .paginate();
 
-    const [documents, totalCount] = await Promise.all([
-      features.executeAll(),
-      features.getTotalCount(Model, config),
-    ]);
+    const result = await features.execute(Model, config);
 
     res.status(200).json({
       status: "Success",
-      results: documents.length,
-      totalCount,
-      totalPages: Math.ceil(totalCount / (req.query.limit * 1 || 20)),
-      currentPage: req.query.page * 1 || 1,
-      data: documents,
+      results: result.documents.length,
+      totalCount: result.totalCount,
+      totalPages: result.totalPages,
+      currentPage: result.currentPage,
+      data: result.documents,
     });
   });
+
 export const softDeleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;

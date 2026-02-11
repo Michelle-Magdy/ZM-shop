@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
 
-export default async function ProductsSection({ slug, page = 1, limit }) {
-  const products = await getProductsByCategory(slug, page, limit);
-  console.log(products);
+export default async function ProductsSection({ slug, queryParams }) {
+  const products = await getProductsByCategory(slug, queryParams);
 
   if (!products) notFound();
   return (

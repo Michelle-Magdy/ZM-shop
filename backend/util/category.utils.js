@@ -1,8 +1,9 @@
+import { log } from "console";
 import Category from "../models/category.model.js";
 
 export const buildCategoryTree = async () => {
   // 1️⃣ Fetch all categories once
-  const allCategories = await Category.find().lean();
+  const allCategories = await Category.find({ isDeleted: false }).lean();
 
   // 2️⃣ Build a map for quick lookup
   const map = {};
@@ -55,10 +56,14 @@ export const findCategoryDescendantsIDs = async (parentId) => {
 
 export const getAllSubcategories = async (parentId) => {
   // 1️⃣ Get direct children
-  const children = await Category.find({ parent: parentId }).lean();
+  const children = await Category.find({
+    parent: parentId,
+    isDeleted: false,
+  }).lean();
 
   // 2️⃣ If none, return empty array
   if (children.length === 0) return [];
+  // console.log(children);
 
   // 3️⃣ Recursively get grandchildren
   const allDescendants = [];
