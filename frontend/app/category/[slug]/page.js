@@ -5,14 +5,17 @@ import Fitlers from "@/app/components/category/Filters";
 export default async function CategoryPage({ params, searchParams }) {
   const { slug } = await params;
   const queryParams = await searchParams;
-  const page = parseInt(queryParams.page) || 1;
-  const limit = parseInt(queryParams.limit) || 20;
+
   return (
-    <div className="grid">
-      <Fitlers />
-      <div>
-        <Navigation slug={slug} />
-        <ProductsSection slug={slug} page={page} limit={limit || 20} />
+    <div>
+      <Navigation slug={slug} />
+      <div className="grid grid-cols-12 gap-8">
+        <div className="col-span-2">
+          <Fitlers slug={slug} />
+        </div>
+        <div className="col-span-10">
+          <ProductsSection slug={slug} queryParams={queryParams} />
+        </div>
       </div>
     </div>
   );

@@ -2,252 +2,245 @@ class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
-    this.filterObj = {}; // Store filter for counting
+    this.mongoFilter = {};
+    this.sortBy = "-createdAt";
+    this.fields = "-__v";
+    this.page = 1;
+    this.limit = 20;
+    this.skip = 0;
   }
 
+  // =============================
+  // 1️⃣ BASIC + RANGE FILTERS
+  // =============================
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFields = ["page", "sort", "limit", "fields", "search"];
-    excludedFields.forEach((el) => delete queryObj[el]);
 
-    let queryStr = JSON.stringify(queryObj);
+    const parsedQuery = {};
+
+    for (const key in queryObj) {
+      const value = queryObj[key];
+
+      // Check if key has bracket notation: price[gte], rating[gt], etc.
+      const bracketMatch = key.match(/^(.+)\[(.+)\]$/);
+
+      if (bracketMatch) {
+        const [, field, operator] = bracketMatch; // field='price', operator='gte'
+
+        // Build nested structure: { price: { gte: value } }
+        if (!parsedQuery[field]) parsedQuery[field] = {};
+        parsedQuery[field][operator] = value;
+      } else {
+        // Regular key: search, page, sort, etc.
+        parsedQuery[key] = value;
+      }
+    }
+
+    // Now exclude fields from parsedQuery instead of queryObj
+    const excludedFields = [
+      "page",
+      "sort",
+      "limit",
+      "fields",
+      "search",
+      "attributes",
+      "variant",
+    ];
+
+    excludedFields.forEach((el) => delete parsedQuery[el]);
+
+    // Convert to MongoDB operators ($gte, $gt, etc.)
+    let queryStr = JSON.stringify(parsedQuery);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
-    this.filterObj = JSON.parse(queryStr);
-    this.query = this.query.find(this.filterObj);
+    let parsed = JSON.parse(queryStr);
+
+    // Convert numbers
+    const convertNumbers = (obj) => {
+      for (let key in obj) {
+        if (typeof obj[key] === "object" && obj[key] !== null) {
+          convertNumbers(obj[key]);
+        } else if (!isNaN(obj[key]) && obj[key] !== "" && obj[key] !== null) {
+          obj[key] = Number(obj[key]);
+        }
+      }
+    };
+
+    convertNumbers(parsed);
+    this.mongoFilter = { ...this.mongoFilter, ...parsed };
 
     return this;
   }
 
+  // =============================
+  // 2️⃣ SEARCH (title + description)
+  // =============================
   search() {
     if (this.queryString.search) {
       const searchQuery = {
         $or: [
-          { title: { $regex: `^${this.queryString.search}`, $options: "i" } },
+          {
+            title: {
+              $regex: this.queryString.search,
+              $options: "i",
+            },
+          },
           {
             description: {
-              $regex: `^${this.queryString.search}`,
+              $regex: this.queryString.search,
               $options: "i",
             },
           },
         ],
       };
-      this.query = this.query.find(searchQuery);
-      // Merge with filterObj for counting
-      this.filterObj = { ...this.filterObj, ...searchQuery };
+
+      this._addToFilter(searchQuery);
     }
+
     return this;
   }
 
+  // =============================
+  // 3️⃣ ATTRIBUTE FILTERS
+  // attributes[battery]=5000&attributes[processor]=M3 Max
+  // =============================
+  attributes() {
+    if (this.queryString.attributes) {
+      const attributeFilters = this.queryString.attributes;
+
+      Object.keys(attributeFilters).forEach((key) => {
+        const filter = {
+          attributes: {
+            $elemMatch: {
+              key: key,
+              value: attributeFilters[key],
+            },
+          },
+        };
+        this._addToFilter(filter);
+      });
+    }
+
+    return this;
+  }
+
+  // =============================
+  // 4️⃣ VARIANT FILTERS
+  // variant[ram]=36GB&variant[color]=Black
+  // =============================
+  variants() {
+    if (this.queryString.variant) {
+      const variantFilters = this.queryString.variant;
+      const variantConditions = {};
+
+      Object.keys(variantFilters).forEach((key) => {
+        variantConditions[`attributeValues.${key}`] = variantFilters[key];
+      });
+
+      const filter = {
+        variants: {
+          $elemMatch: variantConditions,
+        },
+      };
+
+      this._addToFilter(filter);
+    }
+
+    return this;
+  }
+
+  // =============================
+  // HELPER: Merge filters without overwriting
+  // =============================
+  _addToFilter(newFilter) {
+    for (const key in newFilter) {
+      if (this.mongoFilter.hasOwnProperty(key)) {
+        // If key exists, convert to $and
+        if (!this.mongoFilter.$and) {
+          this.mongoFilter.$and = [];
+          // Move existing conflicting key to $and
+          const existing = {};
+          existing[key] = this.mongoFilter[key];
+          this.mongoFilter.$and.push(existing);
+          delete this.mongoFilter[key];
+        }
+        const newCondition = {};
+        newCondition[key] = newFilter[key];
+        this.mongoFilter.$and.push(newCondition);
+      } else {
+        this.mongoFilter[key] = newFilter[key];
+      }
+    }
+  }
+
+  // =============================
+  // 5️⃣ SORT
+  // =============================
   sort() {
     if (this.queryString.sort) {
-      const sortBy = this.queryString.sort.split(",").join(" ");
-      this.query = this.query.sort(sortBy);
-    } else {
-      this.query = this.query.sort("-createdAt");
+      this.sortBy = this.queryString.sort.split(",").join(" ");
     }
     return this;
   }
 
+  // =============================
+  // 6️⃣ FIELD LIMITING
+  // =============================
   limitFields() {
     if (this.queryString.fields) {
-      const fields = this.queryString.fields.split(",").join(" ");
-      this.query = this.query.select(fields);
-    } else {
-      this.query = this.query.select("-__v");
+      this.fields = this.queryString.fields.split(",").join(" ");
     }
     return this;
   }
 
+  // =============================
+  // 7️⃣ PAGINATION
+  // =============================
   paginate() {
     const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 100;
+    const limit = this.queryString.limit * 1 || 20;
     const skip = (page - 1) * limit;
 
-    this.query = this.query.skip(skip).limit(limit);
     this.page = page;
     this.limit = limit;
+    this.skip = skip;
 
     return this;
   }
 
-  // NEW: Get total count
-  async getTotalCount(Model, baseFilter = {}) {
-    const combinedFilter = { ...baseFilter, ...this.filterObj };
-    return await Model.countDocuments(combinedFilter);
-  }
+  // =============================
+  // 8️⃣ EXECUTE QUERY
+  // =============================
+  async execute(Model, baseFilter = {}) {
+    const finalFilter = {
+      ...baseFilter,
+      ...this.mongoFilter,
+    };
 
-  async executeAll() {
-    return await this.filter().search().sort().limitFields().paginate().query;
+    // Handle $and merging if both have $and
+    if (baseFilter.$and && this.mongoFilter.$and) {
+      finalFilter.$and = [...baseFilter.$and, ...this.mongoFilter.$and];
+    }
+
+    const query = Model.find(finalFilter)
+      .sort(this.sortBy)
+      .select(this.fields)
+      .skip(this.skip)
+      .limit(this.limit);
+
+    const [documents, totalCount] = await Promise.all([
+      query,
+      Model.countDocuments(finalFilter),
+    ]);
+
+    return {
+      documents,
+      totalCount,
+      totalPages: Math.ceil(totalCount / this.limit),
+      currentPage: this.page,
+      limit: this.limit,
+    };
   }
 }
 
 export default APIFeatures;
-
-/*
-// GET /api/products?category=123&filters[color]=red,blue&filters[price_min]=1000
-const getFilteredProducts = async (req, res) => {
-  const { 
-    category, 
-    page = 1, 
-    limit = 20, 
-    sort = 'relevance',
-    ...filterParams 
-  } = req.query;
-  
-  // Build base match stage
-  const matchStage = {
-    categoryIds: new mongoose.Types.ObjectId(category),
-    status: 'active',
-    isDeleted: false
-  };
-  
-  // Parse filter parameters
-  const variantFilters = {};  // e.g., { color: ['red'], size: ['L'] }
-  const attributeFilters = {}; // e.g., { material: ['cotton'] }
-  let priceMin, priceMax;
-  
-  Object.entries(filterParams).forEach(([key, value]) => {
-    if (key.startsWith('filters[')) {
-      const filterKey = key.match(/\[(.*?)\]/)[1];
-      const values = value.split(',');
-      
-      if (['color', 'size'].includes(filterKey)) { // known variant dims
-        variantFilters[filterKey] = values;
-      } else {
-        attributeFilters[filterKey] = values;
-      }
-    }
-    if (key === 'price_min') priceMin = parseInt(value) * 100; // convert to cents
-    if (key === 'price_max') priceMax = parseInt(value) * 100;
-  });
-  
-  // Build aggregation pipeline
-  const pipeline = [];
-  
-  // Stage 1: Match category and basic filters
-  pipeline.push({ $match: matchStage });
-  
-  // Stage 2: Add computed fields for filtering
-  pipeline.push({
-    $addFields: {
-      // Flatten variant values for matching
-      variantValues: {
-        $reduce: {
-          input: '$variants',
-          initialValue: [],
-          in: {
-            $concatArrays: [
-              '$$value',
-              [{ $objectToArray: '$$this.attributeValues' }]
-            ]
-          }
-        }
-      },
-      // Calculate effective price (min variant price or base price)
-      effectivePrice: {
-        $cond: {
-          if: { $gt: [{ $size: { $ifNull: ['$variants', []] } }, 0] },
-          then: { $min: '$variants.price' },
-          else: '$basePrice'
-        }
-      }
-    }
-  });
-  
-  // Stage 3: Price filter
-  const priceMatch = {};
-  if (priceMin !== undefined) priceMatch.$gte = priceMin;
-  if (priceMax !== undefined) priceMatch.$lte = priceMax;
-  if (Object.keys(priceMatch).length > 0) {
-    pipeline.push({
-      $match: { effectivePrice: priceMatch }
-    });
-  }
-  
-  // Stage 4: Variant dimension filters (e.g., color=red)
-  Object.entries(variantFilters).forEach(([dim, values]) => {
-    pipeline.push({
-      $match: {
-        [`variants.attributeValues.${dim}`]: { $in: values }
-      }
-    });
-  });
-  
-  // Stage 5: Non-variant attribute filters
-  Object.entries(attributeFilters).forEach(([key, values]) => {
-    pipeline.push({
-      $match: {
-        'attributes': {
-          $elemMatch: {
-            key: key,
-            value: { $in: values }
-          }
-        }
-      }
-    });
-  });
-  
-  // Stage 6: Sorting
-  const sortStage = {};
-  switch(sort) {
-    case 'price_asc': sortStage.effectivePrice = 1; break;
-    case 'price_desc': sortStage.effectivePrice = -1; break;
-    case 'rating': sortStage['ratingStats.average'] = -1; break;
-    case 'newest': sortStage.createdAt = -1; break;
-    default: sortStage.score = { $meta: 'textScore' }; // relevance
-  }
-  pipeline.push({ $sort: sortStage });
-  
-  // Stage 7: Pagination
-  pipeline.push(
-    { $skip: (page - 1) * limit },
-    { $limit: parseInt(limit) }
-  );
-  
-  // Stage 8: Project only needed fields
-  pipeline.push({
-    $project: {
-      title: 1,
-      slug: 1,
-      coverImage: 1,
-      basePrice: 1,
-      effectivePrice: 1,
-      ratingStats: 1,
-      variantDimensions: 1,
-      // Include only matching variants or representative variant
-      variants: {
-        $filter: {
-          input: '$variants',
-          cond: {
-            $and: Object.entries(variantFilters).map(([dim, vals]) => ({
-              $in: [`$$this.attributeValues.${dim}`, vals]
-            }))
-          }
-        }
-      }
-    }
-  });
-  
-  // Execute aggregation
-  const [products, countResult] = await Promise.all([
-    Product.aggregate(pipeline),
-    Product.aggregate([
-      ...pipeline.slice(0, -3), // Remove skip, limit, project
-      { $count: 'total' }
-    ])
-  ]);
-  
-  const total = countResult[0]?.total || 0;
-  
-  res.json({
-    products,
-    pagination: {
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-      total
-    },
-    appliedFilters: { variantFilters, attributeFilters, priceMin, priceMax }
-  });
-};
-*/

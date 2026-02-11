@@ -3,5 +3,5 @@ import Products from "./ProductList";
 
 export default async function BestSellerSection() {
   const products = await getBestSellerProducts();
-  return <Products products={products} type="bestseller" />;
+  return <Products products={products} type="bestSeller" />;
 }

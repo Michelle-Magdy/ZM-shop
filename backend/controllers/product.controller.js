@@ -25,6 +25,7 @@ export const productSanitizer = (req, res, next) => {
     "avgRating",
     "nReviews",
     "description",
+    "productTypeId",
     "categoryIds",
     "attributeDefinitions",
     "attributes",
@@ -148,7 +149,7 @@ export const getProductsByCategory = catchAsync(async (req, res, next) => {
   }
 
   if (!category) {
-    return next(new ApiError("Category not found", 404));
+    return next(new Error("Category not found", 404));
   }
   const allCategories = await findCategoryDescendantsIDs(category._id);
   allCategories.push(category._id);

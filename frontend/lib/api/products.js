@@ -45,14 +45,11 @@ export const searchProducts = async (query) => {
   }
 };
 
-export const getProductsByCategory = async (
-  categorySlug,
-  page = 1,
-  limit = 2,
-) => {
+export const getProductsByCategory = async (categorySlug, queryParams) => {
   try {
+    const seachString = new URLSearchParams(queryParams).toString();
     const res = await apiClient.get(
-      `/product/category/${categorySlug}?page=${page}&limit=${limit}`,
+      `/product/category/${categorySlug}?${seachString}`,
     );
     return res.data;
   } catch (err) {
@@ -62,10 +59,10 @@ export const getProductsByCategory = async (
 };
 
 export const getProduct = async (productSlug) => {
-  try{
+  try {
     const res = await apiClient.get(`/product/${productSlug}`);
     return res.data;
-  }catch(err){
+  } catch (err) {
     console.log(err);
     throw err;
   }
