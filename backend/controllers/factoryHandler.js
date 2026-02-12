@@ -1,3 +1,4 @@
+import { log } from "console";
 import APIFeatures from "../util/apiFeatures.js";
 import catchAsync from "../util/catchAsync.js";
 

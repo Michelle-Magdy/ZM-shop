@@ -4,7 +4,7 @@ import slugify from "slugify";
 const productSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    price: { type: Number, required: true },
+    price: { type: Number, required: true, min: 0 },
     olderPrice: Number,
     stock: { type: Number, default: 1, min: 0 },
     coverImage: { type: String, required: true },
@@ -64,11 +64,14 @@ const productSchema = new mongoose.Schema(
     variants: [
       {
         sku: { type: String, required: true, unique: true, index: true },
-        attributeValues: {
-          type: Map,
-          of: mongoose.Schema.Types.Mixed,
-        },
-        price: { type: Number, requried: true, min: 0 },
+        attributeValues: [
+          {
+            key: { type: String, required: true },
+            value: mongoose.Schema.Types.Mixed,
+            _id: false, // Optional: don't create _id for subdocuments
+          },
+        ],
+        price: { type: Number, required: true, min: 0 },
         stock: {
           type: Number,
           default: 0,
@@ -167,15 +170,20 @@ productSchema.pre("save", async function (next) {
 // validation for variants
 productSchema.pre("save", function (next) {
   if (this.hasVariants) {
-    if (!this.variants || this.variantDimensions.length == 0) {
+    if (!this.variants || this.variants.length === 0) {
+      // Fixed: variants.length instead of variantDimensions.length
       return next(
-        new Error("Products with variants must have at least on variant"),
+        new Error("Products with variants must have at least one variant"),
       );
     }
 
     for (const variant of this.variants) {
       for (const dim of this.variantDimensions) {
-        if (!variant.attributeValues.has(dim)) {
+        // Fix: attributeValues is an array, not a Map
+        const hasAttribute = variant.attributeValues.some(
+          (attr) => attr.key === dim,
+        );
+        if (!hasAttribute) {
           return next(
             new Error(`Variant ${variant.sku} missing value for ${dim}`),
           );

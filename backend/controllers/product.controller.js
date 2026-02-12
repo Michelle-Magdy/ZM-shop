@@ -176,8 +176,8 @@ export const getTopDiscounts = catchAsync(async (req, res, next) => {
   const products = await Product.aggregate([
     {
       $match: {
-        $expr: { $gt: ["$olderPrice", "$price"] }
-      }
+        $expr: { $gt: ["$olderPrice", "$price"] },
+      },
     },
     {
       $addFields: {
@@ -188,28 +188,27 @@ export const getTopDiscounts = catchAsync(async (req, res, next) => {
                 {
                   $divide: [
                     { $subtract: ["$olderPrice", "$price"] },
-                    "$olderPrice"
-                  ]
+                    "$olderPrice",
+                  ],
                 },
-                100
-              ]
+                100,
+              ],
             },
-            2
-          ]
-        }
-      }
+            2,
+          ],
+        },
+      },
     },
     {
-      $sort: { discountPercentage: -1 }
+      $sort: { discountPercentage: -1 },
     },
     {
-      $limit: 3
-    }
+      $limit: 3,
+    },
   ]);
 
   res.status(200).json({
     status: "success",
-    data: products
+    data: products,
   });
 });
-

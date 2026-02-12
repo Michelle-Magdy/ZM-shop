@@ -13,7 +13,6 @@ import sharp from "sharp";
 import { upload } from "../util/multer.config.js";
 import { deleteFile } from "../util/deleteFile.js";
 import mongoose from "mongoose";
-import { log } from "console";
 
 export const uploadImage = upload.single("image");
 
@@ -151,7 +150,7 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
 
     // Non-variant attributes
     product.attributeDefinitions
-      .filter((def) => !def.isvariantDimentsions && def.isFilterable)
+      .filter((def) => !def.isvariantDimensions && def.isFilterable)
       .forEach((def) => {
         const attr = product.attributes.find((a) => a.key === def.key);
         if (!attr) return;
@@ -180,10 +179,10 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
           };
         }
         product.variants.forEach((variant) => {
-          const val = variant.attributeValues.get(def.key);
-          if (val) {
-            filters.variants[def.key].options.add(String(val));
-          }
+          Object.entries(variant.attributeValues).forEach(([key, value]) => {
+            if (value.key === def.key)
+              filters.variants[def.key].options.add(String(value.value));
+          });
         });
       });
   });
@@ -195,6 +194,7 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
   Object.values(filters.variants).forEach(
     (attr) => (attr.options = [...attr.options]),
   );
+  console.log("filters", filters);
 
   res.json(filters);
 });

@@ -44,7 +44,7 @@ class APIFeatures {
       "fields",
       "search",
       "attributes",
-      "variant",
+      "variants",
     ];
 
     excludedFields.forEach((el) => delete parsedQuery[el]);
@@ -105,18 +105,33 @@ class APIFeatures {
   // attributes[battery]=5000&attributes[processor]=M3 Max
   // =============================
   attributes() {
-    if (this.queryString.attributes) {
-      const attributeFilters = this.queryString.attributes;
+    if (this.queryString) {
+      const filters = {};
 
-      Object.keys(attributeFilters).forEach((key) => {
+      Object.entries(this.queryString).forEach(([key, value]) => {
+        const attrMatch = key.match(/^attributes\[(.+)\]$/);
+        if (attrMatch) {
+          filters[attrMatch[1]] = value;
+        }
+      });
+
+      Object.keys(filters).forEach((key) => {
+        const rawValue = filters[key];
+        const numValue = Number(rawValue);
+        const isNumber = !isNaN(numValue) && rawValue !== "";
+
         const filter = {
           attributes: {
             $elemMatch: {
               key: key,
-              value: attributeFilters[key],
+              $or: [
+                { value: rawValue }, // String match
+                ...(isNumber ? [{ value: numValue }] : []), // Number match
+              ],
             },
           },
         };
+
         this._addToFilter(filter);
       });
     }
@@ -129,26 +144,97 @@ class APIFeatures {
   // variant[ram]=36GB&variant[color]=Black
   // =============================
   variants() {
-    if (this.queryString.variant) {
-      const variantFilters = this.queryString.variant;
-      const variantConditions = {};
+    if (this.queryString) {
+      const filters = {};
 
-      Object.keys(variantFilters).forEach((key) => {
-        variantConditions[`attributeValues.${key}`] = variantFilters[key];
+      Object.entries(this.queryString).forEach(([key, value]) => {
+        const attrMatch = key.match(/^variants\[(.+)\]$/);
+        if (attrMatch) {
+          const attrKey = attrMatch[1];
+          const values = value
+            .split(",")
+            .map((v) => v.trim())
+            .filter((v) => v);
+          filters[attrKey] = values;
+        }
       });
 
-      const filter = {
-        variants: {
-          $elemMatch: variantConditions,
-        },
+      const filterKeys = Object.keys(filters);
+      if (filterKeys.length === 0) return this;
+
+      const buildPossibleValues = (values) => {
+        const possibleValues = [];
+        values.forEach((rawValue) => {
+          // Add original value
+          possibleValues.push(rawValue);
+
+          // Add case variations
+          possibleValues.push(rawValue.toLowerCase());
+          possibleValues.push(rawValue.toUpperCase());
+          possibleValues.push(
+            rawValue.charAt(0).toUpperCase() + rawValue.slice(1).toLowerCase(),
+          );
+
+          // Add numeric version
+          const numValue = Number(rawValue);
+          if (!isNaN(numValue) && rawValue !== "") {
+            possibleValues.push(numValue);
+          }
+        });
+        // Remove duplicates
+        return [...new Set(possibleValues)];
       };
 
-      this._addToFilter(filter);
-    }
+      const andConditions = filterKeys.map((key) => {
+        const values = buildPossibleValues(filters[key]);
+        return {
+          attributeValues: {
+            $elemMatch: {
+              key: key,
+              value: values.length === 1 ? values[0] : { $in: values },
+            },
+          },
+        };
+      });
 
+      let variantFilter;
+      if (andConditions.length === 1) {
+        variantFilter = {
+          variants: {
+            $elemMatch: {
+              ...andConditions[0],
+              isActive: true, // Only match active variants
+            },
+          },
+        };
+      } else {
+        variantFilter = {
+          variants: {
+            $elemMatch: {
+              $and: andConditions,
+              isActive: true, // Only match active variants
+            },
+          },
+        };
+      }
+
+      this._addToFilter(variantFilter);
+    }
     return this;
   }
 
+  // Helper method
+  _buildPossibleValues(values) {
+    const possibleValues = [];
+    values.forEach((rawValue) => {
+      possibleValues.push(rawValue);
+      const numValue = Number(rawValue);
+      if (!isNaN(numValue) && rawValue !== "") {
+        possibleValues.push(numValue);
+      }
+    });
+    return possibleValues;
+  }
   // =============================
   // HELPER: Merge filters without overwriting
   // =============================
@@ -217,10 +303,12 @@ class APIFeatures {
       ...this.mongoFilter,
     };
 
-    // Handle $and merging if both have $and
     if (baseFilter.$and && this.mongoFilter.$and) {
       finalFilter.$and = [...baseFilter.$and, ...this.mongoFilter.$and];
     }
+
+    console.log("=== FINAL FILTER ===");
+    console.log(JSON.stringify(finalFilter, null, 2)); // Better formatting
 
     const query = Model.find(finalFilter)
       .sort(this.sortBy)
@@ -232,6 +320,8 @@ class APIFeatures {
       query,
       Model.countDocuments(finalFilter),
     ]);
+
+    console.log(`Found ${totalCount} documents`);
 
     return {
       documents,
