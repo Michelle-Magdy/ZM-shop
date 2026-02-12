@@ -3,6 +3,7 @@ import CategoriesWrapper from "./providers/CategoriesWrapper";
 import { Provider } from "./providers/Providers";
 import TopHeader from "@/app/components/TopHeader";
 import Menu from "./components/Menu";
+import { Toaster } from "react-hot-toast";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 config.autoAddCss = false;
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
             <Menu />
             <main className="px-3 m-0 md:px-6 lg:px-14">
               <div className="container mx-auto">{children}</div>
+              <Toaster position="top-center" />
             </main>
           </Provider>
         </CategoriesWrapper>

@@ -1,4 +1,4 @@
-import { getAllProducts, getProductsByCategory } from "@/lib/api/products";
+import { getProductsByCategory } from "@/lib/api/products";
 import { notFound } from "next/navigation";
 import ProductGrid from "./ProductGrid";
 import Pagination from "./Pagination";
@@ -7,7 +7,6 @@ import ProductCardSkeleton from "@/app/UI/Skeletons/ProductCardSkeleton";
 
 export default async function ProductsSection({ slug, queryParams }) {
   const products = await getProductsByCategory(slug, queryParams);
-  console.log(products);
 
   if (!products) notFound();
   if (!products.results)
