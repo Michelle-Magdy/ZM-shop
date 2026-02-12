@@ -25,15 +25,15 @@ export const getFeaturedProducts = async () => {
   }
 };
 
-export const getTopDiscountedProducts = async() => {
-  try{
+export const getTopDiscountedProducts = async () => {
+  try {
     const res = await apiClient.get("/product/topDiscounts");
     return res.data;
-  }catch(err){
+  } catch (err) {
     console.log(err);
     throw err;
   }
-}
+};
 
 export const searchProducts = async (query) => {
   try {
@@ -47,9 +47,9 @@ export const searchProducts = async (query) => {
 
 export const getProductsByCategory = async (categorySlug, queryParams) => {
   try {
-    const seachString = new URLSearchParams(queryParams).toString();
+    const searchString = new URLSearchParams(queryParams).toString() || "";
     const res = await apiClient.get(
-      `/product/category/${categorySlug}?${seachString}`,
+      `/product/category/${categorySlug}?${searchString}`,
     );
     return res.data;
   } catch (err) {
@@ -66,14 +66,14 @@ export const getProduct = async (productSlug) => {
     console.log(err);
     throw err;
   }
-}
+};
 
 export const getProductReviews = async (productId) => {
-  try{
+  try {
     const res = await apiClient.get(`/reviews/${productId}`);
     return res.data;
-  }catch(err){
+  } catch (err) {
     console.log(err);
     throw err;
   }
-}
+};

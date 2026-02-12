@@ -1,6 +1,6 @@
 "use client";
 import { getAllProducts, getFeaturedProducts } from "@/lib/api/products";
-import ProductCard from "@/app/components/home/ProductCard";
+import ProductCard from "@/app/components/ProductCard";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Scrollbar } from "swiper/modules";
 import { useQuery } from "@tanstack/react-query";

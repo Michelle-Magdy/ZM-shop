@@ -1,19 +1,20 @@
-'use client';
+"use client";
 import CategoryListItem from "./CategoryListItem";
 import { useCategories } from "@/app/context/CategoriesProvider";
 
-export default function Categories() {
-    const categories = useCategories();
+export default function Categories({ handleClose }) {
+  const categories = useCategories();
 
-    return (
-        <ul className="mt-4">
-            {categories.data.map((category) => (
-                <CategoryListItem
-                    key={category._id}
-                    depth={0}
-                    category={category}
-                />
-            ))}
-        </ul>
-    );
+  return (
+    <ul className="mt-4">
+      {categories.data.map((category) => (
+        <CategoryListItem
+          key={category._id}
+          depth={0}
+          category={category}
+          handleClose={handleClose}
+        />
+      ))}
+    </ul>
+  );
 }

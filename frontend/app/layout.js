@@ -3,7 +3,9 @@ import CategoriesWrapper from "./providers/CategoriesWrapper";
 import { Provider } from "./providers/Providers";
 import TopHeader from "@/app/components/TopHeader";
 import Menu from "./components/Menu";
-
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+config.autoAddCss = false;
 export const metadata = {
   title: "Zm Shop",
   description: "Shop as you like",
