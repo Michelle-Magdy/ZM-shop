@@ -8,6 +8,7 @@ import {
   canDeleteReview,
   includeReviewParam,
   canAddReview,
+  handleHelpfulReview,
 } from "../controllers/review.controller.js";
 import { protect } from "../controllers/auth.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
@@ -19,5 +20,7 @@ router
   .post(checkValidMongoId("productId"),protect, productReviewSanitizer, canAddReview, addProductReview)
   .patch(checkValidMongoId("productId"),protect, productReviewSanitizer, includeReviewParam, editProductReview)
   .delete(checkValidMongoId("productId"),protect, canDeleteReview, includeReviewParam, deleteProductReview);
+
+router.patch("/:reviewId/helpful",checkValidMongoId("reviewId"), protect, handleHelpfulReview);
 
 export default router;

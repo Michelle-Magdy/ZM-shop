@@ -1,4 +1,4 @@
-import { getProductReviews } from "@/lib/api/products";
+import { getProductReviews } from "@/lib/api/reviews";
 import ReviewCard from "./ReviewCard";
 
 export default async function ReviewsSection({ productId }) {

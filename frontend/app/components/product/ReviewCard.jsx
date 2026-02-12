@@ -1,11 +1,12 @@
 import StarRating from "@/app/UI/StarRating";
 
+
 export default function ReviewCard({ review }) {
-    const { userId, rating, title, description, date, helpful = 0 } = review;
+    const { userId : user, rating, title, description, date, helpful } = review;
+    
+    // const handleToggleHelpful = () => {
 
-    // Handle userId being either an object or just an ID string
-    const user = typeof userId === "object" ? userId : { name: "Anonymous" };
-
+    // }
     return (
         <div className="border-b border-badge last:border-0 pb-6 last:pb-0">
             {/* Header */}

@@ -68,12 +68,3 @@ export const getProduct = async (productSlug) => {
   }
 }
 
-export const getProductReviews = async (productId) => {
-  try{
-    const res = await apiClient.get(`/reviews/${productId}`);
-    return res.data;
-  }catch(err){
-    console.log(err);
-    throw err;
-  }
-}
