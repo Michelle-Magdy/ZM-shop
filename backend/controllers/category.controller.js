@@ -117,7 +117,6 @@ export const deleteCategory = catchAsync(async (req, res, next) => {
   if (!result) return next(new AppError("cannot delete this category", 500));
   res.status(200).json(result);
 });
-
 export const getAvailableFilters = catchAsync(async (req, res, next) => {
   const { categoryId } = req.params;
 
@@ -166,7 +165,7 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
         filters.attributes[def.key].options.add(String(attr.value));
       });
 
-    // Variant attributes
+    // Variant attributes - FIXED for Map structure
     product.attributeDefinitions
       .filter((def) => def.isvariantDimensions && def.isFilterable)
       .forEach((def) => {
@@ -178,11 +177,14 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
             options: new Set(),
           };
         }
+
+        // FIXED: Iterate through variants and check Map entries
         product.variants.forEach((variant) => {
-          Object.entries(variant.attributeValues).forEach(([key, value]) => {
-            if (value.key === def.key)
-              filters.variants[def.key].options.add(String(value.value));
-          });
+          // attributeValues is a Map, use .get() or convert to object
+          const value = variant.attributeValues.get(def.key);
+          if (value !== undefined) {
+            filters.variants[def.key].options.add(String(value));
+          }
         });
       });
   });
@@ -194,7 +196,7 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
   Object.values(filters.variants).forEach(
     (attr) => (attr.options = [...attr.options]),
   );
-  console.log("filters", filters);
 
+  console.log("filters", filters);
   res.json(filters);
 });

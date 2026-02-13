@@ -15,28 +15,21 @@ class APIFeatures {
   // =============================
   filter() {
     const queryObj = { ...this.queryString };
-
     const parsedQuery = {};
 
     for (const key in queryObj) {
       const value = queryObj[key];
-
-      // Check if key has bracket notation: price[gte], rating[gt], etc.
       const bracketMatch = key.match(/^(.+)\[(.+)\]$/);
 
       if (bracketMatch) {
-        const [, field, operator] = bracketMatch; // field='price', operator='gte'
-
-        // Build nested structure: { price: { gte: value } }
+        const [, field, operator] = bracketMatch;
         if (!parsedQuery[field]) parsedQuery[field] = {};
         parsedQuery[field][operator] = value;
       } else {
-        // Regular key: search, page, sort, etc.
         parsedQuery[key] = value;
       }
     }
 
-    // Now exclude fields from parsedQuery instead of queryObj
     const excludedFields = [
       "page",
       "sort",
@@ -49,13 +42,11 @@ class APIFeatures {
 
     excludedFields.forEach((el) => delete parsedQuery[el]);
 
-    // Convert to MongoDB operators ($gte, $gt, etc.)
     let queryStr = JSON.stringify(parsedQuery);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
     let parsed = JSON.parse(queryStr);
 
-    // Convert numbers
     const convertNumbers = (obj) => {
       for (let key in obj) {
         if (typeof obj[key] === "object" && obj[key] !== null) {
@@ -101,8 +92,7 @@ class APIFeatures {
   }
 
   // =============================
-  // 3️⃣ ATTRIBUTE FILTERS
-  // attributes[battery]=5000&attributes[processor]=M3 Max
+  // 3️⃣ ATTRIBUTE FILTERS (Unchanged - works on product.attributes array)
   // =============================
   attributes() {
     if (this.queryString) {
@@ -125,8 +115,8 @@ class APIFeatures {
             $elemMatch: {
               key: key,
               $or: [
-                { value: rawValue }, // String match
-                ...(isNumber ? [{ value: numValue }] : []), // Number match
+                { value: rawValue },
+                ...(isNumber ? [{ value: numValue }] : []),
               ],
             },
           },
@@ -140,111 +130,89 @@ class APIFeatures {
   }
 
   // =============================
-  // 4️⃣ VARIANT FILTERS
-  // variant[ram]=36GB&variant[color]=Black
+  // 4️⃣ VARIANT FILTERS - FIXED for Map structure
   // =============================
   variants() {
-    if (this.queryString) {
-      const filters = {};
+    if (!this.queryString) return this;
 
-      Object.entries(this.queryString).forEach(([key, value]) => {
-        const attrMatch = key.match(/^variants\[(.+)\]$/);
-        if (attrMatch) {
-          const attrKey = attrMatch[1];
-          const values = value
-            .split(",")
-            .map((v) => v.trim())
-            .filter((v) => v);
-          filters[attrKey] = values;
+    const filters = {};
+
+    Object.entries(this.queryString).forEach(([key, value]) => {
+      const attrMatch = key.match(/^variants\[(.+)\]$/);
+      if (attrMatch) {
+        const attrKey = attrMatch[1];
+        const values = value
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v);
+        filters[attrKey] = values;
+      }
+    });
+
+    const filterKeys = Object.keys(filters);
+    if (filterKeys.length === 0) return this;
+
+    const buildPossibleValues = (values) => {
+      const possibleValues = [];
+      values.forEach((rawValue) => {
+        possibleValues.push(rawValue);
+        possibleValues.push(rawValue.toLowerCase());
+        possibleValues.push(rawValue.toUpperCase());
+        possibleValues.push(
+          rawValue.charAt(0).toUpperCase() + rawValue.slice(1).toLowerCase(),
+        );
+
+        const numValue = Number(rawValue);
+        if (!isNaN(numValue) && rawValue !== "") {
+          possibleValues.push(numValue);
         }
       });
+      return [...new Set(possibleValues)];
+    };
 
-      const filterKeys = Object.keys(filters);
-      if (filterKeys.length === 0) return this;
-
-      const buildPossibleValues = (values) => {
-        const possibleValues = [];
-        values.forEach((rawValue) => {
-          // Add original value
-          possibleValues.push(rawValue);
-
-          // Add case variations
-          possibleValues.push(rawValue.toLowerCase());
-          possibleValues.push(rawValue.toUpperCase());
-          possibleValues.push(
-            rawValue.charAt(0).toUpperCase() + rawValue.slice(1).toLowerCase(),
-          );
-
-          // Add numeric version
-          const numValue = Number(rawValue);
-          if (!isNaN(numValue) && rawValue !== "") {
-            possibleValues.push(numValue);
-          }
-        });
-        // Remove duplicates
-        return [...new Set(possibleValues)];
+    // FIXED: Build MongoDB filter for Map structure
+    // Map in MongoDB is stored as: { "attributeValues.color": "Red", "attributeValues.size": "XL" }
+    const andConditions = filterKeys.map((key) => {
+      const values = buildPossibleValues(filters[key]);
+      return {
+        [`attributeValues.${key}`]:
+          values.length === 1 ? values[0] : { $in: values },
       };
+    });
 
-      const andConditions = filterKeys.map((key) => {
-        const values = buildPossibleValues(filters[key]);
-        return {
-          attributeValues: {
-            $elemMatch: {
-              key: key,
-              value: values.length === 1 ? values[0] : { $in: values },
-            },
+    let variantFilter;
+    if (andConditions.length === 1) {
+      variantFilter = {
+        variants: {
+          $elemMatch: {
+            ...andConditions[0],
+            isActive: true,
           },
-        };
-      });
-
-      let variantFilter;
-      if (andConditions.length === 1) {
-        variantFilter = {
-          variants: {
-            $elemMatch: {
-              ...andConditions[0],
-              isActive: true, // Only match active variants
-            },
+        },
+      };
+    } else {
+      variantFilter = {
+        variants: {
+          $elemMatch: {
+            $and: andConditions,
+            isActive: true,
           },
-        };
-      } else {
-        variantFilter = {
-          variants: {
-            $elemMatch: {
-              $and: andConditions,
-              isActive: true, // Only match active variants
-            },
-          },
-        };
-      }
-
-      this._addToFilter(variantFilter);
+        },
+      };
     }
+
+    this._addToFilter(variantFilter);
     return this;
   }
 
-  // Helper method
-  _buildPossibleValues(values) {
-    const possibleValues = [];
-    values.forEach((rawValue) => {
-      possibleValues.push(rawValue);
-      const numValue = Number(rawValue);
-      if (!isNaN(numValue) && rawValue !== "") {
-        possibleValues.push(numValue);
-      }
-    });
-    return possibleValues;
-  }
   // =============================
   // HELPER: Merge filters without overwriting
   // =============================
   _addToFilter(newFilter) {
     for (const key in newFilter) {
       if (this.mongoFilter.hasOwnProperty(key)) {
-        // If key exists, convert to $and
         if (!this.mongoFilter.$and) {
           this.mongoFilter.$and = [];
-          // Move existing conflicting key to $and
           const existing = {};
           existing[key] = this.mongoFilter[key];
           this.mongoFilter.$and.push(existing);
@@ -308,7 +276,7 @@ class APIFeatures {
     }
 
     console.log("=== FINAL FILTER ===");
-    console.log(JSON.stringify(finalFilter, null, 2)); // Better formatting
+    console.log(JSON.stringify(finalFilter, null, 2));
 
     const query = Model.find(finalFilter)
       .sort(this.sortBy)

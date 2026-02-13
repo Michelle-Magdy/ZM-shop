@@ -6,6 +6,7 @@ import Menu from "./components/Menu";
 import { Toaster } from "react-hot-toast";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import Footer from "./components/Footer";
 config.autoAddCss = false;
 export const metadata = {
   title: "Zm Shop",
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
               <div className="container mx-auto">{children}</div>
               <Toaster position="top-center" />
             </main>
+            <Footer />
           </Provider>
         </CategoriesWrapper>
       </body>
