@@ -64,13 +64,13 @@ const productSchema = new mongoose.Schema(
     variants: [
       {
         sku: { type: String, required: true, unique: true, index: true },
-        attributeValues: [
-          {
-            key: { type: String, required: true },
-            value: mongoose.Schema.Types.Mixed,
-            _id: false, // Optional: don't create _id for subdocuments
-          },
-        ],
+        attributeValues: {
+          type: Map,
+          of: mongoose.Schema.Types.Mixed,
+          default: new Map(),
+          _id: false, // Optional: don't create _id for subdocuments
+        },
+
         price: { type: Number, required: true, min: 0 },
         stock: {
           type: Number,
@@ -148,7 +148,8 @@ productSchema.virtual("priceRange").get(function () {
 productSchema.index({ status: 1, categoryIds: 1, isDeleted: 1 });
 productSchema.index({ status: 1, isDeleted: 1, "ratingStats.average": -1 });
 productSchema.index({ title: "text", description: "text" });
-productSchema.index({ "variants.attributeValues": 1 }); // for variant filtering
+productSchema.index({ "variants.attributeValues.$**": 1 });
+// for variant filtering
 
 productSchema.pre("save", async function (next) {
   if (this.isModified("title")) {
@@ -167,11 +168,10 @@ productSchema.pre("save", async function (next) {
   }
 });
 
-// validation for variants
+// validation for variants - FIXED for Map structure
 productSchema.pre("save", function (next) {
   if (this.hasVariants) {
     if (!this.variants || this.variants.length === 0) {
-      // Fixed: variants.length instead of variantDimensions.length
       return next(
         new Error("Products with variants must have at least one variant"),
       );
@@ -179,11 +179,11 @@ productSchema.pre("save", function (next) {
 
     for (const variant of this.variants) {
       for (const dim of this.variantDimensions) {
-        // Fix: attributeValues is an array, not a Map
-        const hasAttribute = variant.attributeValues.some(
-          (attr) => attr.key === dim,
-        );
-        if (!hasAttribute) {
+        // FIXED: Check Map using .has() or .get()
+        // Convert Map to plain object if needed, or use direct methods
+        const attrValue = variant.attributeValues.get(dim);
+
+        if (attrValue === undefined) {
           return next(
             new Error(`Variant ${variant.sku} missing value for ${dim}`),
           );
