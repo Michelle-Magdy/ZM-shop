@@ -40,7 +40,7 @@ export default function ReviewDialog({ product, isOpen, onClose }) {
             .promise(mutateAsync(data), {
                 loading: "Adding review...",
                 success: "Review added!",
-                error: (err) => err.message || "Failed to add review",
+                error: (err) => err.response?.data?.message || "Failed to add review",
             })
             .then(() => {
                 setRating(0);

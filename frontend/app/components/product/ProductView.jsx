@@ -8,11 +8,22 @@ import ProductSpecifications from "./ProductSpecifications";
 import VariantSelector from "./VariantSelector";
 
 export default function ProductView({ product }) {
-    const [selectedVariant, setSelectedVariant] = useState(
-        product.variants?.[0] ?? null,
-    );
+    const [selectedVariant, setSelectedVariant] = useState(() => {
+        return (
+            product.variants.find((v) => v.isAvailable && v.stock > 0) ||
+            product.variants[0]
+        );
+    });
+    
     const [quantity, setQuantity] = useState(1);
 
+    let attributes = {};
+    let variants = {};
+
+    product.attributeDefinitions.forEach((def) => {
+        if (!def.isvariantDimensions) attributes[def.key] = def;
+        else variants[def.key] = def.options;
+    });
     return (
         <div className="min-h-screen bg-(--color-background) py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 border-b-2 border-badge">
             <div className="max-w-7xl mx-auto">
@@ -36,6 +47,7 @@ export default function ProductView({ product }) {
                             setQuantity={setQuantity}
                             setSelectedVariant={setSelectedVariant}
                             selectedVariant={selectedVariant}
+                            variantsOptions={variants}
                         />
 
                         {/* Quantity Selector */}
@@ -49,7 +61,10 @@ export default function ProductView({ product }) {
                         <ActionButtons selectedVariant={selectedVariant} />
 
                         {/* Product Specifications */}
-                        <ProductSpecifications product={product} />
+                        <ProductSpecifications
+                            attributes={product.attributes}
+                            attrDefinitionsMap={attributes}
+                        />
 
                         {/* Description */}
                         {product.description && (

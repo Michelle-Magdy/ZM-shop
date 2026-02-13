@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.ObjectId,
         ref: "Role",
-        select: false,
       },
     ],
     addresses: [

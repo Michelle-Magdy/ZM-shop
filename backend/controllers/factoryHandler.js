@@ -12,18 +12,30 @@ export const deleteOne = (Model) =>
     });
   });
 
-export const updateOne = (Model, filter = null, newDoc = null) =>
+import mongoose from "mongoose";
+
+export const updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    const { id } = req.params;
+    const { slug } = req.params;
     const update = req.body;
+
+    let filter;
+
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      filter = { _id: slug };
+    } else {
+      filter = { slug: slug };
+    }
+
     const updatedDocument = await Model.findOneAndUpdate(
-      filter ? filter : { _id: id },
-      newDoc ? newDoc : update,
+      filter,
+      update,
       {
         new: true,
         runValidators: true,
-      },
+      }
     );
+
     res.status(200).json({
       status: "Success",
       data: {
@@ -31,6 +43,7 @@ export const updateOne = (Model, filter = null, newDoc = null) =>
       },
     });
   });
+
 
 export const createOne = (Model, object = null) =>
   catchAsync(async (req, res, next) => {

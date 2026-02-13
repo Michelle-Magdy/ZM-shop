@@ -1,78 +1,162 @@
-export default function VariantSelector({product, setQuantity, setSelectedVariant, selectedVariant}) {
-    // Group variants by dimension (color, storage, etc.)
+import { useState, useMemo, useCallback } from "react";
+
+export default function VariantSelector({
+    product,
+    setQuantity,
+    setSelectedVariant,
+    selectedVariant,
+    variantsOptions,
+}) {
     const variantDimensions = product.variantDimensions || [];
 
-    // Get unique values for each dimension
-    const getDimensionOptions = (dimension) => {
-        const values = new Set();
-        product.variants?.forEach((variant) => {
-            if (variant.attributeValues[dimension]) {
-                values.add(variant.attributeValues[dimension]);
-            }
+    // Pre-compute variant lookup map for O(1) access
+    const variantsMap = useMemo(() => {
+        const map = new Map();
+        product.variants.forEach((variant) => {
+            const key = JSON.stringify(variant.attributeValues);
+            map.set(key, variant);
         });
-        return Array.from(values);
-    };
+        return map;
+    }, [product.variants]);
 
-    // Check if variant is available for selected combination
-    const isVariantAvailable = (dimension, value) => {
-        return product.variants?.some(
-            (v) => v.attributeValues[dimension] === value && v.isActive,
-        );
-    };
+    // Get variant by attribute values
+    const getVariantByAttributes = useCallback(
+        (attributes) => {
+            return variantsMap.get(JSON.stringify(attributes));
+        },
+        [variantsMap],
+    );
 
-    // Handle variant selection
-    const handleVariantChange = (dimension, value) => {
-        const newVariant = product.variants?.find(
-            (v) => v.attributeValues[dimension] === value && v.isActive,
-        );
-        if (newVariant) {
-            setSelectedVariant(newVariant);
-            setQuantity(1);
-        }
-    };
+    // Check if combination exists and is available
+    const getCombinationState = useCallback(
+        (dimension, value) => {
+            // Build the potential new attributes
+            const newAttributes = {
+                ...selectedVariant.attributeValues,
+                [dimension]: value,
+            };
+
+            const targetVariant = getVariantByAttributes(newAttributes);
+
+            return {
+                exists: !!targetVariant,
+                isActive: targetVariant?.isActive ?? false,
+                inStock: (targetVariant?.stock ?? 0) > 0,
+                isSelected:
+                    selectedVariant.attributeValues[dimension] === value,
+            };
+        },
+        [selectedVariant, getVariantByAttributes],
+    );
+
+    const handleVariantChange = useCallback(
+        (dimension, value) => {
+            const newAttributes = {
+                ...selectedVariant.attributeValues,
+                [dimension]: value,
+            };
+
+            const matchedVariant = getVariantByAttributes(newAttributes);
+
+            if (matchedVariant) {
+                setSelectedVariant(matchedVariant);
+                setQuantity(1);
+            }
+        },
+        [
+            selectedVariant,
+            getVariantByAttributes,
+            setSelectedVariant,
+            setQuantity,
+        ],
+    );
+
+    // Pre-compute all states to avoid recalculation in render
+    const optionStates = useMemo(() => {
+        const states = {};
+        variantDimensions.forEach((dimension) => {
+            states[dimension] = {};
+            variantsOptions[dimension].forEach((value) => {
+                states[dimension][value] = getCombinationState(
+                    dimension,
+                    value,
+                );
+            });
+        });
+        return states;
+    }, [variantDimensions, variantsOptions, getCombinationState]);
 
     return (
-        <>
+        <div
+            className="space-y-6"
+            role="region"
+            aria-label="Product variant selection"
+        >
             {variantDimensions.map((dimension) => (
-                <div key={dimension} className="space-y-3">
-                    <label className="text-sm font-semibold text-secondary-text uppercase tracking-wide">
+                <fieldset key={dimension} className="space-y-3">
+                    <legend className="text-sm font-semibold text-secondary-text uppercase tracking-wide">
                         {dimension}:{" "}
                         <span className="text-(--color-primary-text) capitalize">
                             {selectedVariant?.attributeValues[dimension]}
                         </span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                        {getDimensionOptions(dimension).map((value) => {
-                            const isSelected =
-                                selectedVariant?.attributeValues[dimension] ===
-                                value;
-                            const available = isVariantAvailable(
-                                dimension,
-                                value,
-                            );
+                    </legend>
+                    <div
+                        className="flex flex-wrap gap-2"
+                        role="radiogroup"
+                        aria-label={`Select ${dimension}`}
+                    >
+                        {variantsOptions[dimension].map((value) => {
+                            const state = optionStates[dimension][value];
+                            const { isSelected, exists, isActive, inStock } =
+                                state;
+
+                            const isDisabled = !exists || !isActive || !inStock;
+                            const isOutOfStock = exists && isActive && !inStock;
 
                             return (
                                 <button
                                     key={value}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={isSelected}
+                                    aria-disabled={isDisabled}
                                     onClick={() =>
                                         handleVariantChange(dimension, value)
                                     }
-                                    disabled={!available}
-                                    className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
-                                        isSelected
-                                            ? "border-(--color-primary) bg-(--color-primary)/10 text-(--color-primary)"
-                                            : available
-                                              ? "border-badge bg-(--color-card) text-(--color-primary-text) hover:border-secondary-text"
-                                              : "border-badge/50 bg-(--color-background) text-secondary-text cursor-not-allowed opacity-60"
-                                    }`}
+                                    disabled={isDisabled}
+                                    className={`
+                                        relative px-4 py-2 rounded-lg border-2 text-sm font-medium 
+                                        transition-all duration-200 focus:outline-none focus:ring-2 
+                                        focus:ring-(--color-primary)/50 focus:ring-offset-2
+                                        ${
+                                            isSelected
+                                                ? "border-(--color-primary) bg-(--color-primary)/10 text-(--color-primary) shadow-sm"
+                                                : isDisabled
+                                                  ? "border-transparent bg-(--color-background) text-secondary-text cursor-not-allowed opacity-50"
+                                                  : "border-badge bg-(--color-card) text-(--color-primary-text) hover:border-(--color-primary)/50 hover:shadow-sm"
+                                        }
+                                        ${isOutOfStock ? "line-through decoration-2" : ""}
+                                    `}
                                 >
-                                    {value}
+                                    <span className="flex items-center gap-1.5">
+                                        {value}
+                                        {isOutOfStock && (
+                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-error opacity-80">
+                                                Out
+                                            </span>
+                                        )}
+                                        {!exists && (
+                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-warning opacity-80">
+                                                N/A
+                                            </span>
+                                        )}
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
-                </div>
+                </fieldset>
             ))}
-        </>
+        </div>
     );
 }

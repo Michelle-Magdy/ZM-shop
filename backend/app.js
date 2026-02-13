@@ -11,6 +11,8 @@ import cartRouter from "./routes/cart.route.js";
 import wishlistRouter from "./routes/wishlist.route.js";
 import couponRouter from "./routes/coupon.route.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -25,6 +27,8 @@ app.use(
 );
 
 app.use(express.json({ limit: "10kb" }));
+app.use(cookieParser());
+
 app.use(express.static("./backend/public"));
 
 app.use("/api/v1/auth", authRouter);

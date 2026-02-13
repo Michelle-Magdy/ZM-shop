@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema(
     productTypeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProductType",
-      required: true,
+      // required: true,
     },
     categoryIds: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Category", index: true },
@@ -61,25 +61,16 @@ const productSchema = new mongoose.Schema(
       },
     ],
     variantDimensions: [{ type: String, index: true, trim: true }],
-    variants: [
-      {
-        sku: { type: String, required: true, unique: true, index: true },
-        attributeValues: [
-          {
-            key: { type: String, required: true },
-            value: mongoose.Schema.Types.Mixed,
-            _id: false, // Optional: don't create _id for subdocuments
-          },
-        ],
-        price: { type: Number, required: true, min: 0 },
-        stock: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
-        isActive: { type: Boolean, default: true },
+    variants: [{
+      sku: { type: String, required: true, index: true },
+      attributeValues: {
+        type: Object,
+        default: {}
       },
-    ],
+      price: { type: Number, required: true, min: 0 },
+      stock: { type: Number, default: 0, min: 0 },
+      isActive: { type: Boolean, default: true },
+    }],
 
     slug: { type: String, unique: true },
     isDeleted: { type: Boolean, default: false },
@@ -167,25 +158,28 @@ productSchema.pre("save", async function (next) {
   }
 });
 
-// validation for variants
+
 productSchema.pre("save", function (next) {
   if (this.hasVariants) {
+    // Check variants array exists and has items
     if (!this.variants || this.variants.length === 0) {
-      // Fixed: variants.length instead of variantDimensions.length
       return next(
-        new Error("Products with variants must have at least one variant"),
+        new Error("Products with variants must have at least one variant")
       );
     }
 
+    // Validate each variant has all required dimension attributes
     for (const variant of this.variants) {
       for (const dim of this.variantDimensions) {
-        // Fix: attributeValues is an array, not a Map
-        const hasAttribute = variant.attributeValues.some(
-          (attr) => attr.key === dim,
-        );
-        if (!hasAttribute) {
+        if (!(dim in variant.attributeValues)) {
           return next(
-            new Error(`Variant ${variant.sku} missing value for ${dim}`),
+            new Error(`Variant ${variant.sku} missing value for ${dim}`)
+          );
+        }
+
+        if (variant.attributeValues[dim] == null || variant.attributeValues[dim] === "") {
+          return next(
+            new Error(`Variant ${variant.sku} has empty value for ${dim}`)
           );
         }
       }

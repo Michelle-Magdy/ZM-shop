@@ -7,18 +7,23 @@ import { promisify } from "util";
 import Cart from "../models/cart.model.js";
 import Wishlist from "../models/wishlist.model.js";
 
-const signToken = (id) => {
+const formatUser = (user) => ({
+  name: user.name,
+  email: user.email,
+  roles: user.roles?.map(r => r.name) || [],
+  addresses: user.addresses,
+});
+
+const signToken = (id, rememberMe) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: rememberMe ? "30d" : process.env.JWT_EXPIRES_IN,
   });
 };
 
-const createAndSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
+const createAndSendToken = (user, rememberMe, statusCode, res) => {
+  const token = signToken(user._id, rememberMe);
   const cookieOptions = {
-    expiresIn: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-    ),
+    expires: new Date(Date.now() + (rememberMe ? 30 : parseInt(process.env.JWT_EXPIRES_IN)) * 24 * 60 * 60 * 1000),
     httpOnly: true,
   };
 
@@ -30,13 +35,13 @@ const createAndSendToken = (user, statusCode, res) => {
 
   res.status(statusCode).json({
     status: "success",
-    data: [user],
+    user: formatUser(user)
   });
 };
 
 export const login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email }).select("+password");
+  const { email, password, rememberMe = false } = req.body;
+  const user = await User.findOne({ email }).select("+password").populate("roles");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
@@ -44,7 +49,7 @@ export const login = catchAsync(async (req, res, next) => {
 
   user.password = undefined;
 
-  createAndSendToken(user, 200, res);
+  createAndSendToken(user, rememberMe, 200, res);
 });
 
 export const signup = catchAsync(async (req, res, next) => {
@@ -72,6 +77,10 @@ export const protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token && req.cookies?.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
@@ -107,6 +116,15 @@ export const authorize = (...restrictedRoles) => {
     return next(new AppError("user is not authorized", 403));
   };
 };
+
+export const getCurrentUser = (req, res, next) => {
+  if (!req.user)
+    return next(new AppError("User is not authenticated", 401));
+  res.status(200).json({
+    status: "success",
+    user: formatUser(req.user)
+  })
+}
 
 //! CONTINUE RESET PASSWORD AND SENDING EMAILS
 

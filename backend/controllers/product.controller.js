@@ -93,31 +93,41 @@ export const resizeImages = catchAsync(async (req, res, next) => {
 });
 
 export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
-  const productId = req.params.id;
+  const param = req.params.slug; 
 
-  // 1. Get the current product data
-  const product = await Product.findById(productId).select(
-    "+coverImage +images",
+  let filter;
+
+  if (mongoose.Types.ObjectId.isValid(param)) {
+    filter = { _id: param };
+  } else {
+    filter = { slug: param };
+  }
+
+  // 1. Get current product
+  const product = await Product.findOne(filter).select(
+    "+coverImage +images"
   );
 
   if (!product) {
-    // If product not found, clean up any newly uploaded files
-    if (req.body.coverImage) deleteFile("products", req.body.coverImage);
+    // Clean up newly uploaded files if product not found
+    if (req.body.coverImage)
+      deleteFile("products", req.body.coverImage);
 
     if (req.body.images) {
       req.body.images.forEach((imageName) => {
         deleteFile("products", imageName);
       });
     }
-    return next(new Error("No product found with that ID"));
+
+    return next(new Error("No product found with that identifier"));
   }
 
-  // 2. Check for new coverImage and delete old one if present
+  // 2. Delete old cover image if new one uploaded
   if (req.body.coverImage && product.coverImage) {
-    // req.body.coverImage will be set by resizeImages if a new file was uploaded
     deleteFile("products", product.coverImage);
   }
 
+  // 3. Delete old images if new ones uploaded
   if (
     req.body.images &&
     req.body.images.length > 0 &&

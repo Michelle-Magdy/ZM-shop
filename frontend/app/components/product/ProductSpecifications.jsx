@@ -1,21 +1,15 @@
 import { memo } from "react";
 
-export default memo(function ProductSpecifications({ product }) {
-    const attrDefinitionsMap =
-        product.attributeDefinitions?.reduce((acc, def) => {
-            acc[def.key] = def;
-            return acc;
-        }, {}) || {};
-
+export default memo(function ProductSpecifications({ attributes, attrDefinitionsMap }) {
     return (
         <>
-            {product.attributes?.length > 0 && (
+            {attributes.length > 0 && (
                 <div className="bg-(--color-card) rounded-xl p-6 shadow-sm border border-badge">
                     <h3 className="text-lg font-bold text-(--color-primary-text) mb-4">
                         Specifications
                     </h3>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {product.attributes.map((attr) => {
+                        {attributes.map((attr) => {
                             const definition = attrDefinitionsMap[attr.key];
                             return (
                                 <div key={attr.key} className="space-y-1">
