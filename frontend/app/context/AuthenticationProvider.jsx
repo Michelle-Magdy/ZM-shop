@@ -20,7 +20,6 @@ export function AuthenticationProvider({ children }) {
         const fetchCurrentUser = async () => {
             try {
                 const res = await getMe();
-                console.log(res);
                 setUser(res.user);
             } catch {
                 setUser(null);

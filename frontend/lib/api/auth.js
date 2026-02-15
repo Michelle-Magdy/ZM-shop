@@ -20,3 +20,13 @@ export const getMe = async () => {
         throw err;
     }
 }
+
+export const logout = async () => {
+    try{
+        const res = await apiClient.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
+        return res.data;
+    }catch(err){
+        console.log(err);
+        throw err;
+    }
+}

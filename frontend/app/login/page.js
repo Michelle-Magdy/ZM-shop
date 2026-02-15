@@ -9,6 +9,9 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthenticationProvider";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useLayoutEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 
 const zodSchema = z.object({
     "email": z.email(),
@@ -23,11 +26,20 @@ export default function Login() {
         resolver: zodResolver(zodSchema)
     });
 
-    const { setUser } = useAuth();
+    const { setUser, isAuthenticated } = useAuth();
     const router = useRouter();
+
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const { mutate, isPending } = useMutation({
         mutationFn: login,
+        onMutate: () => {
+            if (isAuthenticated) {
+                toast("User already logged in. If you want to change account please logout first.");
+                return Promise.reject(new Error("Already authenticated"));
+            }
+        },
         onError: (e) => setError("general", { message: e.response?.data?.message }),
         onSuccess: (res) => {
             setUser(res.user);
@@ -80,21 +92,34 @@ export default function Login() {
                             </label>
                             <a
                                 href="#"
-                                className="text-sm text-primary hover:text-primary-hover transition-colors"
+                                className="text-sm text-secondary-text hover:text-primary-hover transition-colors"
                             >
                                 Forgot password?
                             </a>
                         </div>
-                        <input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 rounded-lg bg-background border border-badge text-primary-text placeholder:text-secondary-text/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-                            {...register("password")}
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••"
+                                className="w-full px-4 py-3 pr-10 rounded-lg bg-background border border-badge text-primary-text placeholder:text-secondary-text/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                                {...register("password")}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-text hover:text-primary-text transition-colors cursor-pointer focus:outline-none"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? (
+                                    <FaEye className="w-5 h-5" />
+                                ) : (
+                                    <FaEyeSlash className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
                         {errors.password && <p className="font-bold">{errors.password.message}</p>}
                     </div>
-
                     {/* Remember Me */}
                     <div className="flex items-center">
                         <input

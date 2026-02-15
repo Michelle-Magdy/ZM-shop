@@ -21,7 +21,7 @@ export default function TopHeader() {
                     <SearchBar />
                 </div>
 
-                <div className="right flex items-center ml-2 text-white dark:text-primary-text">
+                <div className="right flex items-center ml-2 text-white dark:text-primary-text *:hover:text-secondary-text *:dark:hover:text-primary-hover *:cursor-pointer">
                     <div className=" hidden md:block w-[70%]">
                         <ThemeSwitcher />
                     </div>

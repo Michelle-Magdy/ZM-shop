@@ -33,7 +33,7 @@ export default function ThemeSwitcher() {
                 onClick={() => setTheme("light")}
                 className="flex items-center gap-2 text-text-secondary"
             >
-                <FaSun className="cursor-pointer md:mr-3" size={25} />
+                <FaSun className="cursor-pointer md:mr-3" title="Light mode" size={25} />
                 <span className="md:hidden text-sm">Light Mode</span>
             </button>
         );
@@ -44,7 +44,7 @@ export default function ThemeSwitcher() {
                 onClick={() => setTheme("dark")}
                 className="flex items-center gap-2 text-gray-700 md:text-inherit"
             >
-                <FaMoon className="cursor-pointer md:mr-3" size={25}/>
+                <FaMoon className="cursor-pointer md:mr-3" title="Dark mode" size={25}/>
                 <span className="md:hidden text-sm">Dark Mode</span>
             </button>
         );
