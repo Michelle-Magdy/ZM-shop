@@ -70,6 +70,19 @@ export const signup = catchAsync(async (req, res, next) => {
   createAndSendToken(user, 201, res);
 });
 
+export const logout = catchAsync((req, res, next) => {
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  });
+
+  res.status(200).json({
+    status: "Success",
+    message: "Logout successful."
+  })
+})
+
 export const protect = catchAsync(async (req, res, next) => {
   let token;
   if (
