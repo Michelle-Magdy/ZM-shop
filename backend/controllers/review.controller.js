@@ -18,10 +18,12 @@ export const productReviewSanitizer = (req, res, next) => {
 
 export const includeReviewParam = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
-  const productId = req.params.productId;
+  const productId = mongoose.Types.ObjectId.createFromHexString(req.params.productId);
+  console.log("User id: ", userId);
+  console.log("Product id: ", productId);
 
-  req.params.id = await Review.findOne({ userId, productId }).select("_id"); // put review id in param
-
+  req.params.id = (await Review.findOne({ userId, productId }))._id; // put review id in param
+  console.log("Params Id: ", req.params.id);
   next();
 });
 

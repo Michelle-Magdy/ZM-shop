@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthenticationProvider";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 

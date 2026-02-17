@@ -2,6 +2,7 @@ import StarRating from "@/app/UI/StarRating";
 
 
 export default function ReviewCard({ review }) {
+    console.log(review);
     const { userId : user, rating, title, description, date, helpful } = review;
     
     // const handleToggleHelpful = () => {
