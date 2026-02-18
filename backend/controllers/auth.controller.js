@@ -12,6 +12,7 @@ const formatUser = (user) => ({
   email: user.email,
   roles: user.roles?.map(r => r.name) || [],
   addresses: user.addresses,
+  id: user._id
 });
 
 const signToken = (id, rememberMe) => {

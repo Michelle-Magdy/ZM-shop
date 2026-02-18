@@ -12,6 +12,7 @@ export const productReviewSanitizer = (req, res, next) => {
     rating,
     title,
     description,
+    userId: req.user
   };
   next();
 };
@@ -47,9 +48,7 @@ export const canDeleteReview = catchAsync(async (req, res, next) => {
 });
 
 export const canAddReview = catchAsync(async (req, res, next) => {
-  const { productId } = req.body;
-  const userId = req.user._id;
-
+  const { productId, userId } = req.body;
   const hasReview = await Review.findOne({ userId, productId });
 
   if (hasReview)
@@ -70,42 +69,29 @@ export const editProductReview = updateOne(Review);
 export const deleteProductReview = deleteOne(Review);
 
 export const handleHelpfulReview = catchAsync(async (req, res, next) => {
-  const { helpful } = req.body;
-  const userId = req.user._id.toString(); // Ensure string comparison
+  const userId = req.user._id;
   const { reviewId } = req.params;
 
-  const review = await Review.findById(reviewId);
+  let review = await Review.findOneAndUpdate(
+    { _id: reviewId, helpful: userId },
+    { $pull: { helpful: userId } },
+    { new: true }
+  );
 
   if (!review) {
+    review = await Review.findOneAndUpdate(
+      { _id: reviewId },
+      { $addToSet: { helpful: userId } },
+      { new: true }
+    )
+  };
+
+  if(!review){
     return res.status(404).json({
       status: "error",
-      message: "Review not found, it may be deleted."
+      message: "Review not found. It may be deleted"
     });
   }
-
-  const hasVoted = review.helpful.some(id => id.toString() === userId);
-
-  if (hasVoted && helpful) {
-    return res.status(400).json({
-      status: "error",
-      message: "User already found review helpful"
-    });
-  }
-
-  if (!hasVoted && !helpful) {
-    return res.status(400).json({
-      status: "error",
-      message: "User has not marked this review as helpful"
-    });
-  }
-
-  if (helpful) {
-    review.helpful.push(userId);
-  } else {
-    review.helpful.pull(userId);
-  }
-
-  await review.save();
 
   res.status(200).json({
     status: "success",
