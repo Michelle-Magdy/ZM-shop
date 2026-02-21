@@ -16,6 +16,7 @@
   --color-secondary-text: #6b7280;
   --color-link: #cad5e2;
   --color-link-hover: #fff;
+  --color-error: #fb2c36;
 
   /* Add dark mode strategy */
   --color-scheme: light dark;
@@ -40,8 +41,10 @@
     --color-badge: #d1d1d1;
     --color-primary-text: #104e64;
     --color-secondary-text: #6b7280;
+    --color-secondary-text-hover: #e3e3e3;
     --color-link: #cad5e2;
     --color-link-hover: #e3e3e3;
+    --color-error: #fb2c36;
   }
   body {
     font-family: var(--font-ubuntu);
@@ -72,6 +75,7 @@
     --color-secondary-text: #b0b3b8;
     --color-link-hover: oklch(71.5% 0.143 215.221);
     --color-link: #e3e3e3;
+    --color-error: #fb2c36;
   }
 }
 

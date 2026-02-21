@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import dotenv from "dotenv";
+import { log } from "console";
+dotenv.config();
 
 const userSchema = new mongoose.Schema(
   {
@@ -10,17 +13,11 @@ const userSchema = new mongoose.Schema(
       required: [true, "User must have a name"],
       minLength: 4,
       trim: true,
-      validate: {
-        validator: function (el) {
-          return !el.trim().includes(" ");
-        },
-        message: "Username can't have spaces inbetween",
-      },
     },
     email: {
       type: String,
       validate: [validator.isEmail, "Please enter a valid email"],
-      unique: [true, "Enter a unique email"],
+      unique: [true, "This Email already exists"],
       required: [true, "User must have an email"],
     },
     password: {
@@ -46,29 +43,36 @@ const userSchema = new mongoose.Schema(
       default: false,
       select: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now(),
+    },
     passwordChangedAt: Date,
     passwordResetToken: { type: String, select: false },
-    passwordResetExpires: { type: Date, select: false },
+    passwordResetExpiresAt: { type: Date, select: false },
+    verificationToken: { type: String, select: false },
+    verificationTokenExpiresAt: { type: Date, select: false },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
-
-    if (!this.isNew) {
-      this.passwordChangedAt = Date.now() - 1000;
-    }
+    this.passwordChangedAt = Date.now() - 1000;
   }
   next();
 });
 
 userSchema.methods.correctPassword = async function (
   enteredPassword,
-  realPassword
+  realPassword,
 ) {
   return await bcrypt.compare(enteredPassword, realPassword);
 };
@@ -87,9 +91,11 @@ userSchema.methods.makeResetPasswordToken = function () {
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.passwordResetExpires =
-    Date.now() + process.env.RESET_PASSWORD_EXPRIRES_IN * 1;
 
+  console.log(process.env.RESET_PASSWORD_EXPRIRES_IN);
+
+  this.passwordResetExpiresAt =
+    Date.now() + Number(process.env.RESET_PASSWORD_EXPRIRES_IN);
   return resetToken;
 };
 
