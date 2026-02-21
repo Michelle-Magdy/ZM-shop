@@ -1,12 +1,48 @@
+import { useAuth } from "@/app/context/AuthenticationProvider";
 import StarRating from "@/app/UI/StarRating";
-
+import { handleHelpfulReview } from "@/lib/api/reviews";
+import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa";
+import { getDisplayedHelpfulCount } from "@/util/ReviewHelper";
+import toast from "react-hot-toast";
 
 export default function ReviewCard({ review }) {
-    const { userId : user, rating, title, description, date, helpful } = review;
-    
-    // const handleToggleHelpful = () => {
+    const { userId: user, rating, title, description, date, helpful } = review;
+    const { user: currentUser, isAuthenticated } = useAuth();
 
-    // }
+    const [isHelpful, setIsHelpful] = useState(false);
+
+    const { mutate } = useMutation({
+        mutationFn: () => handleHelpfulReview(review._id),
+        onError: () => {
+            setIsHelpful((prev) => !prev);
+            toast.error("Failed to update. Try again.");
+        },
+    });
+
+    const handleToggleHelpful = () => {
+        if (!isAuthenticated) {
+            toast.error("Please login first before giving any feedback.");
+            return;
+        }
+        setIsHelpful((prev) => !prev);
+        mutate();
+    };
+
+    useEffect(() => {
+        if (currentUser) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setIsHelpful(helpful.includes(currentUser.id));
+        }
+    }, [currentUser, helpful]);
+
+    const helpfulLength = getDisplayedHelpfulCount(
+        helpful,
+        currentUser,
+        isHelpful,
+    );
+
     return (
         <div className="border-b border-badge last:border-0 pb-6 last:pb-0">
             {/* Header */}
@@ -46,21 +82,22 @@ export default function ReviewCard({ review }) {
 
             {/* Helpful & Actions */}
             <div className="flex items-center gap-4 mt-4">
-                <button className="flex items-center gap-2 text-sm text-secondary-text hover:text-(--color-primary-text) transition-colors">
-                    <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
-                        />
-                    </svg>
-                    Helpful ({helpful})
+                <button
+                    onClick={handleToggleHelpful}
+                    className={`flex items-center gap-2 text-sm transition-colors
+    ${
+        isHelpful
+            ? "text-(--color-primary-text)"
+            : "text-secondary-text hover:text-(--color-primary-text)"
+    }
+  `}
+                >
+                    {isHelpful ? (
+                        <FaThumbsUp className="w-4 h-4" />
+                    ) : (
+                        <FaRegThumbsUp className="w-4 h-4" />
+                    )}
+                    Helpful ({helpfulLength})
                 </button>
                 <button className="text-sm text-secondary-text hover:text-(--color-primary-text) transition-colors">
                     Report

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 
 export default function VariantSelector({
     product,
+    quantity,
     setQuantity,
     setSelectedVariant,
     selectedVariant,
@@ -27,27 +28,27 @@ export default function VariantSelector({
         [variantsMap],
     );
 
-    // Check if combination exists and is available
-    const getCombinationState = useCallback(
-        (dimension, value) => {
-            // Build the potential new attributes
-            const newAttributes = {
-                ...selectedVariant.attributeValues,
-                [dimension]: value,
-            };
+    // Check if current selection exists and get its state
+    const currentVariantState = useMemo(() => {
+        const exists = !!selectedVariant && !selectedVariant._isInvalid;
+        const isActive = selectedVariant?.isActive ?? false;
+        const inStock = (selectedVariant?.stock ?? 0) > 0;
 
-            const targetVariant = getVariantByAttributes(newAttributes);
-
-            return {
-                exists: !!targetVariant,
-                isActive: targetVariant?.isActive ?? false,
-                inStock: (targetVariant?.stock ?? 0) > 0,
-                isSelected:
-                    selectedVariant.attributeValues[dimension] === value,
-            };
-        },
-        [selectedVariant, getVariantByAttributes],
-    );
+        return {
+            exists,
+            isActive,
+            inStock,
+            isValid: exists && isActive,
+            isAvailable: exists && isActive && inStock,
+            message: !exists
+                ? "Not Available"
+                : !isActive
+                  ? "Not Available"
+                  : !inStock
+                    ? "Out of Stock"
+                    : null,
+        };
+    }, [selectedVariant]);
 
     const handleVariantChange = useCallback(
         (dimension, value) => {
@@ -60,8 +61,16 @@ export default function VariantSelector({
 
             if (matchedVariant) {
                 setSelectedVariant(matchedVariant);
-                setQuantity(1);
+            } else {
+                setSelectedVariant({
+                    ...selectedVariant,
+                    attributeValues: newAttributes,
+                    _isInvalid: true,
+                    stock: 0,
+                    isActive: false,
+                });
             }
+            setQuantity(1);
         },
         [
             selectedVariant,
@@ -71,27 +80,27 @@ export default function VariantSelector({
         ],
     );
 
-    // Pre-compute all states to avoid recalculation in render
-    const optionStates = useMemo(() => {
-        const states = {};
-        variantDimensions.forEach((dimension) => {
-            states[dimension] = {};
-            variantsOptions[dimension].forEach((value) => {
-                states[dimension][value] = getCombinationState(
-                    dimension,
-                    value,
-                );
-            });
-        });
-        return states;
-    }, [variantDimensions, variantsOptions, getCombinationState]);
-
     return (
         <div
             className="space-y-6"
             role="region"
             aria-label="Product variant selection"
         >
+            {/* Status indicator - only place where availability is shown */}
+            {currentVariantState.message && (
+                <div className="text-sm font-semibold">
+                    <span
+                        className={`${
+                            currentVariantState.message === "Out of Stock"
+                                ? "text-error"
+                                : "text-warning"
+                        }`}
+                    >
+                        {currentVariantState.message}
+                    </span>
+                </div>
+            )}
+
             {variantDimensions.map((dimension) => (
                 <fieldset key={dimension} className="space-y-3">
                     <legend className="text-sm font-semibold text-secondary-text uppercase tracking-wide">
@@ -106,12 +115,9 @@ export default function VariantSelector({
                         aria-label={`Select ${dimension}`}
                     >
                         {variantsOptions[dimension].map((value) => {
-                            const state = optionStates[dimension][value];
-                            const { isSelected, exists, isActive, inStock } =
-                                state;
-
-                            const isDisabled = !exists || !isActive || !inStock;
-                            const isOutOfStock = exists && isActive && !inStock;
+                            const isSelected =
+                                selectedVariant?.attributeValues[dimension] ===
+                                value;
 
                             return (
                                 <button
@@ -119,38 +125,21 @@ export default function VariantSelector({
                                     type="button"
                                     role="radio"
                                     aria-checked={isSelected}
-                                    aria-disabled={isDisabled}
                                     onClick={() =>
                                         handleVariantChange(dimension, value)
                                     }
-                                    disabled={isDisabled}
                                     className={`
-                                        relative px-4 py-2 rounded-lg border-2 text-sm font-medium 
+                                        px-4 py-2 rounded-lg border-2 text-sm font-medium 
                                         transition-all duration-200 focus:outline-none focus:ring-2 
                                         focus:ring-(--color-primary)/50 focus:ring-offset-2
                                         ${
                                             isSelected
                                                 ? "border-(--color-primary) bg-(--color-primary)/10 text-(--color-primary) shadow-sm"
-                                                : isDisabled
-                                                  ? "border-transparent bg-(--color-background) text-secondary-text cursor-not-allowed opacity-50"
-                                                  : "border-badge bg-(--color-card) text-(--color-primary-text) hover:border-(--color-primary)/50 hover:shadow-sm"
+                                                : "border-badge bg-(--color-card) text-(--color-primary-text) hover:border-(--color-primary)/50 hover:shadow-sm"
                                         }
-                                        ${isOutOfStock ? "line-through decoration-2" : ""}
                                     `}
                                 >
-                                    <span className="flex items-center gap-1.5">
-                                        {value}
-                                        {isOutOfStock && (
-                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-error opacity-80">
-                                                Out
-                                            </span>
-                                        )}
-                                        {!exists && (
-                                            <span className="text-[10px] uppercase tracking-wider font-semibold text-warning opacity-80">
-                                                N/A
-                                            </span>
-                                        )}
-                                    </span>
+                                    {value}
                                 </button>
                             );
                         })}

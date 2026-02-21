@@ -23,7 +23,8 @@ const reviewSchema = new mongoose.Schema({
     title: String,
     description: String,
     helpful: {
-        type: [String],
+        type: [mongoose.Schema.ObjectId],
+        ref: 'User',
         default: []
     }
 })
@@ -106,19 +107,6 @@ reviewSchema.pre(/^find/, function (next) {
     next();
 });
 
-reviewSchema.set('toJSON', {
-    transform: function (doc, ret) {
-        ret.helpful = ret.helpful?.length || 0;
-        return ret;
-    }
-});
-
-reviewSchema.set('toObject', {
-    transform: function (doc, ret) {
-        ret.helpful = ret.helpful?.length || 0;
-        return ret;
-    }
-});
 
 const Review = mongoose.model('Review', reviewSchema);
 

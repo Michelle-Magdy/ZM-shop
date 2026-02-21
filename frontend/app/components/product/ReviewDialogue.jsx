@@ -7,10 +7,11 @@ import { RxCross1 } from "react-icons/rx";
 import { FaCheck, FaStar } from "react-icons/fa";
 import { IoIosSend } from "react-icons/io";
 import { addReview } from "@/lib/api/reviews";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 export default function ReviewDialog({ product, isOpen, onClose }) {
+    const queryClient = useQueryClient();
     const { mutateAsync, isPending } = useMutation({
         mutationFn: (data) => addReview(product._id, data),
     });
@@ -47,6 +48,9 @@ export default function ReviewDialog({ product, isOpen, onClose }) {
                 setHoverRating(0);
                 setTitle("");
                 setReview("");
+                queryClient.invalidateQueries({
+                    queryKey: ["product-reviews", product._id]
+                })
                 onClose();
             });
     };
