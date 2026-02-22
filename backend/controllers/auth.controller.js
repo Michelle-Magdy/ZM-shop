@@ -22,6 +22,8 @@ const formatUser = (user) => ({
   roles: user.roles?.map((r) => r.name) || [],
   addresses: user.addresses,
   password: undefined,
+  gender: user.gender,
+  phone: user.phone,
   id: user._id,
 });
 

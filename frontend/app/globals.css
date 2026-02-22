@@ -16,6 +16,7 @@
   --color-secondary-text: #6b7280;
   --color-link: #cad5e2;
   --color-link-hover: #fff;
+  --color-button-label: #e3e3e3;
   --color-error: #fb2c36;
 
   /* Add dark mode strategy */
@@ -44,6 +45,7 @@
     --color-secondary-text-hover: #e3e3e3;
     --color-link: #cad5e2;
     --color-link-hover: #e3e3e3;
+    --color-button-label: #e3e3e3;
     --color-error: #fb2c36;
   }
   body {
@@ -98,4 +100,14 @@ button {
 
 .swiper-pagination-bullet-active {
   @apply bg-primary w-6;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

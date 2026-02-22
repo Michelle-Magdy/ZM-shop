@@ -3,15 +3,47 @@ import validator from "validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import Role from "./role.model.js";
 import { log } from "console";
 dotenv.config();
 
+/**
+ * User Schema for MongoDB
+ *
+ * @typedef {Object} User
+ * @property {string} name - User's full name (required, min 4 characters)
+ * @property {string} phone - User's phone number (must match Egyptian phone format: 01[0125]XXXXXXXX)
+ * @property {string} gender - User's gender (enum: "male" or "female")
+ * @property {string} email - User's email address (required, unique, must be valid email)
+ * @property {string} password - User's password (required, must be strong, not selected by default)
+ * @property {ObjectId[]} roles - Array of role references
+ * @property {boolean} isDeleted - Soft delete flag (default: false, not selected by default)
+ * @property {boolean} isVerified - Email verification status (default: false)
+ * @property {Date} lastLogin - Last login timestamp (default: current date)
+ * @property {Date} passwordChangedAt - Timestamp when password was last changed
+ * @property {string} passwordResetToken - Token for password reset (not selected by default)
+ * @property {Date} passwordResetExpiresAt - Expiration time for password reset token (not selected by default)
+ * @property {string} verificationToken - Token for email verification (not selected by default)
+ * @property {Date} verificationTokenExpiresAt - Expiration time for verification token (not selected by default)
+ * @property {Date} createdAt - Document creation timestamp (auto-generated)
+ * @property {Date} updatedAt - Document update timestamp (auto-generated)
+ */
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: [true, "User must have a name"],
-      minLength: 4,
+      minLength: 3,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      match: [/^01[0125]\d{8}$/, "Please enter a valid phone number"],
+      trim: true,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female"],
       trim: true,
     },
     email: {
@@ -30,12 +62,6 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.ObjectId,
         ref: "Role",
-      },
-    ],
-    addresses: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: "Address",
       },
     ],
     isDeleted: {
