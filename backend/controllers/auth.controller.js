@@ -61,6 +61,8 @@ export const signup = catchAsync(async (req, res, next) => {
     password,
     roles: [process.env.USER_ROLE_ID],
   });
+  
+  user.populate("roles");
   user.password = undefined;
 
   //Create a cart for new user
@@ -68,7 +70,7 @@ export const signup = catchAsync(async (req, res, next) => {
   // create a wishlist for the new user
   await Wishlist.create({ userId: user._id, items: [] });
 
-  createAndSendToken(user, 201, res);
+  createAndSendToken(user, false, 201, res);
 });
 
 export const logout = catchAsync((req, res, next) => {

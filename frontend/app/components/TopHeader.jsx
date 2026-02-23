@@ -1,9 +1,8 @@
 import Link from "next/link";
 import ThemeSwitcher from "./ThemeSwitcher";
-import { CiShoppingCart } from "react-icons/ci";
-import { LuUserRound } from "react-icons/lu";
 import SearchBar from "./SearchBar";
 import UserAccount from "./UserAccount";
+import ShoppingCart from "./ShoppingCart";
 
 export default function TopHeader() {
     return (
@@ -26,12 +25,7 @@ export default function TopHeader() {
                         <ThemeSwitcher />
                     </div>
                     <UserAccount />
-                    <div className="flex items-center">
-                        <CiShoppingCart className="w-9 h-9 md:w-11 md:h-11" />
-                        <span className="-ml-2 -mt-7.5 md:-ml-2.5 md:-mt-9 text-sm md:text-base">
-                            0
-                        </span>
-                    </div>
+                    <ShoppingCart />
                 </div>
             </div>
         </div>

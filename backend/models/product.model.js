@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import slugify from "slugify";
 
 const productSchema = new mongoose.Schema(
@@ -60,6 +60,7 @@ const productSchema = new mongoose.Schema(
         displayValue: String,
       },
     ],
+
     variantDimensions: [{ type: String, index: true, trim: true }],
     variants: [
       {
@@ -80,6 +81,23 @@ const productSchema = new mongoose.Schema(
         isActive: { type: Boolean, default: true },
       },
     ],
+
+    defaultVariant: {
+      sku: String,
+      attributeValues: {
+        type: Map,
+        of: mongoose.Schema.Types.Mixed,
+        default: new Map(),
+        _id: false
+      },
+      price: { type: Number, min: 0 },
+      stock: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      isActive: { type: Boolean, default: true },
+    },
 
     slug: { type: String, unique: true },
     isDeleted: { type: Boolean, default: false },
@@ -152,6 +170,7 @@ productSchema.index({ "variants.attributeValues.$**": 1 });
 // for variant filtering
 
 productSchema.pre("save", async function (next) {
+  //Slug generation
   if (this.isModified("title")) {
     let baseSlug = slugify(this.title, {
       lower: true,
@@ -164,12 +183,9 @@ productSchema.pre("save", async function (next) {
       slug = `${baseSlug}-${counter++}`;
     }
     this.slug = slug;
-    next();
   }
-});
 
-// validation for variants - FIXED for Map structure
-productSchema.pre("save", function (next) {
+  //Variants validation
   if (this.hasVariants) {
     // Check variants array exists and has items
     if (!this.variants || this.variants.length === 0) {
@@ -193,8 +209,33 @@ productSchema.pre("save", function (next) {
       }
     }
   }
+
+  //Default variant computation
+  // if (this.isModified("variants") || !this.defaultVariant) {
+  //   const activeVariants = this.variants?.filter(v => v.isActive) || [];
+
+  //   // Sort: in-stock first, then by price, then by creation
+  //   const sorted = activeVariants.sort((a, b) => {
+  //     const aInStock = a.stock > 0;
+  //     const bInStock = b.stock > 0;
+
+  //     if (aInStock !== bInStock) return bInStock - aInStock; // In-stock first
+  //     return a.price - b.price; // Cheapest first
+  //   });
+
+  //   const best = sorted[0];
+
+  //   this.defaultVariant = best ? {
+  //     sku: best.sku,
+  //     price: best.price,
+  //     stock: best.stock,
+  //     attributeValues: best.attributeValues,
+  //   } : null;
+  // }
+
   next();
 });
+
 
 productSchema.index({ title: 1 });
 productSchema.index({ description: 1 });

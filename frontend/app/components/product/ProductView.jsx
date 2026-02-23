@@ -8,13 +8,10 @@ import ProductSpecifications from "./ProductSpecifications";
 import VariantSelector from "./VariantSelector";
 
 export default function ProductView({ product }) {
-    const [selectedVariant, setSelectedVariant] = useState(() => {
-        return (
-            product.variants.find((v) => v.isAvailable && v.stock > 0) ||
-            product.variants[0]
-        );
-    });
-    
+    const [selectedVariant, setSelectedVariant] = useState(
+        product.defaultVariant,
+    );
+
     const [quantity, setQuantity] = useState(1);
 
     let attributes = {};
@@ -58,7 +55,13 @@ export default function ProductView({ product }) {
                         />
 
                         {/* Action Buttons */}
-                        <ActionButtons selectedVariant={selectedVariant} />
+                        <ActionButtons
+                            selectedVariant={selectedVariant}
+                            productId={product._id}
+                            title={product.title}
+                            coverImage={product.coverImage}
+                            slug={product.slug}
+                        />
 
                         {/* Product Specifications */}
                         <ProductSpecifications
