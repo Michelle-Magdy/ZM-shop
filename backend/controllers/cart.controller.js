@@ -31,6 +31,7 @@ export const cartSanitizar = (req, res, next) => {
 
     next();
 };
+
 export const getUserCart = catchAsync(async (req, res, next) => {
     const userId = req.user._id;
     const cart = await Cart.findOne({ userId });

@@ -38,7 +38,7 @@ export default function ThemeSwitcher() {
           title="Light mode"
           size={25}
         />
-        <span className="md:hidden text-sm">Light Mode</span>
+        <span className="md:hidden text-sm ml-2">Light Mode</span>
       </button>
     );
 
@@ -53,7 +53,7 @@ export default function ThemeSwitcher() {
           title="Dark mode"
           size={25}
         />
-        <span className="md:hidden text-sm">Dark Mode</span>
+        <span className="md:hidden text-sm ml-2">Dark Mode</span>
       </button>
     );
 }

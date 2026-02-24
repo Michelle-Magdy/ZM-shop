@@ -1,53 +1,92 @@
-import { response } from "express";
 import Wishlist from "../models/wishlist.model.js";
 import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
-import { getOne } from "./factoryHandler.js";
 
-// get one wishlist using user id
-export const getWishlist = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  return getOne(Wishlist, { userId })(req, res, next);
-});
-// clear wishlist
-export const clearWishlist = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  const wishlist = await Wishlist.findOneAndUpdate({ userId }, { items: [] });
-  res.status(204).json({
-    data: wishlist,
-  });
-});
-// add item to wishlist
-export const addItemToWishlist = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  const { productId } = req.body;
-
-  const wishlist = await Wishlist.findOne({ userId });
-
-  if (!wishlist)
-    return next(new AppError("there is no wishlist for this user", 404));
-  if (!wishlist.items.find((product) => product === productId.toString())) {
-    wishlist.items.push(productId);
+export const wishlistSanitizar = (req, res, next) => {
+  if (!Array.isArray(req.body.items)) {
+    return next(new AppError("Items must be an array", 400));
   }
-  await wishlist.save();
+
+  req.body.items = req.body.items.map(item => {
+    const {
+      productId,
+      slug,
+      title,
+      coverImage,
+      variant
+    } = item;
+
+    // Validate required fields
+    if (!productId) {
+      throw new AppError("productId is required for each item", 400);
+    }
+    if (!title) {
+      throw new AppError("title is required for each item", 400);
+    }
+    if (!coverImage) {
+      throw new AppError("coverImage is required for each item", 400);
+    }
+
+    // Build sanitized variant object
+    let sanitizedVariant;
+    if (variant) {
+      // Handle attributeValues Map conversion
+      let attributeValues = new Map();
+      if (variant.attributeValues) {
+        if (variant.attributeValues instanceof Map) {
+          attributeValues = variant.attributeValues;
+        } else if (typeof variant.attributeValues === 'object') {
+          attributeValues = new Map(Object.entries(variant.attributeValues));
+        }
+      }
+
+      sanitizedVariant = {
+        sku: variant.sku || undefined,
+        attributeValues,
+        price: variant.price !== undefined ? Number(variant.price) : undefined,
+        stock: variant.stock !== undefined ? Number(variant.stock) : 0,
+        isActive: variant.isActive !== undefined ? Boolean(variant.isActive) : true
+      };
+    }
+
+    return {
+      productId,
+      slug: slug || undefined,
+      title,
+      coverImage,
+      ...(sanitizedVariant && { variant: sanitizedVariant })
+    };
+  });
+
+  next();
+};
+
+export const getWishlist = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const wishlist = await Wishlist.findOne({ userId });
+
+  if (!wishlist) //probably won't happen as every user has a wishlist
+    return next(new AppError("No wishlist for current user", 404));
+
   res.status(200).json({
-    message: "item added successfully",
-    data: wishlist,
+    status: "success",
+    items: wishlist.items
   });
 });
 
-// remove item from wishlist
-export const removeItemFromWishlist = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-  const { productId } = req.body;
-  const wishlist = await Wishlist.findOne({ userId });
+export const updateWishlist = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  let wishlist = await Wishlist.findOne({ userId });
   if (!wishlist)
-    return next(new AppError("there is no wishlist for this user", 404));
-  wishlist.items = wishlist.items.filter(
-    (item) => item._id.toString() !== productId
-  );
+    return next(new AppError("No wishlist for current user", 404)); //won't happen every user has a wishlist
+
+
+  wishlist.items = req.body.items;
   await wishlist.save();
+
   res.status(200).json({
-    data: wishlist,
+    status: "success",
+    items: wishlist.items
   });
-});
+})
+

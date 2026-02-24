@@ -10,6 +10,7 @@ import { logout } from "@/lib/api/auth";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { clearCart } from "@/features/cart/cartSlice";
+import { clearWishlist } from "@/features/wishlist/wishlistSlice";
 
 export default function UserAccount() {
     const { isAuthenticated, user, setUser } = useAuth();
@@ -37,6 +38,7 @@ export default function UserAccount() {
             const res = await logout();
             toast.success(res.message || "Logged out successfully");
             dispatch(clearCart(true));
+            dispatch(clearWishlist(true));
             setUser(null);
             setIsOpen(false);
         } catch (err) {
@@ -82,7 +84,7 @@ export default function UserAccount() {
 
                     {/* Menu Items */}
                     <Link
-                        href="/account"
+                        href="/account/profile"
                         onClick={() => setIsOpen(false)}
                         className="block px-4 py-2 text-sm text-(--color-primary-text) border-b border-badge hover:bg-badge dark:hover:text-secondary-text transition-colors"
                     >

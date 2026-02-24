@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
                     className="object-contain transform transition-transform duration-200 ease-in-out group-hover:scale-110"
                     unoptimized
                 />
-                <LikeButton />
+                <LikeButton productId={product._id} title={product.title} slug={product.slug} selectedVariant={selectedVariant} coverImage={product.coverImage}/>
             </Link>
 
             {/* Content - flex-1 pushes button to bottom */}
@@ -51,7 +51,7 @@ export default function ProductCard({ product }) {
                 </Link>
 
                 <div className="bg-badge w-fit rounded-lg flex items-center gap-1 py-0.5 px-1.5 text-xs mb-1">
-                    <FaStar className="text-green-700 dark:text-[#e3e3e3] text-[10px]" />
+                    <FaStar className="text-green-700 dark:text-button-label text-[10px]" />
                     <span className="font-bold">{product.avgRating}</span>
                     <span className="text-gray-500">({product.nReviews})</span>
                 </div>

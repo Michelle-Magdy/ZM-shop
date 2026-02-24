@@ -56,6 +56,7 @@ const createTokenAndSetCookie = (user, res, rememberMe = false) => {
 
 export const login = catchAsync(async (req, res, next) => {
   const { email, password, rememberMe = false } = req.body;
+  console.log("I work");
   const user = await User.findOne({ email })
     .select("+password")
     .populate("roles");

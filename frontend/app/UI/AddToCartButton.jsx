@@ -1,8 +1,5 @@
 "use client";
-import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "@/features/cart/cartSlice";
-import { useAuth } from "../context/AuthenticationProvider";
-import toast from "react-hot-toast";
+import useAddToCart from "@/lib/hooks/useAddToCart";
 
 export default function AddToCartButton({
     selectedVariant,
@@ -12,14 +9,9 @@ export default function AddToCartButton({
     slug,
     compact = false,
 }) {
-    const dispatch = useDispatch();
-    const { isAuthenticated } = useAuth();
+    const { handleAddToCart } = useAddToCart();
 
-    const handleAddToCart = () => {
-        if (!isAuthenticated) {
-            toast.error("Please login first.")
-            return;
-        }
+    const onClick = () => {
         const item = {
             productId,
             slug,
@@ -28,7 +20,7 @@ export default function AddToCartButton({
             variant: selectedVariant,
         };
 
-        dispatch(addToCart(item));
+        handleAddToCart(item);
     };
 
     const buttonClasses = compact
@@ -42,7 +34,7 @@ export default function AddToCartButton({
                 selectedVariant &&
                 (!selectedVariant?.isActive || selectedVariant?.stock === 0)
             }
-            onClick={handleAddToCart}
+            onClick={onClick}
         >
             {!selectedVariant
                 ? "Add to Cart"

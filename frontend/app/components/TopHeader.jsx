@@ -1,8 +1,10 @@
+"use client"
 import Link from "next/link";
 import ThemeSwitcher from "./ThemeSwitcher";
 import SearchBar from "./SearchBar";
 import UserAccount from "./UserAccount";
 import ShoppingCart from "./ShoppingCart";
+import Wishlist from "./Wishlist";
 
 export default function TopHeader() {
     return (
@@ -25,6 +27,9 @@ export default function TopHeader() {
                         <ThemeSwitcher />
                     </div>
                     <UserAccount />
+                    <div className="hidden md:block mx-1">
+                        <Wishlist />
+                    </div>
                     <ShoppingCart />
                 </div>
             </div>

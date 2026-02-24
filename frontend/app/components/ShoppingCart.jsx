@@ -25,9 +25,9 @@ export default function ShoppingCart() {
 
     return (
         <>
-            <Link href="/cart" className="flex items-center">
+            <Link href="/cart" className="flex items-center relative">
                 <CiShoppingCart className="w-9 h-9 md:w-11 md:h-11" />
-                <span className="-ml-2 -mt-7.5 md:-ml-2.5 md:-mt-9 text-sm md:text-base">
+                <span className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 text-sm md:text-base">
                     {loading ? <LoadingSpinner size="sm" /> : itemsNumber}
                 </span>
             </Link>
