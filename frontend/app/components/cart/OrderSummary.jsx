@@ -1,3 +1,5 @@
+import CheckoutButton from "./CheckoutButton";
+
 export default function OrderSummary({ items }) {
     // Calculate totals
     const subtotal = items?.reduce(
@@ -67,9 +69,7 @@ export default function OrderSummary({ items }) {
                 </div>
 
                 {/* Checkout Button */}
-                <button className="w-full py-3 bg-(--color-primary) text-(--color-brand-light) rounded-lg hover:bg-primary-hover transition-all duration-200 font-semibold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">
-                    Proceed to Checkout
-                </button>
+                <CheckoutButton />
 
                 <p className="text-center text-sm text-secondary-text mt-4">
                     Shipping & taxes calculated at checkout
