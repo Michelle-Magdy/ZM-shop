@@ -34,7 +34,7 @@ export default function AddressItem({ add, onDelete }) {
         </div>
 
         <p className="mt-2 text-secondary-text text-sm sm:text-base line-clamp-2">
-          {add.displayName || add.address || "No address provided"}
+          {add.displayName || add.fullAddress || "No address provided"}
         </p>
       </div>
 
