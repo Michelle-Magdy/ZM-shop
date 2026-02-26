@@ -12,7 +12,7 @@ export const getUserOrders = catchAsync(async (req, res, next) => {
     });
 })
 
-export const createOrder = catchAsync(async (req, res, next) => {
+export const createOrder = catchAsync(async (req, res, next) => { // Used when paying in cash
     const userId = req.user._id;
     const { address } = req.body;
 

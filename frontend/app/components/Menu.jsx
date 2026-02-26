@@ -11,7 +11,7 @@ export default function Menu() {
   const categories = useCategories();
 
   return (
-    <header className="p-3 flex sticky top-0 z-30 bg-white items-center gap-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]  dark:bg-card dark:shadow-[0_4px_6px_-1px_rgba(255,255,255,0.1)] dark:text-secondary-text">
+    <header className="p-3 flex sticky top-0 z-20 bg-white items-center gap-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]  dark:bg-card dark:shadow-[0_4px_6px_-1px_rgba(255,255,255,0.1)] dark:text-secondary-text">
       <MenuBar open={open} onClose={() => setOpen(false)}></MenuBar>
       <div
         className="flex items-center gap-2 cursor-pointer"

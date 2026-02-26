@@ -45,7 +45,7 @@ app.use("/api/v1/wishlist", wishlistRouter);
 app.use("/api/v1/coupons", couponRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/payment", paymentRouter);
-app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/orders", orderRouter);
 app.use(globalErrorHandler);
 
 export default app;
