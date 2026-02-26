@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { clearCart } from "@/features/cart/cartSlice";
 import { clearWishlist } from "@/features/wishlist/wishlistSlice";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 export default function UserAccount() {
   const { isAuthenticated, user, setUser } = useAuth();
@@ -68,7 +69,7 @@ export default function UserAccount() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-(--color-card) border border-badge z-50">
           {/* Greeting */}
-          <div className="px-4 py-3 border-b text-primary dark:text-primary-text border-badge flex gap-1">
+          <div className="px-4 py-3 border-b text-primary dark:text-primary-text border-badge flex gap-1 bg-primary/10">
             <p className="text-sm ">Hello,</p>
             <p className="text-sm font-bold truncate">
               {user?.name || user?.email || "User"}
@@ -79,7 +80,7 @@ export default function UserAccount() {
           <Link
             href="/account/profile"
             onClick={() => setIsOpen(false)}
-            className="block px-4 py-2 text-sm text-(--color-primary-text) border-b border-badge hover:bg-badge dark:hover:text-secondary-text transition-colors"
+            className="block px-4 py-2 text-sm text-(--color-primary-text)  border-badge  dark:hover:text-secondary-text transition-colors"
           >
             My Account
           </Link>
@@ -90,6 +91,20 @@ export default function UserAccount() {
             className="block px-4 py-2 text-sm text-(--color-primary-text) hover:bg-badge dark:hover:text-secondary-text transition-colors"
           >
             Order History
+          </Link>
+          <Link
+            href="/wishlist"
+            onClick={() => setIsOpen(false)}
+            className="sm:hidden px-4 py-2 text-sm text-(--color-primary-text) hover:bg-badge dark:hover:text-secondary-text transition-colors block"
+          >
+            Wishlist
+          </Link>
+          <Link
+            href="/cart"
+            onClick={() => setIsOpen(false)}
+            className="sm:hidden block px-4 py-2 text-sm text-(--color-primary-text) hover:bg-badge dark:hover:text-secondary-text transition-colors"
+          >
+            Cart
           </Link>
 
           {/* Logout */}

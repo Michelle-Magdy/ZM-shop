@@ -46,7 +46,7 @@ export default function ThemeSwitcher() {
     return (
       <button
         onClick={() => setTheme("dark")}
-        className="flex items-center gap-2 text-gray-700 md:text-inherit"
+        className={`flex items-center gap-2 md:text-inherit text-gray-700`}
       >
         <FaMoon
           className="cursor-pointer md:mr-3"

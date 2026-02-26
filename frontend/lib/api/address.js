@@ -4,14 +4,20 @@ import { apiClient } from "./axios";
 export const addAddress = async (data) => {
   try {
     const { userId, latitude, longitude, label, fullAddress, isDefault } = data;
-    const res = await apiClient.post(`${API_BASE_URL}/addresses`, {
-      userId,
-      latitude,
-      longitude,
-      label,
-      fullAddress,
-      isDefault,
-    });
+    const res = await apiClient.post(
+      `${API_BASE_URL}/addresses`,
+      {
+        userId,
+        latitude,
+        longitude,
+        label,
+        fullAddress,
+        isDefault,
+      },
+      {
+        withCredentials: true,
+      },
+    );
     return res.data;
   } catch (err) {
     console.log(err);
@@ -21,7 +27,9 @@ export const addAddress = async (data) => {
 
 export const getAddresses = async () => {
   try {
-    const res = await apiClient.get(`${API_BASE_URL}/addresses`, { withCredentials: true });
+    const res = await apiClient.get(`${API_BASE_URL}/addresses`, {
+      withCredentials: true,
+    }, { withCredentials: true });
     console.log(res.data);
     return res.data;
   } catch (err) {
@@ -35,6 +43,9 @@ export const getAddressFromLocation = async (lat, lon, signal) => {
     const res = await apiClient.get(
       `${API_BASE_URL}/addresses/lookup?lat=${lat}&lon=${lon}`,
       { signal: signal },
+      {
+        withCredentials: true,
+      },
     );
     return res.data;
   } catch (err) {
@@ -45,7 +56,9 @@ export const getAddressFromLocation = async (lat, lon, signal) => {
 
 export const updateAddress = async (id, data) => {
   try {
-    const res = await apiClient.patch(`${API_BASE_URL}/addresses/${id}`, data);
+    const res = await apiClient.patch(`${API_BASE_URL}/addresses/${id}`, data, {
+      withCredentials: true,
+    });
     return res.data;
   } catch (err) {
     console.log(err);
@@ -54,7 +67,9 @@ export const updateAddress = async (id, data) => {
 };
 export const deleteAddress = async (id) => {
   try {
-    const res = await apiClient.delete(`${API_BASE_URL}/addresses/${id}`);
+    const res = await apiClient.delete(`${API_BASE_URL}/addresses/${id}`, {
+      withCredentials: true,
+    });
     return res.data;
   } catch (err) {
     console.log(err);
