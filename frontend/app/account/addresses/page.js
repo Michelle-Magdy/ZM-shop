@@ -53,7 +53,7 @@ export default function Address() {
       latitude: selectedLocation.lat,
       longitude: selectedLocation.lng,
       label: selectedLocation.label,
-      address: selectedLocation.displayName,
+      fullAddress: selectedLocation.displayName,
       isDefault: selectedLocation.isDefault,
     };
 

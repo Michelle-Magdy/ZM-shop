@@ -12,6 +12,7 @@ import wishlistRouter from "./routes/wishlist.route.js";
 import couponRouter from "./routes/coupon.route.js";
 import addressRouter from "./routes/addresss.route.js";
 import paymentRouter from "./routes/payment.route.js";
+import orderRouter from "./routes/order.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -44,6 +45,7 @@ app.use("/api/v1/wishlist", wishlistRouter);
 app.use("/api/v1/coupons", couponRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/order", orderRouter);
 app.use(globalErrorHandler);
 
 export default app;

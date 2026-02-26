@@ -3,7 +3,7 @@ import { apiClient } from "./axios";
 
 export const addAddress = async (data) => {
   try {
-    const { userId, latitude, longitude, label, address, isDefault } = data;
+    const { userId, latitude, longitude, label, fullAddress, isDefault } = data;
     const res = await apiClient.post(
       `${API_BASE_URL}/addresses`,
       {
@@ -11,7 +11,7 @@ export const addAddress = async (data) => {
         latitude,
         longitude,
         label,
-        address,
+        fullAddress,
         isDefault,
       },
       {

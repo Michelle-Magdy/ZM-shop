@@ -5,7 +5,7 @@ import { getOne } from "./factoryHandler.js";
 import mongoose from "mongoose";
 
 export const addAddress = catchAsync(async (req, res, next) => {
-  let { userId, latitude, longitude, label, address, isDefault } = req.body;
+  let { userId, latitude, longitude, label, fullAddress, isDefault } = req.body;
 
   // Count existing addresses for the user
   const count = await Address.countDocuments({ userId });
@@ -19,7 +19,7 @@ export const addAddress = catchAsync(async (req, res, next) => {
   const newAddress = await Address.create({
     userId,
     label,
-    address,
+    fullAddress,
     location: {
       type: "Point",
       coordinates: [longitude, latitude], // <-- FIXED ORDER
