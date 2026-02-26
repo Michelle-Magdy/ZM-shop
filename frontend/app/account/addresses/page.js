@@ -4,9 +4,10 @@
 import AddressItem from "@/app/components/account/location/AddressItem";
 import LocationPicker from "@/app/components/account/location/LocationPicker";
 import { useAuth } from "@/app/context/AuthenticationProvider";
-import { getAddresses } from "@/lib/api/address";
-import { useQuery } from "@tanstack/react-query";
+import { addAddress, getAddresses } from "@/lib/api/address";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Address() {
   const { user } = useAuth();
@@ -14,20 +15,12 @@ export default function Address() {
 
   const { isFetching, isError, data, isSuccess, error } = useQuery({
     queryKey: ["addresses", user?.id], // Optional chaining for safety
-    queryFn: async () => {
-      const data = await getAddresses(user.id);
-      return data;
-    },
+    queryFn: getAddresses,
     enabled: !!user?.id, // Only run query if user exists
     staleTime: 1000 * 60 * 5,
   });
 
-  // Debug log
-  if (isSuccess) {
-    console.log(user);
-    console.log(data.data[0]);
-  }
-
+  const queryClient = useQueryClient();
   // Loading state
   if (isFetching) {
     return (
@@ -49,6 +42,33 @@ export default function Address() {
       </main>
     );
   }
+  const handleDelete = () => {
+    queryClient.invalidateQueries(["addresses", user?.id]);
+  };
+
+  const handleSubmit = async (selectedLocation) => {
+    const payload = {
+      userId: user.id || user._id,
+      latitude: selectedLocation.lat,
+      longitude: selectedLocation.lng,
+      label: selectedLocation.label,
+      address: selectedLocation.displayName,
+      isDefault: selectedLocation.isDefault,
+    };
+
+    try {
+      const data = await addAddress(payload);
+      if (!data) {
+        throw new Error("failed to add location");
+      }
+      queryClient.invalidateQueries(["addresses", user?.id]);
+
+      toast.success("new address added");
+    } catch (err) {
+      console.log(err);
+      toast.error(err);
+    }
+  };
 
   return (
     <main className="min-h-screen gap-4 p-4">
@@ -64,17 +84,42 @@ export default function Address() {
       </div>
 
       {/* Addresses List */}
-      {isSuccess && data?.data.length > 0 ? (
-        data.data.map((add, index) => <AddressItem add={add} key={index} />)
-      ) : isSuccess && data?.length === 0 ? (
+      {/* Addresses List */}
+      {isSuccess &&
+        data?.data?.length > 0 &&
+        data.data.map((add, index) => (
+          <AddressItem add={add} key={index} onDelete={handleDelete} />
+        ))}
+
+      {isSuccess && data?.data?.length === 0 && (
         <div className="text-center text-gray-500 mt-8">
           No addresses found. Add your first address!
         </div>
-      ) : (
-        <>Shite</>
       )}
 
-      <LocationPicker isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {isError && (
+        <div className="text-red-500 text-center">
+          Error: {error?.message || "Something went wrong"}
+        </div>
+      )}
+
+      {isFetching && <>Loading...</>}
+
+      <LocationPicker
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        defaultValues={{
+          lat: 30.0444,
+          lng: 31.2357,
+          state: "",
+          village: "",
+          displayName: "",
+          suburb: "",
+          label: "",
+          isDefault: false,
+        }}
+        onConfirm={handleSubmit}
+      />
     </main>
   );
 }

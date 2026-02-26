@@ -1,5 +1,5 @@
 // hooks/useCurrentLocation.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 export function useCurrentLocation() {
   const [location, setLocation] = useState({

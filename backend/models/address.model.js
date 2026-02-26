@@ -36,7 +36,16 @@ const addressSchema = new mongoose.Schema(
 );
 // to enable location-based queries
 addressSchema.index({ location: "2dsphere" });
-
+addressSchema.pre("save", async function (next) {
+  // If this one is being set as default
+  if (this.isDefault) {
+    await this.constructor.updateMany(
+      { userId: this.userId, _id: { $ne: this._id } },
+      { isDefault: false },
+    );
+  }
+  next();
+});
 const Address = mongoose.model("Address", addressSchema);
 
 export default Address;

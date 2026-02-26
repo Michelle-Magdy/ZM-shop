@@ -1,41 +1,32 @@
 // components/LocationPicker/SearchBar.tsx
 "use client";
 
-import { useState } from "react";
+import { useCurrentLocation } from "@/lib/hooks/useCurrentLocation";
+import { useEffect, useState } from "react";
 import { IoSearch, IoLocate } from "react-icons/io5";
 
-export default function SearchBar({ onLocationSelect }) {
-  const [query, setQuery] = useState("");
+export default function SearchBar({ onLocationSelect, query, setQuery }) {
+  // const [query, setQuery] = useState("");
+  const { latitude, longitude, loading, error, getLocation } =
+    useCurrentLocation();
 
   const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // In production, reverse geocode to get address
-          onLocationSelect({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            address: "Current Location",
-            details: "Using GPS coordinates",
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          alert("Unable to retrieve your location");
-        },
-      );
+    getLocation();
+  };
+  useEffect(() => {
+    if (!loading && !error && latitude && longitude) {
+      onLocationSelect({
+        lat: latitude,
+        lng: longitude,
+        address: "Current Location",
+        details: "Using GPS coordinates",
+      });
     }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // In production, integrate with geocoding API (Google Maps, Mapbox, etc.)
-    console.log("Searching for:", query);
-  };
+  }, [latitude, longitude, loading, error, onLocationSelect]);
 
   return (
     <div className="flex gap-3">
-      <form onSubmit={handleSearch} className="flex-1">
+      <form className="flex-1">
         <div className="relative dark:bg-primary-hover bg-button-label rounded-xl ">
           <IoSearch
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -56,7 +47,7 @@ export default function SearchBar({ onLocationSelect }) {
         className="flex items-center gap-2 whitespace-nowrap rounded-xl border border-gray-200 dark:border-0 bg-background px-4 py-2 text-sm font-medium text-primary-text transition-colors hover:bg-blue-50 hover:text-cyan-700 dark:bg-primary dark:hover:bg-primary-hover dark:hover:text-primary-text"
       >
         <IoLocate size={18} />
-        Use current location
+        {<span className="hidden lg:block">Use current location</span>}
       </button>
     </div>
   );

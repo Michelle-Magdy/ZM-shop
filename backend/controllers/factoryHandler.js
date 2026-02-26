@@ -5,7 +5,7 @@ import catchAsync from "../util/catchAsync.js";
 export const deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    await Model.findByIdAndDelete(id);
+    if (!mongoose.Types.ObjectId.isValid(id)) await Model.findByIdAndDelete(id);
     res.status(204).json({
       status: "Success",
       data: null,
@@ -16,25 +16,21 @@ import mongoose from "mongoose";
 
 export const updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    const { slug } = req.params;
+    const { slug, id } = req.params;
     const update = req.body;
 
     let filter;
 
-    if (mongoose.Types.ObjectId.isValid(slug)) {
+    if (id && mongoose.Types.ObjectId.isValid(id)) {
       filter = { _id: slug };
     } else {
       filter = { slug: slug };
     }
 
-    const updatedDocument = await Model.findOneAndUpdate(
-      filter,
-      update,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updatedDocument = await Model.findOneAndUpdate(filter, update, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       status: "Success",
@@ -43,7 +39,6 @@ export const updateOne = (Model) =>
       },
     });
   });
-
 
 export const createOne = (Model, object = null) =>
   catchAsync(async (req, res, next) => {
