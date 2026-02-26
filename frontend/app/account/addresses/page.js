@@ -8,6 +8,7 @@ import { addAddress, getAddresses } from "@/lib/api/address";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { FaLocationDot } from "react-icons/fa6";
 
 export default function Address() {
   const { user } = useAuth();
@@ -73,13 +74,15 @@ export default function Address() {
   return (
     <main className="min-h-screen gap-4 p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-primary-text text-2xl">Choose your Address</h1>
+        <h1 className="text-primary-text text-lg font-bold md:text-2xl">
+          Choose your Address
+        </h1>
 
         <button
           onClick={() => setIsOpen(true)}
-          className="rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-lg transition-all hover:bg-primary-hover"
+          className="rounded-xl bg-primary md:px-6 md:py-3 px-3 py-2 font-semibold text-white shadow-lg transition-all hover:bg-primary-hover flex items-center justify-center gap-1 "
         >
-          Open Location Picker
+          <FaLocationDot /> Map
         </button>
       </div>
 

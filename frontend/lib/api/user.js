@@ -4,11 +4,17 @@ import { apiClient } from "./axios";
 export const updateMe = async (user) => {
   try {
     const { name, phone, gender } = user;
-    const res = await apiClient.patch(`${API_BASE_URL}/users/me`, {
-      name,
-      phone,
-      gender,
-    });
+    const res = await apiClient.patch(
+      `${API_BASE_URL}/users/me`,
+      {
+        name,
+        phone,
+        gender,
+      },
+      {
+        withCredentials: true,
+      },
+    );
     return res.data;
   } catch (err) {
     console.log(err);

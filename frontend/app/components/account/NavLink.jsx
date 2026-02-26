@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function NavLink({ item, isLast = false }) {
+export default function NavLink({ item, onClick, isLast = false }) {
   const pathname = usePathname();
   // Helper function to check if a link is active
   const isActive = (href) => {
@@ -24,12 +24,13 @@ export default function NavLink({ item, isLast = false }) {
           ? "bg-badge text-primary-text font-semibold"
           : "text-primary-text hover:bg-badge"
       } hover:opacity-90`} // ← subtle hover effect always applies
+      onClick={onClick}
     >
       <item.icon
         className={`w-5 h-5 transition-colors ${
           active
-            ? "text-primary"
-            : "text-secondary-text group-hover:text-primary"
+            ? "text-primary-text"
+            : "text-secondary-text group-hover:text-primary-text"
         }`}
       />
       <p className="group-hover:translate-x-0.5 transition-transform">
