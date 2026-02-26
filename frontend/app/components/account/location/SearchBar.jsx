@@ -15,12 +15,7 @@ export default function SearchBar({ onLocationSelect, query, setQuery }) {
   };
   useEffect(() => {
     if (!loading && !error && latitude && longitude) {
-      onLocationSelect({
-        lat: latitude,
-        lng: longitude,
-        address: "Current Location",
-        details: "Using GPS coordinates",
-      });
+      onLocationSelect(latitude, longitude);
     }
   }, [latitude, longitude, loading, error, onLocationSelect]);
 
