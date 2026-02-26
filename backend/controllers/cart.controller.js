@@ -3,101 +3,60 @@ import Product from "../models/product.model.js";
 import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 
+export const cartSanitizar = (req, res, next) => {
+    if (!Array.isArray(req.body.items)) {
+        return next(new AppError("Items must be an array", 400));
+    }
+
+    req.body.items = req.body.items.map(item => {
+        const { productId, slug, title, coverImage, variant, quantity } = item;
+
+        return {
+            productId,
+            slug,
+            title,
+            coverImage,
+            variant: variant
+                ? {
+                    sku: variant.sku,
+                    attributeValues: variant.attributeValues,
+                    price: variant.price,
+                    stock: variant.stock,
+                    isActive: variant.isActive,
+                }
+                : undefined,
+            quantity: quantity || 1,
+        };
+    });
+
+    next();
+};
+
 export const getUserCart = catchAsync(async (req, res, next) => {
-    const { userId } = req.params;
+    const userId = req.user._id;
     const cart = await Cart.findOne({ userId });
-    
+
     if (!cart) //probably won't happen as every user has a cart
         return next(new AppError("No cart for current user", 404));
 
     res.status(200).json({
         status: "success",
-        length: cart.items.length,
         items: cart.items
     });
 })
 
-export const addCartItem = catchAsync(async (req, res, next) => {
-    const { userId } = req.params;
-    const { productId } = req.body;
-
-    if (!productId) {
-        return next(new AppError("product id is required", 400));
-    }
-
-    const cart = await Cart.findOne({ userId });
+export const updateCart = catchAsync(async (req, res, next) => {
+    const userId = req.user._id;
+    let cart = await Cart.findOne({ userId });
     if (!cart)
-        return next(new AppError("No cart for current user", 404));
+        return next(new AppError("No cart for current user", 404)); //won't happen every user has a cart
 
-    const product = await Product.findById(productId);
-    if (!product) {
-        return next(new AppError("Product not found", 404));
-    }
-
-    const itemExist = cart.items.find(it => it.productId.toString() == productId);
-    if (!itemExist) {
-        cart.items.push({
-            productId,
-            addToCartPrice: product.price,
-            quantity: 1
-        });
-        await cart.save();
-    }
+    cart.items = req.body.items;
+    await cart.save();
 
     res.status(200).json({
         status: "success",
-        item: {
-            productId,
-            addToCartPrice: product.price,
-            quantity: 1
-        }
+        items: cart.items
     });
 })
 
-export const modifyItemQuantity = catchAsync(async (req, res, next) => {
-    const { userId } = req.params;
-    const { productId, quantity } = req.body;
-    if (!productId || !quantity) {
-        return next(new AppError("Missing product id or quantity", 400));
-    }
-
-    if(quantity === 0)
-        return next(); // remove item from cart middleware
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart) 
-        return next(new AppError("No cart for current user", 404));
-
-    const item = cart.items.find(it => it.productId.toString() === productId);
-    if (!item) {
-        return next(new AppError("Item not found in cart", 404));
-    }
-
-    item.quantity = quantity;
-    await cart.save();
-
-    res.status(201).json({
-        status: "success",
-        item
-    });
-})
-
-export const removeItemFromCart = catchAsync(async (req, res, next) => {
-    const { userId } = req.params;
-    const { productId } = req.body;
-    if (!productId) {
-        return next(new AppError("Missing product id", 400));
-    }
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart) 
-        return next(new AppError("No cart for current user", 404));
-
-    cart.items = cart.items.filter(it => it.productId.toString() !== productId);
-    await cart.save();
-
-    res.status(204).json({
-        status: "success",
-        data: null
-    });
-})

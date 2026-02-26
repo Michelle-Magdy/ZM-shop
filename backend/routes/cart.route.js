@@ -1,21 +1,17 @@
 import express from "express";
 import { protect } from "../controllers/auth.controller.js";
 import {
-  addCartItem,
+  cartSanitizar,
   getUserCart,
-  modifyItemQuantity,
-  removeItemFromCart,
+  updateCart
 } from "../controllers/cart.controller.js";
-import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 
 const router = express.Router();
 
 router.use(protect);
 router
-  .route("/:userId")
-  .get(checkValidMongoId("userId"), getUserCart)
-  .post(checkValidMongoId("userId"), addCartItem)
-  .patch(checkValidMongoId("userId"), modifyItemQuantity, removeItemFromCart)
-  .delete(checkValidMongoId("userId"), removeItemFromCart);
+  .route("/")
+  .get(getUserCart)
+  .put(cartSanitizar, updateCart);
 
 export default router;

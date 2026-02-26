@@ -8,6 +8,7 @@ import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import Footer from "./components/Footer";
 import AuthLoadingOverlay from "./components/AuthLoadingOverlay";
+import AppEventListener from "./components/AppEventListener";
 config.autoAddCss = false;
 export const metadata = {
   title: "Zm Shop",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning={true} className="bg-background">
         <CategoriesWrapper>
           <Provider>
+            <AppEventListener />
             <AuthLoadingOverlay />
             <TopHeader />
             <Menu />

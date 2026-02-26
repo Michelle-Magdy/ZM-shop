@@ -7,13 +7,16 @@ import { useState, useRef, useEffect } from "react";
 import { FaArrowDown } from "react-icons/fa";
 import animation from "@/app/UI/Animation.module.css";
 import { logout } from "@/lib/api/auth";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { clearCart } from "@/features/cart/cartSlice";
+import { clearWishlist } from "@/features/wishlist/wishlistSlice";
 
 export default function UserAccount() {
   const { isAuthenticated, user, setUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const dispatch = useDispatch();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,6 +33,8 @@ export default function UserAccount() {
     try {
       const res = await logout();
       toast.success(res.message || "Logged out successfully");
+      dispatch(clearCart(true));
+      dispatch(clearWishlist(true));
       setUser(null);
       setIsOpen(false);
     } catch (err) {

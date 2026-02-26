@@ -1,24 +1,15 @@
 import express from "express";
 import {
-  addItemToWishlist,
-  clearWishlist,
   getWishlist,
-  removeItemFromWishlist,
+  updateWishlist,
+  wishlistSanitizar
 } from "../controllers/wishlist.controller.js";
-import { authorize, protect } from "../controllers/auth.controller.js";
-import Wishlist from "../models/wishlist.model.js";
-import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
+import { protect } from "../controllers/auth.controller.js";
 
 const router = express.Router();
-router.use(protect, authorize("admin", "vendor", "delivery", "user"));
+router.use(protect);
 
-router.route("/:userId").get(checkValidMongoId("userId"), getWishlist);
-router.delete("/:userId/clear", checkValidMongoId("userId"), clearWishlist);
-router.delete(
-  "/:userId/removeItem",
-  checkValidMongoId("userId"),
-  removeItemFromWishlist
-);
-router.post("/:userId/addItem", checkValidMongoId("userId"), addItemToWishlist);
+router.route("/").get(getWishlist).put( wishlistSanitizar, updateWishlist)
+
 
 export default router;

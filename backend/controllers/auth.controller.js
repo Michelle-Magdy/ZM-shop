@@ -113,6 +113,8 @@ export const signup = catchAsync(async (req, res, next) => {
     verificationTokenExpiresAt,
     roles: [process.env.USER_ROLE_ID],
   });
+  
+  user.populate("roles");
   user.password = undefined;
 
   //Create a cart for new user

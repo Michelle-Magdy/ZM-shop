@@ -21,6 +21,7 @@ export function AuthenticationProvider({ children }) {
             try {
                 const res = await getMe();
                 setUser(res.user);
+                
             } catch {
                 setUser(null);
             } finally {

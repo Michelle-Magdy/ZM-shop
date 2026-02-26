@@ -40,6 +40,7 @@ export const productSanitizer = (req, res, next) => {
     "viewCount",
     "salesCount",
     "status",
+    "defaultVariant"
   ];
 
   // Filter req.body to only include allowed fields
