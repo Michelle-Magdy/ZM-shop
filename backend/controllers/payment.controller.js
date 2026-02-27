@@ -5,50 +5,6 @@ import catchAsync from "../util/catchAsync.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export const validateCart = async (req, res, next) => {
-    const userId = req.user._id;
-
-    const cart = await Cart.findOne({ userId })
-        .populate("items.productId", "variants");
-
-    if (!cart)
-        return next(new AppError("User cart doesn't exist", 404));
-
-    let priceChanged = false;
-
-    for (const item of cart.items) {
-        const DBVariant = item.productId.variants.find(
-            v => v.sku === item.variant.sku
-        );
-
-        if (!DBVariant || !DBVariant.isActive) {
-            return res.status(409).json({
-                status: "error",
-                message: `${item.variant.sku} is no longer available`,
-            });
-        }
-
-        if (DBVariant.stock < item.quantity) {
-            return res.status(409).json({
-                status: "error",
-                message: `${DBVariant.sku} has insufficient stock`,
-            });
-        }
-
-        if (item.variant.price !== DBVariant.price) {
-            item.variant.price = DBVariant.price;
-            priceChanged = true;
-        }
-    }
-
-    if (priceChanged) {
-        await cart.save();
-    }
-
-    req.cart = cart;
-    req.priceChanged = priceChanged;
-    next();
-};
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
     const line_items = cart.items.map(item => {
@@ -87,6 +43,8 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
         cancel_url: `http://localhost:3000/cart`,
         metadata: {
             userId: req.user._id.toString(),
+            address: req.body.address.toString(),
+            phone: req.body.phone.toString()
         }
     });
 

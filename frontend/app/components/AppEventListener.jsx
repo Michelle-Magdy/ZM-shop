@@ -19,7 +19,6 @@ export default function AppEventListener() {
 
     useEffect(() => {
         if (!cartLastAction) return;
-        console.log(cartLastAction);
         if (cartLastAction.status === "success") {
             cartLastAction.message && toast.success(cartLastAction.message);
             dispatch(syncCart());

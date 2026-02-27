@@ -11,53 +11,49 @@ import {
     FaTimes,
     FaCheck,
     FaChevronRight,
+    FaPhone,
 } from "react-icons/fa";
-
-// Mock data matching your schema
-const mockAddresses = [
-    {
-        _id: "69a06fe07555a00699cc4376",
-        userId: "699c9ebb6e05470a368ed18b",
-        label: "Home",
-        fullAddress: "2, شارع ترعه الشرقاويه, ميت نما, القليوبية, 13629, مصر",
-        isDefault: true,
-        location: {
-            type: "Point",
-            coordinates: [31.238588833178138, 30.147219155788196],
-        },
-    },
-    {
-        _id: "69a06fe07555a00699cc4377",
-        userId: "699c9ebb6e05470a368ed18b",
-        label: "Work",
-        fullAddress: "15, شارع التحرير, القاهرة, 11511, مصر",
-        isDefault: false,
-        location: {
-            type: "Point",
-            coordinates: [31.2357, 30.0444],
-        },
-    },
-];
+import { useQuery } from "@tanstack/react-query";
+import { getAddresses } from "../../../lib/api/address.js";
+import toast from "react-hot-toast";
 
 export default function CheckoutModal({
     isOpen,
     onClose,
     onConfirm,
     isLoading,
+    user,
 }) {
-    const [selectedAddressId, setSelectedAddressId] = useState(
-        mockAddresses.find((a) => a.isDefault)?._id || mockAddresses[0]?._id,
-    );
-    const [paymentMethod, setPaymentMethod] = useState("online"); // 'online' or 'cash'
+    const { data: addresses, isLoading: addressesLoading } = useQuery({
+        queryKey: ["addresses", user?.id],
+        queryFn: getAddresses,
+        enabled: !!user?.id,
+    });
+
+    const [paymentMethod, setPaymentMethod] = useState("online");
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
 
     if (!isOpen) return null;
 
-    const selectedAddress = mockAddresses.find(
+    const selectedAddress = addresses?.data?.find(
         (a) => a._id === selectedAddressId,
     );
 
     const handleConfirm = () => {
-        onConfirm(paymentMethod, address);
+        if (!selectedAddress) {
+            toast.error("Please select an address");
+            return;
+        }
+
+        const phoneRegex = /^01[0125]\d{8}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            toast.error("Invalid phone number");
+            return;
+        }
+
+        // Pass phone number to parent
+        onConfirm(paymentMethod, selectedAddress, phoneNumber);
     };
 
     return (
@@ -93,49 +89,79 @@ export default function CheckoutModal({
                             </Link>
                         </div>
 
-                        <div className="space-y-3">
-                            {mockAddresses.map((address) => (
-                                <label
-                                    key={address._id}
-                                    className={`relative flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                        selectedAddressId === address._id
-                                            ? "border-(--color-primary) bg-(--color-primary)/5"
-                                            : "border-badge hover:border-(--color-primary)/50"
-                                    }`}
+                        {/* Loading State */}
+                        {addressesLoading && (
+                            <div className="p-8 text-center text-secondary-text">
+                                Loading addresses...
+                            </div>
+                        )}
+
+                        {/* Empty State */}
+                        {!addressesLoading && !addresses?.data?.length && (
+                            <div className="p-6 rounded-xl border-2 border-dashed border-badge text-center">
+                                <p className="text-secondary-text mb-4">
+                                    No addresses found
+                                </p>
+                                <Link
+                                    href="/account/addresses"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-primary) text-white rounded-lg hover:bg-primary-hover transition-colors"
                                 >
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        value={address._id}
-                                        checked={
+                                    <FaPlus className="w-4 h-4" />
+                                    Add Your First Address
+                                </Link>
+                            </div>
+                        )}
+
+                        {/* Addresses List */}
+                        {addresses?.data?.length > 0 && (
+                            <div className="space-y-3">
+                                {addresses.data.map((address) => (
+                                    <label
+                                        key={address._id}
+                                        className={`relative flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                             selectedAddressId === address._id
-                                        }
-                                        onChange={(e) =>
-                                            setSelectedAddressId(e.target.value)
-                                        }
-                                        className="mt-1 w-4 h-4 accent-(--color-primary)"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold text-(--color-primary-text)">
-                                                {address.label}
-                                            </span>
-                                            {address.isDefault && (
-                                                <span className="px-2 py-0.5 text-xs rounded-full bg-(--color-primary) text-white">
-                                                    Default
+                                                ? "border-(--color-primary) bg-(--color-primary)/5"
+                                                : "border-badge hover:border-(--color-primary)/50"
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="address"
+                                            value={address._id}
+                                            checked={
+                                                selectedAddressId ===
+                                                address._id
+                                            }
+                                            onChange={(e) =>
+                                                setSelectedAddressId(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="mt-1 w-4 h-4 accent-(--color-primary)"
+                                        />
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-semibold text-(--color-primary-text)">
+                                                    {address.label || "Address"}
                                                 </span>
-                                            )}
+                                                {address.isDefault && (
+                                                    <span className="px-2 py-0.5 text-xs rounded-full bg-(--color-primary) text-white">
+                                                        Default
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-secondary-text leading-relaxed">
+                                                {address.fullAddress ||
+                                                    `${address.street}, ${address.city}`}
+                                            </p>
                                         </div>
-                                        <p className="text-sm text-secondary-text leading-relaxed">
-                                            {address.fullAddress}
-                                        </p>
-                                    </div>
-                                    {selectedAddressId === address._id && (
-                                        <FaCheck className="w-5 h-5 text-(--color-primary) absolute top-4 right-4" />
-                                    )}
-                                </label>
-                            ))}
-                        </div>
+                                        {selectedAddressId === address._id && (
+                                            <FaCheck className="w-5 h-5 text-(--color-primary) dark:text-inherit absolute top-4 right-4" />
+                                        )}
+                                    </label>
+                                ))}
+                            </div>
+                        )}
 
                         <p className="mt-3 text-sm text-secondary-text dark:text-primary-text font-bold">
                             Need more addresses?{" "}
@@ -145,6 +171,30 @@ export default function CheckoutModal({
                             >
                                 Manage addresses in your account
                             </Link>
+                        </p>
+                    </section>
+
+                    {/* Phone Number Section */}
+                    <section>
+                        <h3 className="text-lg font-semibold text-(--color-primary-text) mb-4 flex items-center gap-2">
+                            <FaPhone className="w-5 h-5 text-(--color-primary)" />
+                            Contact Phone
+                        </h3>
+                        <div className="relative">
+                            <input
+                                type="tel"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                placeholder="Enter your phone number"
+                                className="w-full p-4 pl-12 rounded-xl border-2 border-badge bg-(--color-card)
+                                    focus:border-(--color-primary) focus:outline-none transition-colors
+                                    text-(--color-primary-text) placeholder:text-secondary-text"
+                            />
+                            <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-text" />
+                        </div>
+                        <p className="mt-2 text-sm text-secondary-text">
+                            We'll use this number to contact you about your
+                            delivery
                         </p>
                     </section>
 
@@ -160,7 +210,7 @@ export default function CheckoutModal({
                             <label
                                 className={`relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 cursor-pointer transition-all ${
                                     paymentMethod === "online"
-                                        ? "border-(--color-primary) bg-(--color-primary)/5"
+                                        ? "border-(--color-primary) bg-(--color-primary)/5 dark:bg-(--color-primary)"
                                         : "border-badge hover:border-(--color-primary)/50"
                                 }`}
                             >
@@ -192,7 +242,7 @@ export default function CheckoutModal({
                                     </span>
                                 </div>
                                 {paymentMethod === "online" && (
-                                    <FaCheck className="w-5 h-5 text-(--color-primary) absolute top-3 right-3" />
+                                    <FaCheck className="w-5 h-5 text-(--color-primary) dark:text-inherit absolute top-3 right-3" />
                                 )}
                             </label>
 
@@ -200,7 +250,7 @@ export default function CheckoutModal({
                             <label
                                 className={`relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 cursor-pointer transition-all ${
                                     paymentMethod === "cash"
-                                        ? "border-(--color-primary) bg-(--color-primary)/5"
+                                        ? "border-(--color-primary) bg-(--color-primary)/5 dark:bg-(--color-primary)"
                                         : "border-badge hover:border-(--color-primary)/50"
                                 }`}
                             >
@@ -232,7 +282,7 @@ export default function CheckoutModal({
                                     </span>
                                 </div>
                                 {paymentMethod === "cash" && (
-                                    <FaCheck className="w-5 h-5 text-(--color-primary) absolute top-3 right-3" />
+                                    <FaCheck className="w-5 h-5 text-(--color-primary) dark:text-inherit absolute top-3 right-3" />
                                 )}
                             </label>
                         </div>
@@ -245,7 +295,15 @@ export default function CheckoutModal({
                                 Selected Address:
                             </span>
                             <span className="font-medium text-(--color-primary-text)">
-                                {selectedAddress?.label}
+                                {selectedAddress?.label || "None selected"}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm mb-2">
+                            <span className="text-secondary-text">
+                                Phone Number:
+                            </span>
+                            <span className="font-medium text-(--color-primary-text)">
+                                {phoneNumber || "Not provided"}
                             </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -265,7 +323,12 @@ export default function CheckoutModal({
                 <div className="bottom-0 p-6 border-t border-badge bg-(--color-card) space-y-3">
                     <button
                         onClick={handleConfirm}
-                        disabled={isLoading}
+                        disabled={
+                            isLoading ||
+                            !selectedAddress ||
+                            !phoneNumber.trim() ||
+                            addressesLoading
+                        }
                         className="w-full py-4 px-6 rounded-xl bg-(--color-primary) text-white font-semibold 
          hover:bg-primary-hover transition-all flex items-center justify-center gap-2
          shadow-lg shadow-(--color-primary)/25

@@ -71,6 +71,10 @@ const orderSchema = new mongoose.Schema({
                 required: true, // [lng, lat]
             },
         }
+    },
+    phone: {
+        type: String,
+        required: [true, "Order must have a phone number."]
     }
 }, {
     timestamps: true

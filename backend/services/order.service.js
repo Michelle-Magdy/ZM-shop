@@ -5,21 +5,16 @@ import AppError from "../util/appError.js";
 import Product from "../models/product.model.js";
 
 
-export const createOrderService = async (userId, address, paid) => {
+export const createOrderService = async (userId, data, paid, cart) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const cart = await Cart.findOne({ userId }).session(session);
-
-        if (!cart || cart.items.length === 0) {
-            throw new AppError("Your cart is empty", 400);
-        }
-
         const [order] = await Order.create([{
             userId,
             items: cart.items.map(item => item.toObject()),
-            address,
+            address: data?.address,
+            phone: data?.phone,
             paymentMethod: paid ? "ONLINE" : "CASH"
         }], { session });
 
@@ -48,7 +43,7 @@ export const createOrderService = async (userId, address, paid) => {
     } catch (error) {
         await session.abortTransaction();
         throw error;
-    }finally {
+    } finally {
         session.endSession();
     }
 };
@@ -76,12 +71,12 @@ export const cancelOrderService = async (userId, orderId) => {
         }
 
         await session.commitTransaction();
-        
+
         return order;
     } catch (err) {
         await session.abortTransaction();
         throw err;
-    }finally {
+    } finally {
         session.endSession();
     }
 }
