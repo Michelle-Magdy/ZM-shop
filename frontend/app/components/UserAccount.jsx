@@ -86,7 +86,7 @@ export default function UserAccount() {
           </Link>
 
           <Link
-            href="/orders"
+            href="/account/track-orders"
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2 text-sm text-(--color-primary-text) hover:bg-badge dark:hover:text-secondary-text transition-colors"
           >
