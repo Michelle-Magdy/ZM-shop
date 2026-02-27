@@ -1,6 +1,7 @@
-import { createCheckoutSession, validateCart } from "../controllers/payment.controller.js"
+import { createCheckoutSession } from "../controllers/payment.controller.js"
 import { protect } from "../controllers/auth.controller.js"
 import express from "express"
+import { validateCart } from "../middlewares/cart.middleware.js";
 
 const router = express.Router();
 

@@ -35,11 +35,11 @@ const orderSchema = new mongoose.Schema(
             default: new Map(),
           },
           price: { type: Number, required: true, min: 0 },
-          // stock: {
-          //   type: Number,
-          //   default: 0,
-          //   min: 0,
-          // },
+          stock: {
+            type: Number,
+            default: 0,
+            min: 0,
+          },
           isActive: { type: Boolean, default: true },
         },
 
@@ -64,6 +64,11 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
       default: "PENDING",
     },
+    stripeSessionId: {
+      type: String,
+      unique: true, // ensures idempotency for online payments
+      sparse: true, // allows multiple orders with null/undefined (for CASH)
+    },
     address: {
       label: {
         type: String,
@@ -83,6 +88,10 @@ const orderSchema = new mongoose.Schema(
           required: true, // [lng, lat]
         },
       },
+    },
+    phone: {
+      type: String,
+      required: [true, "Order must have a phone number."],
     },
     totalPrice: { type: Number, required: true, min: 0 },
   },

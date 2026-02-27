@@ -27,9 +27,7 @@ export const addAddress = async (data) => {
 
 export const getAddresses = async () => {
   try {
-    const res = await apiClient.get(`${API_BASE_URL}/addresses`, {
-      withCredentials: true,
-    });
+    const res = await apiClient.get(`${API_BASE_URL}/addresses`, { withCredentials: true });
     return res.data;
   } catch (err) {
     console.log(err);

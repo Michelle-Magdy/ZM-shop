@@ -12,7 +12,7 @@ export default function OrderSummary({ items }) {
 
     return (
         <div className="w-full lg:w-96">
-            <div className="bg-(--color-card) rounded-lg p-6 shadow-sm border border-badge sticky top-4">
+            <div className="bg-(--color-card) rounded-lg p-6 shadow-sm border border-badge">
                 {/* Coupon Code */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-(--color-primary-text) mb-2 font-ubuntu">

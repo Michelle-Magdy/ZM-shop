@@ -18,10 +18,24 @@ export const getUserOrders = catchAsync(async (req, res, next) => {
 });
 
 export const createOrder = catchAsync(async (req, res, next) => {
+  // Used when paying in cash
   const userId = req.user._id;
-  const { address } = req.body;
+  const { address, phone } = req.body;
 
-  const order = await createOrderService(userId, address);
+  if (req.priceChanged) {
+    return res.status(200).json({
+      status: "price_changed",
+      message: "Some item prices have been updated.\nPlease review your cart.",
+      items: req.cart.items,
+    });
+  }
+
+  const order = await createOrderService(
+    userId,
+    { address, phone },
+    false,
+    req.cart,
+  );
 
   res.status(201).json({
     status: "success",

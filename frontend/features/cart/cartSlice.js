@@ -56,7 +56,7 @@ const cartSlice = createSlice({
             const sku = action.payload.sku;
             const item = state.items.find(it => it.variant.sku === sku);
 
-            if (!item || item.variant.stock === item.quantity){
+            if (!item || item.variant.stock === item.quantity) {
                 state.lastAction = { status: "error", message: "Out of stock." };
                 return;
             }
@@ -79,7 +79,13 @@ const cartSlice = createSlice({
         clearCart(state, action) {
             const hideMessage = action.payload;
             state.items = [];
-            state.lastAction = { status: "success", message: hideMessage ?  null : "Cart cleared." };
+            state.lastAction = { status: "success", message: hideMessage ? null : "Cart cleared." };
+        },
+
+        replaceCart(state, action) {
+            const items = action.payload;
+            state.items = items;
+            state.lastAction = { status: "synced", message: null };
         },
 
         resetLastAction: (state) => { state.lastAction = null; }
@@ -102,5 +108,5 @@ const cartSlice = createSlice({
     }
 });
 
-export const { addToCart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity, resetLastAction } = cartSlice.actions;
+export const { addToCart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity, resetLastAction, replaceCart } = cartSlice.actions;
 export default cartSlice.reducer;

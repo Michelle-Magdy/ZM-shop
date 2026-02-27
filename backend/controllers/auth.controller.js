@@ -13,6 +13,7 @@ import {
   sendResetPasswordEmail,
 } from "../mailtrap/emails.js";
 import dotenv from "dotenv";
+import { log } from "console";
 
 dotenv.config();
 
