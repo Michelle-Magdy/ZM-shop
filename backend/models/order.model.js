@@ -52,6 +52,11 @@ const orderSchema = new mongoose.Schema({
         enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
         default: "PENDING",
     },
+    stripeSessionId: {
+        type: String,
+        unique: true, // ensures idempotency for online payments
+        sparse: true, // allows multiple orders with null/undefined (for CASH)
+    },
     address: {
         label: {
             type: String,

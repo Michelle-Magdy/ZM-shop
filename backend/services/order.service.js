@@ -5,7 +5,7 @@ import AppError from "../util/appError.js";
 import Product from "../models/product.model.js";
 
 
-export const createOrderService = async (userId, data, paid, cart) => {
+export const createOrderService = async (userId, data, paid, cart, stripeSessionId) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -15,7 +15,8 @@ export const createOrderService = async (userId, data, paid, cart) => {
             items: cart.items.map(item => item.toObject()),
             address: data?.address,
             phone: data?.phone,
-            paymentMethod: paid ? "ONLINE" : "CASH"
+            paymentMethod: paid ? "ONLINE" : "CASH",
+            stripeSessionId: paid ? stripeSessionId : undefined,
         }], { session });
 
         for (const item of cart.items) {

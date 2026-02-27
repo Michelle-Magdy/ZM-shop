@@ -1,7 +1,7 @@
-import Cart from "../models/cart.model.js";
 import Stripe from "stripe";
-import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
+import { createOrderService } from "../services/order.service.js";
+import Cart from "../models/cart.model.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -31,7 +31,7 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
                 minimum: 1,
                 maximum: item.variant.stock,
             },
-            
+
         };
     });
 
@@ -55,3 +55,65 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 
+export const stripeWebhook = async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body, // make sure raw body is available, not parsed JSON
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (err) {
+        console.log("⚠️ Webhook signature verification failed.", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle only the event type you care about
+    if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+
+        // ✅ Only process if payment is confirmed
+        if (session.payment_status !== "paid") {
+            return res.status(200).send({ received: true });
+        }
+
+        const userId = session.metadata.userId;
+        const address = session.metadata.address;
+        const phone = session.metadata.phone;
+
+        // ✅ Prevent duplicate processing
+        const existingOrder = await Order.findOne({ stripeSessionId: session.id });
+        if (existingOrder) return res.status(200).send({ received: true });
+
+        // ✅ Fetch fresh cart
+        const cart = await Cart.findOne({ userId }).populate("items.productId");
+        if (!cart || cart.items.length === 0) {
+            // Optionally issue refund if cart empty
+            await stripe.refunds.create({ payment_intent: session.payment_intent });
+            return res.status(400).send({ error: "Cart empty, refund issued" });
+        }
+
+        // ✅ Revalidate stock & price
+        const { error } = await validateCartItems(cart);
+        if (error) {
+            // Refund if validation fails
+            await stripe.refunds.create({ payment_intent: session.payment_intent });
+            return res.status(409).send({ error: error.message });
+        }
+
+        try {
+            // ✅ Transaction-safe order creation
+            await createOrderService(userId, { address, phone }, true, cart, session.id);
+        } catch (err) {
+            console.log("Error creating order from webhook:", err);
+            // Optional: refund on failure
+            await stripe.refunds.create({ payment_intent: session.payment_intent });
+            return res.status(500).send({ error: "Order creation failed, refund issued" });
+        }
+    }
+
+    // Respond 200 to acknowledge receipt of webhook
+    res.status(200).send({ received: true });
+};
