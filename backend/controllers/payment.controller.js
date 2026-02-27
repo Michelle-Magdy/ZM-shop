@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import catchAsync from "../util/catchAsync.js";
 import { createOrderService } from "../services/order.service.js";
+import { validateCartItems } from "../services/cart.service.js";
 import Cart from "../models/cart.model.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -63,7 +64,7 @@ export const stripeWebhook = async (req, res) => {
         event = stripe.webhooks.constructEvent(
             req.body, // make sure raw body is available, not parsed JSON
             sig,
-            process.env.STRIPE_WEBHOOK_SECRET
+            process.env.STRIPE_WEBHOOK_SECRET // we get it from stipe after setting up webhook with our domain
         );
     } catch (err) {
         console.log("⚠️ Webhook signature verification failed.", err.message);
@@ -88,7 +89,7 @@ export const stripeWebhook = async (req, res) => {
         if (existingOrder) return res.status(200).send({ received: true });
 
         // ✅ Fetch fresh cart
-        const cart = await Cart.findOne({ userId }).populate("items.productId");
+        const cart = await Cart.findOne({ userId }).populate("items.productId", "variant");
         if (!cart || cart.items.length === 0) {
             // Optionally issue refund if cart empty
             await stripe.refunds.create({ payment_intent: session.payment_intent });
