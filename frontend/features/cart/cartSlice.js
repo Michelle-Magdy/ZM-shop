@@ -14,6 +14,7 @@ export const syncCart = createAsyncThunk("/cart/sync", async (_, { getState }) =
 
 const initialState = {
     items: [],
+    coupon: null,
     loading: false,
     error: null,
     lastAction: null
@@ -104,6 +105,7 @@ const cartSlice = createSlice({
         builder.addCase(fetchCart.fulfilled, (state, action) => {
             state.loading = false;
             state.items = action.payload.items;
+            state.coupon = action.payload.coupon;
         })
     }
 });

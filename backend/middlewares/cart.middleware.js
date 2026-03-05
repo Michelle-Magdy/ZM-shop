@@ -5,7 +5,9 @@ import Cart from '../models/cart.model.js';
 export const validateCart = catchAsync(async (req, res, next) => {
     const userId = req.user._id;
 
-    const cart = await Cart.findOne({ userId }).populate('items.productId', 'variants');
+    const cart = await Cart.findOne({ userId })
+        .populate('items.productId', 'variants')
+        .populate('coupon.couponId');
 
     if (!cart) {
         return next(new AppError("Cart not found", 404));

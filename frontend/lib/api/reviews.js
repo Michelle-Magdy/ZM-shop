@@ -23,13 +23,9 @@ export const handleHelpfulReview = async (reviewId) => {
 }
 
 export const addReview = async (productId, data) => {
-    try {
-        const res = await apiClient.post(`${API_BASE_URL}/reviews/product/${productId}`, data, { withCredentials: true });
-        return res.data;
-    } catch (err) {
-        console.log(err);
-        throw err;
-    }
+    const res = await apiClient.post(`${API_BASE_URL}/reviews/product/${productId}`, data);
+    return res.data;
+
 }
 
 export const editReview = async (reviewId, data) => {

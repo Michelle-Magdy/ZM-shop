@@ -1,34 +1,28 @@
 import CheckoutButton from "./checkout/CheckoutButton";
+import Coupon from "./Coupon.jsx";
+import { useState } from "react";
 
-export default function OrderSummary({ items }) {
+export default function OrderSummary({ items, coupon }) {
     // Calculate totals
+    const [discountPercentage, setDiscountPercentage] = useState(coupon?.discountPercentage || null);
     const subtotal = items?.reduce(
         (sum, item) => sum + item.variant.price * item.quantity,
         0,
     );
     const itemCount = items?.reduce((sum, item) => sum + item.quantity, 0);
     const shipping = subtotal > 500 ? 0 : 15;
-    const total = subtotal + shipping;
+
+    const total =
+        (subtotal + shipping) *
+        (discountPercentage ? (100 - discountPercentage) / 100 : 1);
 
     return (
         <div className="w-full lg:w-96">
             <div className="bg-(--color-card) rounded-lg p-6 shadow-sm border border-badge">
                 {/* Coupon Code */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-(--color-primary-text) mb-2 font-ubuntu">
-                        Coupon Code
-                    </label>
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="Enter code"
-                            className="flex-1 px-4 py-2 bg-(--color-background) border border-badge rounded-lg text-(--color-primary-text) placeholder-secondary-text focus:outline-none focus:border-(--color-primary) transition-colors duration-200"
-                        />
-                        <button className="px-4 py-2 bg-(--color-primary) text-(--color-brand-light) rounded-lg hover:bg-primary-hover transition-colors duration-200 font-medium">
-                            Apply
-                        </button>
-                    </div>
-                </div>
+                <Coupon
+                    onApply={(discount) => setDiscountPercentage(discount)}
+                />
 
                 <hr className="border-badge mb-6" />
 
@@ -57,13 +51,36 @@ export default function OrderSummary({ items }) {
                             Free shipping on orders over $50!
                         </p>
                     )}
+                    {discountPercentage !== null && (
+                        <div className="flex justify-between text-secondary-text">
+                            <span>Discount ({discountPercentage}%)</span>
+                            <span className="text-(--color-primary) dark:text-primary-text">
+                                -$
+                                {(
+                                    ((subtotal + shipping) *
+                                        discountPercentage) /
+                                    100
+                                ).toFixed(2)}
+                            </span>
+                        </div>
+                    )}
                     <hr className="border-badge" />
                     <div className="flex justify-between text-lg font-bold">
                         <span className="text-(--color-primary-text)">
                             Total
                         </span>
                         <span className="text-(--color-primary) dark:text-primary-text">
-                            ${total.toFixed(2)}
+                            $
+                            {discountPercentage === null ? (
+                                total.toFixed(2)
+                            ) : (
+                                <>
+                                    <span className="line-through mr-2">
+                                        {(shipping + subtotal).toFixed(2)}
+                                    </span>
+                                    <span>{total.toFixed(2)}</span>
+                                </>
+                            )}
                         </span>
                     </div>
                 </div>

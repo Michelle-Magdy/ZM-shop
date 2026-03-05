@@ -6,16 +6,27 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Ensure cookies are sent with requests
+  withCredentials: true,
 });
 
+const handleApiError = (error) => {
+  if (!error.response) {
+    return Promise.reject({
+      message: "Network error. Please check your internet connection.",
+      status: null,
+    });
+  }
+
+  const { status, data } = error.response;
+
+  return Promise.reject({
+    status,
+    message: data?.message || "Something went wrong",
+    errors: data?.errors,
+  });
+};
+
 apiClient.interceptors.response.use(
-  (response) => {
-    // If you forget this return, apiClient.get() returns undefined
-    return response;
-  },
-  (error) => {
-    // If you forget to reject, React Query might not see it as an error
-    return Promise.reject(error);
-  },
+  (response) => response,
+  (error) => handleApiError(error)
 );

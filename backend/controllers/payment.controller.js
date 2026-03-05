@@ -8,6 +8,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
+
+    const subtotal = cart.items.reduce((sum, item) =>
+        sum + item.variant.price * item.quantity, 0
+    );
+
+    let discountAmount = 0;
+    if (cart.coupon?.couponId) {
+        const coupon = cart.coupon.couponId;
+        const isValid = coupon.isActive && coupon.expirationDate > new Date();
+
+        if (!isValid) {
+            return next(new AppError("Coupon is no longer valid", 400));
+        }
+
+        discountAmount = subtotal * (cart.coupon.discountPercentage / 100);
+    }
+
+
     const line_items = cart.items.map(item => {
         let variantDescription = "";
         if (item.variant.attributeValues && item.variant.attributeValues.size > 0) {
@@ -26,15 +44,24 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
                 },
                 unit_amount: Math.round(item.variant.price * 100), // cents
             },
-            quantity: item.quantity,
-            adjustable_quantity: {
-                enabled: true,
-                minimum: 1,
-                maximum: item.variant.stock,
-            },
+            quantity: item.quantity
 
         };
     });
+
+
+    if (discountAmount > 0) {
+        line_items.push({
+            price_data: {
+                currency: "usd",
+                product_data: {
+                    name: `Discount (${cart.coupon.code})`,
+                },
+                unit_amount: -Math.round(discountAmount * 100),
+            },
+            quantity: 1,
+        });
+    }
 
     const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -89,7 +116,10 @@ export const stripeWebhook = async (req, res) => {
         if (existingOrder) return res.status(200).send({ received: true });
 
         // ✅ Fetch fresh cart
-        const cart = await Cart.findOne({ userId }).populate("items.productId", "variant");
+        const cart = await Cart.findOne({ userId })
+            .populate("items.productId", "variant")
+            .populate("coupon.couponId");
+
         if (!cart || cart.items.length === 0) {
             // Optionally issue refund if cart empty
             await stripe.refunds.create({ payment_intent: session.payment_intent });

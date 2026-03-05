@@ -41,10 +41,21 @@ const cartSchema = new mongoose.Schema({
                 default: 1
             }
         }
-    ]
+    ],
+    coupon: {
+        code: String,              
+        discountPercentage: Number, 
+        appliedAt: Date,                 
+        couponId: {               
+            type: mongoose.Schema.ObjectId,
+            ref: 'Coupon',
+            required: false
+        }
+    },
 });
 
 cartSchema.index({ "items.variant.sku": 1 });
+cartSchema.index({ userId: 1 }, { unique: true });
 
 const Cart = mongoose.model('Cart', cartSchema);
 export default Cart;

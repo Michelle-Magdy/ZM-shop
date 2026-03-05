@@ -55,7 +55,7 @@ export default function ReviewDialog({
                 loading: `${editMode ? "Editing review..." : "Adding review..."}`,
                 success: `${editMode ? "Review updated!" : "Review added!"}`,
                 error: (err) =>
-                    err.response?.data?.message || `${editMode ? "Failed to update review" : "Failed to add review"}`,
+                    err.message || `${editMode ? "Failed to update review" : "Failed to add review"}`,
             })
             .then(() => {
                 setRating(0);

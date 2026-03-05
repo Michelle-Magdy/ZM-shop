@@ -2,6 +2,7 @@ import Coupon from "../models/coupon.model.js";
 import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, deleteOne, getAll, updateOne } from "./factoryHandler.js";
+import Cart from "../models/cart.model.js";
 
 export const couponSanitizer = (req, res, next) => {
     const { code, discountPercentage, expirationDate, isActive } = req.body;
@@ -30,6 +31,19 @@ export const couponExist = catchAsync(async (req, res, next) => {
 
     if(!coupon)
         return next(new AppError("Code is invalid or expired", 400));
+
+    const userId = req.user._id;
+    const cart = await Cart.findOne({ userId });
+    if (!cart)
+        return next(new AppError("No cart for current user", 404));
+
+    cart.coupon = {
+        code: coupon.code,
+        discountPercentage: coupon.discountPercentage,
+        appliedAt: new Date(),
+        couponId: coupon._id
+    };
+    await cart.save();
 
     res.status(200).json({
         status: "success",

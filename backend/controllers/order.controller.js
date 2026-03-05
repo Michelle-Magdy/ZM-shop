@@ -45,7 +45,7 @@ export const createOrder = catchAsync(async (req, res, next) => {
   });
 });
 
-export const cancelOrder = catchAsync(async (req, res, next) => {
+export const cancelOrder = catchAsync(async (req, res, next) => { //Good in case of cash on delivery, in online payment, we will handle cancellation via stripe webhooks
   const { orderId } = req.body;
   const userId = req.user._id;
   await cancelOrderService(userId, orderId);

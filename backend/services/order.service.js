@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Cart from "../models/cart.model.js";
+import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import AppError from "../util/appError.js";
 import Product from "../models/product.model.js";
@@ -10,9 +10,22 @@ export const createOrderService = async (userId, data, paid, cart, stripeSession
     session.startTransaction();
 
     try {
-        const totalPrice = cart.items.reduce((acc, item) => {
+        let totalPrice = cart.items.reduce((acc, item) => {
             return acc + item.variant.price * item.quantity;
         }, 0);
+
+        if (cart.coupon?.couponId) {
+            const coupon = cart.coupon.couponId;
+
+            const isValid = coupon.isActive && coupon.expirationDate > new Date();
+
+            if (!isValid) {
+                throw new AppError("Coupon is no longer valid", 400);
+            }
+
+            const discountAmount = totalPrice * (cart.coupon.discountPercentage / 100);
+            totalPrice = totalPrice - discountAmount;
+        }
 
         const orderData = {
             userId,
@@ -57,6 +70,7 @@ export const createOrderService = async (userId, data, paid, cart, stripeSession
         }
 
         cart.items = [];
+        cart.coupon = undefined;
         await cart.save({ session });
 
         await session.commitTransaction();
