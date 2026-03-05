@@ -2,29 +2,28 @@ import Review from "../models/review.model.js";
 import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, deleteOne, getAll, updateOne } from "./factoryHandler.js";
-import mongoose from "mongoose";
+import Order from "../models/order.model.js";
 
 export const productReviewSanitizer = (req, res, next) => {
-  const { rating, title, description } = req.body;
+  const fields = ["rating", "title", "description"];
+  const sanitizedBody = {};
+  for (const field of fields) {
+    if (req.body[field] !== undefined) {
+      sanitizedBody[field] = req.body[field];
+    }
+  }
+  const productId = req.params.productId;
+  if (productId)
+    sanitizedBody.productId = productId;
 
-  req.body = {
-    productId: req.params.productId,
-    rating,
-    title,
-    description,
-    userId: req.user
-  };
+  sanitizedBody.userId = req.user._id;
+
+  req.body = sanitizedBody;
   next();
 };
 
 export const includeReviewParam = catchAsync(async (req, res, next) => {
-  const userId = req.user._id;
-  const productId = mongoose.Types.ObjectId.createFromHexString(req.params.productId);
-  console.log("User id: ", userId);
-  console.log("Product id: ", productId);
-
-  req.params.id = (await Review.findOne({ userId, productId }))._id; // put review id in param
-  console.log("Params Id: ", req.params.id);
+  req.params.id = req.params.reviewId; // put review id in param
   next();
 });
 
@@ -33,10 +32,11 @@ export const canDeleteReview = catchAsync(async (req, res, next) => {
   if (isAdmin) return next();
 
   const userId = req.user._id;
-  const productId = req.params.productId;
+  const reviewId = req.params.reviewId;
+  const review = await Review.findById(reviewId);
+  if (!review) return next(new AppError("Review not found. It may be already deleted", 404));
 
-  const review = await Review.findOne({ userId, productId });
-  if (!review)
+  if (review.userId._id.toString() !== userId.toString())
     return next(
       new AppError(
         "You are not allowed to delete another person's review",
@@ -47,12 +47,36 @@ export const canDeleteReview = catchAsync(async (req, res, next) => {
   next();
 });
 
+export const canEditReview = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const reviewId = req.params.reviewId;
+  const review = await Review.findById(reviewId);
+  if (!review)
+    return next(new AppError("Review not found. It may be already deleted", 404));
+  if (review.userId._id.toString() !== userId.toString())
+    return next(
+      new AppError(
+        "You are not allowed to edit another person's review",
+        403,
+      ),
+    );
+  next();
+});
+
 export const canAddReview = catchAsync(async (req, res, next) => {
   const { productId, userId } = req.body;
   const hasReview = await Review.findOne({ userId, productId });
 
   if (hasReview)
     return next(new AppError("user can only have one review", 403));
+
+  const hasPurchased = await Order.exists({
+    userId: req.user._id,
+    "items.productId": productId
+  });
+
+  if (!hasPurchased)
+    return next(new AppError("Please purchase this product before submitting a review.", 403));
 
   next();
 });
@@ -86,7 +110,7 @@ export const handleHelpfulReview = catchAsync(async (req, res, next) => {
     )
   };
 
-  if(!review){
+  if (!review) {
     return res.status(404).json({
       status: "error",
       message: "Review not found. It may be deleted"

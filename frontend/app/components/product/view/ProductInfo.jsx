@@ -9,11 +9,16 @@ export default function ProductInfo({ product, selectedVariant }) {
                     {product.title}
                 </h1>
                 <div className="flex items-center gap-3">
-                    <StarRating rating={product.ratingStats.average} />
-                    {product.ratingStats.average && (
-                        <span className="text-sm text-secondary-text">
-                            ({product.ratingStats.average.toFixed(1)} out of 5)
-                        </span>
+                    {product.ratingStats.average ? (
+                        <>
+                            <StarRating rating={product.ratingStats.average} />
+                            <span className="text-sm text-secondary-text">
+                                ({product.ratingStats.average.toFixed(1)} out of
+                                5)
+                            </span>
+                        </>
+                    ) : (
+                        "UnRated"
                     )}
                 </div>
             </div>

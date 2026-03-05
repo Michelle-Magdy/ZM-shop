@@ -1,4 +1,4 @@
-import CheckoutButton from "./CheckoutButton";
+import CheckoutButton from "./checkout/CheckoutButton";
 
 export default function OrderSummary({ items }) {
     // Calculate totals

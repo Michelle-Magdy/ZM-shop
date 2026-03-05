@@ -31,7 +31,7 @@ export default function Wishlist() {
     const theme = resolvedTheme || systemTheme || "light";
 
     return (
-        <Link href="/wishlist" className="flex items-center relative mr-1">
+        <Link href="/account/wishlist" className="flex items-center relative mr-1">
             <div className={"relative text-gray-700 dark:text-secondary-text md:text-inherit"}>
                 {theme === "dark" ? (
                     <FaRegHeart

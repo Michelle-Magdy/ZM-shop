@@ -1,13 +1,13 @@
 import { useState } from "react";
 import CheckoutModal from "./CheckoutModal.jsx";
-import { getCheckoutSession } from "../../../lib/api/payment.js";
+import { getCheckoutSession } from "../../../../lib/api/payment.js";
 import toast from "react-hot-toast";
-import { createOrder } from "../../../lib/api/order.js";
+import { createOrder } from "../../../../lib/api/order.js";
 import { useRouter } from "next/navigation.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
-import { clearCart, replaceCart } from "../../../features/cart/cartSlice.js";
-import { useAuth } from "../../context/AuthenticationProvider.jsx";
+import { clearCart, replaceCart } from "../../../../features/cart/cartSlice.js";
+import { useAuth } from "../../../context/AuthenticationProvider.jsx";
 
 export default function CheckoutButton() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function CheckoutButton() {
 
                 queryClient.invalidateQueries({ queryKey: ["orders"] });
 
-                router.push("/orders");
+                router.push("/account/track-orders");
             }
         } catch (err) {
             toast.error(err.message);

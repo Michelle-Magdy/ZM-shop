@@ -5,7 +5,7 @@ import catchAsync from "../util/catchAsync.js";
 export const deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) await Model.findByIdAndDelete(id);
+    await Model.findByIdAndDelete(id);
     res.status(204).json({
       status: "Success",
       data: null,
@@ -21,8 +21,8 @@ export const updateOne = (Model) =>
 
     let filter;
 
-    if (id && mongoose.Types.ObjectId.isValid(id)) {
-      filter = { _id: slug };
+    if (id) {
+      filter = { _id: id };
     } else {
       filter = { slug: slug };
     }

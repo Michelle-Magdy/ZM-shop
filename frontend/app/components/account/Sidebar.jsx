@@ -18,9 +18,9 @@ export default function Sidebar({ user, setUser, onNavigate }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const menuItems = [
-    { icon: FaBox, label: "Orders", href: "/orders" },
-    { icon: FaRotateLeft, label: "Returns", href: "/returns" },
-    { icon: FaHeart, label: "Wishlist", href: "/wishlist" },
+    { icon: FaBox, label: "Orders", href: "/account/track-orders" },
+    { icon: FaRotateLeft, label: "Returns", href: "/account/returns" },
+    { icon: FaHeart, label: "Wishlist", href: "/account/wishlist" },
   ];
 
   const accountItems = [

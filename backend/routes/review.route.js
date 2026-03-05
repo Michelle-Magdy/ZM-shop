@@ -9,18 +9,21 @@ import {
   includeReviewParam,
   canAddReview,
   handleHelpfulReview,
+  canEditReview,
 } from "../controllers/review.controller.js";
 import { protect } from "../controllers/auth.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 const router = express.Router();
 
-router
-  .route("/:productId")
-  .get(checkValidMongoId("productId"),getProductReviews)
-  .post(checkValidMongoId("productId"),protect, productReviewSanitizer, canAddReview, addProductReview)
-  .patch(checkValidMongoId("productId"),protect, productReviewSanitizer, includeReviewParam, editProductReview)
-  .delete(checkValidMongoId("productId"),protect, canDeleteReview, includeReviewParam, deleteProductReview);
+router.route("/:reviewId")
+  .delete(checkValidMongoId("reviewId"), protect, canDeleteReview, includeReviewParam, deleteProductReview)
+  .patch(checkValidMongoId("reviewId"), protect, canEditReview, productReviewSanitizer, includeReviewParam, editProductReview);
 
-router.patch("/:reviewId/helpful",checkValidMongoId("reviewId"), protect, handleHelpfulReview);
+router.patch("/:reviewId/helpful", checkValidMongoId("reviewId"), protect, handleHelpfulReview);
+
+router
+  .route("/product/:productId")
+  .get(checkValidMongoId("productId"), getProductReviews)
+  .post(checkValidMongoId("productId"), protect, productReviewSanitizer, canAddReview, addProductReview)
 
 export default router;

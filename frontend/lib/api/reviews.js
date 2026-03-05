@@ -1,8 +1,9 @@
 import { apiClient } from "./axios";
+import { API_BASE_URL } from "../apiConfig.js";
 
 export const getProductReviews = async (productId) => {
     try {
-        const res = await apiClient.get(`/reviews/${productId}`);
+        const res = await apiClient.get(`${API_BASE_URL}/reviews/product/${productId}`);
         console.log(res.data);
         return res.data;
     } catch (err) {
@@ -12,20 +13,40 @@ export const getProductReviews = async (productId) => {
 }
 
 export const handleHelpfulReview = async (reviewId) => {
-    try{
-        const res = await apiClient.patch(`/reviews/${reviewId}/helpful`, {}, { withCredentials: true });
+    try {
+        const res = await apiClient.patch(`${API_BASE_URL}/reviews/${reviewId}/helpful`, {}, { withCredentials: true });
         return res.data;
-    }catch(err) {
+    } catch (err) {
         console.log(err);
         throw err;
     }
 }
 
 export const addReview = async (productId, data) => {
-    try{
-        const res = await apiClient.post(`/reviews/${productId}`, data, { withCredentials: true });
+    try {
+        const res = await apiClient.post(`${API_BASE_URL}/reviews/product/${productId}`, data, { withCredentials: true });
         return res.data;
-    }catch(err){
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
+export const editReview = async (reviewId, data) => {
+    try {
+        const res = await apiClient.patch(`${API_BASE_URL}/reviews/${reviewId}`, data, { withCredentials: true });
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+}
+
+export const deleteReview = async (reviewId) => {
+    try {
+        const res = await apiClient.delete(`${API_BASE_URL}/reviews/${reviewId}`, { withCredentials: true });
+        return res.data;
+    } catch (err) {
         console.log(err);
         throw err;
     }

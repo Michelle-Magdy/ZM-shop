@@ -1,12 +1,12 @@
 // api/client.ts
 import axios from "axios";
-axios.defaults.withCredentials = true;
 
 export const apiClient = axios.create({
   baseURL: "http://localhost:5000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Ensure cookies are sent with requests
 });
 
 apiClient.interceptors.response.use(

@@ -10,14 +10,35 @@ export const createOrderService = async (userId, data, paid, cart, stripeSession
     session.startTransaction();
 
     try {
-        const [order] = await Order.create([{
+        const totalPrice = cart.items.reduce((acc, item) => {
+            return acc + item.variant.price * item.quantity;
+        }, 0);
+
+        const orderData = {
             userId,
             items: cart.items.map(item => item.toObject()),
-            address: data?.address,
+            address: {
+                label: data.address.label,
+                fullAddress: data.address.fullAddress,
+                location: {
+                    type: "Point",
+                    coordinates: [
+                        data.address.location.coordinates[0],
+                        data.address.location.coordinates[1]
+                    ]
+                }
+            },
             phone: data?.phone,
             paymentMethod: paid ? "ONLINE" : "CASH",
-            stripeSessionId: paid ? stripeSessionId : undefined,
-        }], { session });
+            totalPrice
+        };
+
+        if (stripeSessionId) {
+            orderData.stripeSessionId = stripeSessionId;
+        }
+
+        const [order] = await Order.create([orderData], { session });
+
 
         for (const item of cart.items) {
             const result = await Product.updateOne(
