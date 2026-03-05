@@ -6,20 +6,33 @@ import { PRODUCT_IMAGE_URL } from "@/lib/apiConfig";
 import { RxCross1 } from "react-icons/rx";
 import { FaCheck, FaStar } from "react-icons/fa";
 import { IoIosSend } from "react-icons/io";
-import { addReview } from "@/lib/api/reviews";
+import { addReview, editReview } from "@/lib/api/reviews";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useProduct from "./ProductContext.js";
+
 import toast from "react-hot-toast";
 
-export default function ReviewDialog({ product, isOpen, onClose }) {
+export default function ReviewDialog({
+    isOpen,
+    onClose,
+    initialData = {
+        rating: 0,
+        title: "",
+        description: "",
+    },
+    editMode = false,
+    reviewId = null,
+}) {
     const queryClient = useQueryClient();
+    const product = useProduct();
     const { mutateAsync, isPending } = useMutation({
-        mutationFn: (data) => addReview(product._id, data),
+        mutationFn: (data) => editMode ? editReview(reviewId, data) : addReview(product._id, data),
     });
 
-    const [rating, setRating] = useState(0);
+    const [rating, setRating] = useState(initialData.rating);
     const [hoverRating, setHoverRating] = useState(0);
-    const [title, setTitle] = useState("");
-    const [review, setReview] = useState("");
+    const [title, setTitle] = useState(initialData.title);
+    const [review, setReview] = useState(initialData.description);
 
     const ratingLabels = ["Poor", "Fair", "Good", "Very Good", "Excellent"];
 
@@ -39,9 +52,10 @@ export default function ReviewDialog({ product, isOpen, onClose }) {
 
         await toast
             .promise(mutateAsync(data), {
-                loading: "Adding review...",
-                success: "Review added!",
-                error: (err) => err.response?.data?.message || "Failed to add review",
+                loading: `${editMode ? "Editing review..." : "Adding review..."}`,
+                success: `${editMode ? "Review updated!" : "Review added!"}`,
+                error: (err) =>
+                    err.response?.data?.message || `${editMode ? "Failed to update review" : "Failed to add review"}`,
             })
             .then(() => {
                 setRating(0);
@@ -49,8 +63,8 @@ export default function ReviewDialog({ product, isOpen, onClose }) {
                 setTitle("");
                 setReview("");
                 queryClient.invalidateQueries({
-                    queryKey: ["product-reviews", product._id]
-                })
+                    queryKey: ["product-reviews", product._id],
+                });
                 onClose();
             });
     };

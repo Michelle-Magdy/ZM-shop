@@ -1,6 +1,7 @@
 import StarRating from "@/app/UI/StarRating";
 import ReviewsSection from "./ReviewsSection";
-import AddReview from "./AddReview";
+import AddReview from "./AddReview.jsx";
+import { ProductProvider } from "./ProductContext.js";
 
 export default function RatingSection({ product }) {
     const {
@@ -62,11 +63,15 @@ export default function RatingSection({ product }) {
                         </div>
 
                         {/* Write Review Button */}
-                        <AddReview product={product} />
+                        <ProductProvider product={product}>
+                            <AddReview />
+                        </ProductProvider>
                     </div>
 
                     {/* Right Column - Reviews List */}
-                    <ReviewsSection productId={product._id} />
+                    <ProductProvider product={product}>
+                        <ReviewsSection />
+                    </ProductProvider>
                 </div>
             </div>
         </>

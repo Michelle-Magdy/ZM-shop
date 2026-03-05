@@ -8,7 +8,7 @@ import { FaTrash, FaShoppingCart, FaArrowLeft, FaRegHeart } from "react-icons/fa
 import { fetchWishlist, clearWishlist } from "@/features/wishlist/wishlistSlice";
 import useAddToCart from "@/lib/hooks/useAddToCart";
 import useRemoveFromWishlist from "@/lib/hooks/useRemoveFromWishlist";
-import LoadingSpinner from "../UI/LoadingSpinner";
+import LoadingSpinner from "../../UI/LoadingSpinner";
 
 export default function WishlistPage() {
     const dispatch = useDispatch();
