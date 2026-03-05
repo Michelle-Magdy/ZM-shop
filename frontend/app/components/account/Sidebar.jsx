@@ -2,19 +2,21 @@
 import {
   FaBox,
   FaRotateLeft,
-  FaCoins,
   FaHeart,
   FaUser,
   FaLocationDot,
-  FaCreditCard,
-  FaShieldHalved,
-  FaGift,
-  FaLock,
 } from "react-icons/fa6";
 import NavLink from "./NavLink";
 import toast from "react-hot-toast";
+import { logout } from "@/lib/api/auth";
+import { useDispatch } from "react-redux";
+import { clearCart } from "@/features/cart/cartSlice";
+import { clearWishlist } from "@/features/wishlist/wishlistSlice";
+import { useRouter } from "next/navigation";
 
-export default function Sidebar({ user, onNavigate }) {
+export default function Sidebar({ user, setUser, onNavigate }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const menuItems = [
     { icon: FaBox, label: "Orders", href: "/account/track-orders" },
     { icon: FaRotateLeft, label: "Returns", href: "/account/returns" },
@@ -36,12 +38,11 @@ export default function Sidebar({ user, onNavigate }) {
       dispatch(clearCart(true));
       dispatch(clearWishlist(true));
       setUser(null);
-      setIsOpen(false);
+      router.push("/login");
     } catch (err) {
       toast.error(err.message || "Logout failed");
     }
   };
-  // Reusable link item component
 
   return (
     <aside className="w-full shrink-0 ">

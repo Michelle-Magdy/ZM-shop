@@ -88,7 +88,7 @@ const productSchema = new mongoose.Schema(
         type: Map,
         of: mongoose.Schema.Types.Mixed,
         default: new Map(),
-        _id: false
+        _id: false,
       },
       price: { type: Number, min: 0 },
       stock: {
@@ -190,7 +190,7 @@ productSchema.pre("save", async function (next) {
     // Check variants array exists and has items
     if (!this.variants || this.variants.length === 0) {
       return next(
-        new Error("Products with variants must have at least one variant")
+        new Error("Products with variants must have at least one variant"),
       );
     }
 
@@ -203,7 +203,7 @@ productSchema.pre("save", async function (next) {
 
         if (attrValue === undefined) {
           return next(
-            new Error(`Variant ${variant.sku} has empty value for ${dim}`)
+            new Error(`Variant ${variant.sku} has empty value for ${dim}`),
           );
         }
       }
@@ -235,7 +235,6 @@ productSchema.pre("save", async function (next) {
 
   next();
 });
-
 
 productSchema.index({ title: 1 });
 productSchema.index({ description: 1 });

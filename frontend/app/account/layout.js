@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthenticationProvider";
 import { Menu, X } from "lucide-react";
 
 export default function Layout({ children }) {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -13,7 +13,12 @@ export default function Layout({ children }) {
       {/* Desktop Layout */}
       <div className="hidden md:grid md:grid-cols-12 gap-8 mt-8 px-4">
         <aside className="md:col-span-4 lg:col-span-3">
-          <Sidebar user={user} />
+          <Sidebar
+            user={user}
+            setUser={(value) => {
+              setUser(value);
+            }}
+          />
         </aside>
         <main className="md:col-span-8 lg:col-span-9">{children}</main>
       </div>
@@ -64,6 +69,10 @@ export default function Layout({ children }) {
               <div className="p-4 overflow-y-auto h-[calc(100vh-80px)]">
                 <Sidebar
                   user={user}
+                  setUser={(value) => {
+                    setUser(value);
+                    setIsMobileMenuOpen(false);
+                  }}
                   onNavigate={() => setIsMobileMenuOpen(false)}
                 />
               </div>
