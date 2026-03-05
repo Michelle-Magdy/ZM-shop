@@ -16,6 +16,6 @@ router.route("/").get(getUserOrders).post(validateCart, createOrder);
 
 router.get("/stats", orderStats);
 
-router.post("/cancel", checkValidMongoId("orderId"), cancelOrder);
+router.post("/cancel/:orderId", checkValidMongoId("orderId"), cancelOrder);
 
 export default router;

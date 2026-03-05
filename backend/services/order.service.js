@@ -1,11 +1,17 @@
 import mongoose from "mongoose";
-import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import AppError from "../util/appError.js";
 import Product from "../models/product.model.js";
+import stripe from "../stripeConfig.js";
 
-
-export const createOrderService = async (userId, data, paid, cart, stripeSessionId) => {
+export const createOrderService = async (
+    userId,
+    data,
+    paid,
+    cart,
+    stripeSessionId,
+    stripePaymentIntentId = null
+) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -43,11 +49,16 @@ export const createOrderService = async (userId, data, paid, cart, stripeSession
             },
             phone: data?.phone,
             paymentMethod: paid ? "ONLINE" : "CASH",
+            paymentStatus: paid ? "PAID" : "UNPAID",
             totalPrice
         };
 
         if (stripeSessionId) {
             orderData.stripeSessionId = stripeSessionId;
+        }
+
+        if (stripePaymentIntentId) {
+            orderData.stripePaymentIntentId = stripePaymentIntentId;
         }
 
         const [order] = await Order.create([orderData], { session });
@@ -89,11 +100,9 @@ export const cancelOrderService = async (userId, orderId) => {
     session.startTransaction();
 
     try {
-        const order = await Order.findOneAndUpdate(
-            { _id: orderId, userId, orderStatus: "PENDING" },
-            { orderStatus: "CANCELLED" },
-            { new: true, session }
-        );
+        const order = await Order.findOne(
+            { _id: orderId, userId, orderStatus: "PENDING" }
+        ).session(session);
 
         if (!order)
             throw new AppError("Order not found or cannot be cancelled.", 400);
@@ -105,10 +114,33 @@ export const cancelOrderService = async (userId, orderId) => {
                 { session }
             );
         }
+        order.orderStatus = "CANCELLED";
 
+        if (order.paymentMethod === "ONLINE" && order.paymentStatus === "PAID" && order.refundStatus === "NONE") {
+            order.refundStatus = "PENDING";
+            await order.save({ session });
+
+            try {
+                await stripe.refunds.create({
+                    payment_intent: order.stripePaymentIntentId,
+                    reason: 'requested_by_customer'
+                }, { idempotencyKey: `refund_${order._id}` });
+
+                order.refundStatus = "SUCCESS";
+
+            } catch (stripeErr) {
+                // Mark as failed but CONTINUE (don't throw)
+                order.refundStatus = "FAILED";
+                order.refundError = stripeErr.message;
+                // should send alert to admin for manual review
+                console.error(`Stripe refund failed for order ${orderId}:`, stripeErr.message);
+            }
+        }
+
+        await order.save({ session });
         await session.commitTransaction();
-
         return order;
+
     } catch (err) {
         await session.abortTransaction();
         throw err;

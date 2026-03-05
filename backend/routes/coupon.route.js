@@ -6,6 +6,7 @@ import {
   couponSanitizer,
   getCoupons,
   removeCoupon,
+  removeCouponFromCart,
   updateCoupon,
 } from "../controllers/coupon.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get("/exist/:code", couponExist);
+router.delete("/remove", removeCouponFromCart);
 
 router.use(authorize("admin"));
 

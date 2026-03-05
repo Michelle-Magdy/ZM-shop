@@ -89,8 +89,12 @@ const cartSlice = createSlice({
             state.lastAction = { status: "synced", message: null };
         },
 
-        resetLastAction: (state) => { state.lastAction = null; }
+        resetLastAction: (state) => { state.lastAction = null; },
 
+        updateCoupon(state, action) {
+            const coupon = action.payload;
+            state.coupon = coupon;
+        }
     },
     extraReducers: (builder) => {
         builder.addCase(fetchCart.pending, (state) => {
@@ -110,5 +114,5 @@ const cartSlice = createSlice({
     }
 });
 
-export const { addToCart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity, resetLastAction, replaceCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, clearCart, increaseQuantity, decreaseQuantity, resetLastAction, replaceCart, updateCoupon } = cartSlice.actions;
 export default cartSlice.reducer;

@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { clearCart } from "@/features/cart/cartSlice";
 
 export default function CartPage() {
-    const { items, loading, coupon } = useSelector((state) => state.cart);
+    const { items, loading } = useSelector((state) => state.cart);
     const dispatch = useDispatch();
     
     const handleClearCart = () => {
@@ -89,7 +89,7 @@ export default function CartPage() {
                 </div>
 
                 {/* Right side - Order Summary */}
-                <OrderSummary loading={loading} items={items} coupon={coupon} />
+                <OrderSummary loading={loading} items={items}/>
             </div>
         </div>
     );

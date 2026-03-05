@@ -1,10 +1,8 @@
-import Stripe from "stripe";
 import catchAsync from "../util/catchAsync.js";
 import { createOrderService } from "../services/order.service.js";
 import { validateCartItems } from "../services/cart.service.js";
 import Cart from "../models/cart.model.js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import stripe from "../stripeConfig.js";
 
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
@@ -82,6 +80,12 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
     });
 });
 
+const refundWithIdempotency = (paymentIntentId, idempotencySuffix) => {
+    return stripe.refunds.create(
+        { payment_intent: paymentIntentId },
+        { idempotencyKey: `refund-${paymentIntentId}-${idempotencySuffix}` }
+    );
+};
 
 export const stripeWebhook = async (req, res) => {
     const sig = req.headers["stripe-signature"];
@@ -122,26 +126,26 @@ export const stripeWebhook = async (req, res) => {
 
         if (!cart || cart.items.length === 0) {
             // Optionally issue refund if cart empty
-            await stripe.refunds.create({ payment_intent: session.payment_intent });
-            return res.status(400).send({ error: "Cart empty, refund issued" });
+            await refundWithIdempotency(session.payment_intent, "empty_cart");
+            return res.status(200).send({ error: "Cart empty, refund issued" });
         }
 
         // ✅ Revalidate stock & price
         const { error } = await validateCartItems(cart);
         if (error) {
             // Refund if validation fails
-            await stripe.refunds.create({ payment_intent: session.payment_intent });
-            return res.status(409).send({ error: error.message });
+            await refundWithIdempotency(session.payment_intent, "cart_validation_failed");
+            return res.status(200).send({ error: error.message });
         }
 
         try {
             // ✅ Transaction-safe order creation
-            await createOrderService(userId, { address, phone }, true, cart, session.id);
+            await createOrderService(userId, { address, phone }, true, cart, session.id, session.payment_intent);
         } catch (err) {
             console.log("Error creating order from webhook:", err);
-            // Optional: refund on failure
-            await stripe.refunds.create({ payment_intent: session.payment_intent });
-            return res.status(500).send({ error: "Order creation failed, refund issued" });
+            // refund on failure
+            await refundWithIdempotency(session.payment_intent, "order_creation_failed");
+            return res.status(200).send({ error: "Order creation failed, refund issued" });
         }
     }
 

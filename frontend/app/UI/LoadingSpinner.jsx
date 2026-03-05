@@ -20,20 +20,20 @@ export default function LoadingSpinner({
             className={`flex flex-col items-center justify-center gap-3 ${className}`}
         >
             <div
-                className={`${sizeClasses[size]} rounded-full animate-spin`}
-                style={{
-                    border: `2px solid ${white ? "rgba(255,255,255,0.2)" : "var(--color-badge)"}`,
-                    borderTopColor: white ? "#ffffff" : "var(--color-primary)",
-                }}
+                className={`${sizeClasses[size]} rounded-full animate-spin 
+                    ${
+                        white
+                            ? "border-white/20 border-t-white"
+                            : "border-gray-300 border-t-primary dark:border-gray-600 dark:border-t-white"
+                    }`}
             />
             {text && (
                 <span
-                    className="text-sm font-medium"
-                    style={{
-                        color: white
-                            ? "#ffffff"
-                            : "var(--color-secondary-text)",
-                    }}
+                    className={`text-sm font-medium ${
+                        white
+                            ? "text-white"
+                            : "text-gray-600 dark:text-gray-300"
+                    }`}
                 >
                     {text}
                 </span>

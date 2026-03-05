@@ -64,10 +64,23 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"],
       default: "PENDING",
     },
+    refundStatus: {
+      type: String,
+      enum: ['NONE', 'PENDING', 'SUCCESS', 'FAILED'],
+      default: 'NONE'
+    },
+    refundError: {
+      type: String,
+      default: null,
+    },
     stripeSessionId: {
       type: String,
       unique: true, // ensures idempotency for online payments
       sparse: true, // allows multiple orders with null/undefined (for CASH)
+    },
+    stripePaymentIntentId: {
+      type: String,
+      sparse: true,
     },
     address: {
       label: {

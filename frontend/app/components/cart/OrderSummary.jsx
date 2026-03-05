@@ -1,10 +1,11 @@
+import { useSelector } from "react-redux";
 import CheckoutButton from "./checkout/CheckoutButton";
 import Coupon from "./Coupon.jsx";
-import { useState } from "react";
 
-export default function OrderSummary({ items, coupon }) {
-    // Calculate totals
-    const [discountPercentage, setDiscountPercentage] = useState(coupon?.discountPercentage || null);
+export default function OrderSummary({ items }) {
+    const coupon = useSelector((state) => state.cart.coupon);
+    const discountPercentage = coupon?.discountPercentage || null;
+    
     const subtotal = items?.reduce(
         (sum, item) => sum + item.variant.price * item.quantity,
         0,
@@ -20,9 +21,7 @@ export default function OrderSummary({ items, coupon }) {
         <div className="w-full lg:w-96">
             <div className="bg-(--color-card) rounded-lg p-6 shadow-sm border border-badge">
                 {/* Coupon Code */}
-                <Coupon
-                    onApply={(discount) => setDiscountPercentage(discount)}
-                />
+                <Coupon code={coupon?.code || null} />
 
                 <hr className="border-badge mb-6" />
 
