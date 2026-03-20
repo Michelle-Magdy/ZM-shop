@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       validate: [validator.isStrongPassword, "Please enter a strong password"],
-      required: [true, "User must have a password"],
+
       select: false,
     },
     roles: [
@@ -82,12 +82,18 @@ const userSchema = new mongoose.Schema(
     passwordResetExpiresAt: { type: Date, select: false },
     verificationToken: { type: String, select: false },
     verificationTokenExpiresAt: { type: Date, select: false },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
   },
 );
 
+userSchema.index({ googleId: 1 });
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);

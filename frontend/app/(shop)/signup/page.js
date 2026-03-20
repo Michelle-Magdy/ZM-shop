@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { useAuth } from "../context/AuthenticationProvider";
+import { useAuth } from "../../context/AuthenticationProvider";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaEyeSlash, FaEye } from "react-icons/fa";
 import Link from "next/link";

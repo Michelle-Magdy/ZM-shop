@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import Sidebar from "../components/account/Sidebar";
-import { useAuth } from "../context/AuthenticationProvider";
+import Sidebar from "../../components/account/Sidebar";
+import { useAuth } from "../../context/AuthenticationProvider";
 import { Menu, X } from "lucide-react";
 
 export default function Layout({ children }) {

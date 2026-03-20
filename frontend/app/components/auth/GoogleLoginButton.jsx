@@ -1,0 +1,44 @@
+import { apiClient } from "@/lib/api/axios";
+import { GoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
+
+export default function GoogleLoginButton() {
+  const handleSuccess = async (credentialResponse) => {
+    console.log("hi");
+    try {
+      console.log(credentialResponse.credential);
+
+      // credentialResponse.credential is the Google ID token
+      const res = await apiClient.post(
+        "http://localhost:5000/api/v1/auth/google/token",
+        { token: credentialResponse.credential },
+        { withCredentials: true }, // IMPORTANT: Send/receive cookies
+      );
+
+      console.log("Login successful!", res.data);
+
+      //! Redirect to dashboard or home
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert(
+        "Login failed: " + (error.response?.data?.message || "Unknown error"),
+      );
+    }
+  };
+
+  const handleError = () => {
+    console.log("Login Failed");
+    toast.error("error during login try again");
+  };
+
+  return (
+    <div className="w-fit ">
+      <GoogleLogin
+        onSuccess={handleSuccess}
+        onError={handleError}
+        useOneTap // Show popup automatically if already logged into Google
+      />
+    </div>
+  );
+}

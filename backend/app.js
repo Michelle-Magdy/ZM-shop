@@ -16,6 +16,7 @@ import stripeRouter from "./routes/stripe.route.js";
 import orderRouter from "./routes/order.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import passport from "passport";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -31,8 +32,8 @@ app.use(
 
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
-
 app.use(express.static("./backend/public"));
+app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);

@@ -6,11 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { login } from "@/lib/api/auth";
 import Link from "next/link";
-import { useAuth } from "../context/AuthenticationProvider";
+import { useAuth } from "../../context/AuthenticationProvider";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
+import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
 
 const zodSchema = z.object({
   email: z.email(),
@@ -32,13 +33,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, setUser } = useAuth();
-  useEffect(() => {
-    if (authLoading) return;
-    if (isAuthenticated) {
-      toast.success("you already logged in");
-      router.push("/");
-    }
-  }, [isAuthenticated, authLoading, router]);
+  // useEffect(() => {
+  //   if (authLoading) return;
+  //   if (isAuthenticated) {
+  //     toast.success("you already logged in");
+  //     router.push("/");
+  //   }
+  // }, [isAuthenticated, authLoading, router]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
@@ -54,7 +55,16 @@ export default function Login() {
     onSuccess: (res) => {
       setUser(res.user);
       toast.success("Welcome back " + res.user.name);
-      router.push("/");
+      const roles = res.user.roles;
+      if (roles.includes("admin")) {
+        router.push("/admin");
+      } else if (roles.includes("vendor")) {
+        router.push("/vendor");
+      } else if (roles.includes("delivery")) {
+        router.push("/delivery");
+      } else {
+        router.push("/");
+      }
     },
   });
 
@@ -176,11 +186,8 @@ export default function Login() {
         </div>
 
         {/* Social Login */}
-        <div className="mt-6 ">
-          <button className="flex items-center justify-center px-4 py-2 border border-badge rounded-lg bg-background w-full text-primary-text hover:bg-badge/30 transition-colors cursor-pointer">
-            <FaGoogle className="mr-2" />
-            Google
-          </button>
+        <div className="mt-6 w-full flex justify-center items-center">
+          <GoogleLoginButton />
         </div>
 
         {/* Footer */}

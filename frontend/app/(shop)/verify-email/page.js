@@ -4,7 +4,7 @@ import { verifyEmail } from "@/lib/api/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "../context/AuthenticationProvider";
+import { useAuth } from "../../context/AuthenticationProvider";
 
 export default function VerifyEmail() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);

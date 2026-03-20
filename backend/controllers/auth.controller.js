@@ -13,6 +13,7 @@ import {
   sendResetPasswordEmail,
 } from "../mailtrap/emails.js";
 import dotenv from "dotenv";
+import { createTokenAndSetCookie } from "../util/jwt.js";
 
 dotenv.config();
 
@@ -22,37 +23,11 @@ const formatUser = (user) => ({
   roles: user.roles?.map((r) => r.name) || [],
   addresses: user.addresses,
   password: undefined,
+  isVerified: user.isVerified,
   gender: user.gender,
   phone: user.phone,
   id: user._id,
 });
-
-const signToken = (id, rememberMe) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: rememberMe ? "30d" : process.env.JWT_EXPIRES_IN,
-  });
-};
-
-const createTokenAndSetCookie = (user, res, rememberMe = false) => {
-  const token = signToken(user._id, rememberMe);
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() +
-        (rememberMe ? 30 : parseInt(process.env.JWT_EXPIRES_IN)) *
-          24 *
-          60 *
-          60 *
-          1000,
-    ),
-    httpOnly: true, // prevent xss
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict", // prevent csrf
-    maxAge: 30 * 60 * 60 * 1000, //! edit this for refresh tokens
-  };
-
-  res.cookie("jwt", token, cookieOptions);
-  return token;
-};
 
 export const login = catchAsync(async (req, res, next) => {
   const { email, password, rememberMe = false } = req.body;
@@ -81,7 +56,7 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
   });
 
   if (!user)
-    res.status(400).json({
+    return res.status(400).json({
       status: "failed",
       message: "invalid or expired verification code",
     });
@@ -113,7 +88,7 @@ export const signup = catchAsync(async (req, res, next) => {
     verificationTokenExpiresAt,
     roles: [process.env.USER_ROLE_ID],
   });
-  
+
   user.populate("roles");
   user.password = undefined;
 

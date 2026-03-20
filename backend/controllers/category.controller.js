@@ -10,7 +10,7 @@ import { softDeleteCategory } from "../services/category.service.js";
 import multer from "multer";
 import Product from "../models/product.model.js";
 import sharp from "sharp";
-import { upload } from "../util/multer.config.js";
+import { upload } from "../config/multer.config.js";
 import { deleteFile } from "../util/deleteFile.js";
 import mongoose from "mongoose";
 

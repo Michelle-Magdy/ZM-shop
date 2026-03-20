@@ -5,6 +5,7 @@ import { AuthenticationProvider } from "../context/AuthenticationProvider";
 import { useMemo } from "react";
 import { store } from "@/store";
 import { Provider as ReduxProvider } from "react-redux";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export function Provider({ children }) {
   const queryClient = useMemo(() => new QueryClient(), []);
@@ -14,7 +15,11 @@ export function Provider({ children }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthenticationProvider>
-            {children}
+            <GoogleOAuthProvider
+              clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+            >
+              {children}
+            </GoogleOAuthProvider>
           </AuthenticationProvider>
         </ThemeProvider>
       </QueryClientProvider>

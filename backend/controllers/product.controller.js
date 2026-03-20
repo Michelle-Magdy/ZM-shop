@@ -7,7 +7,7 @@ import {
   getOne,
   softDeleteOne,
 } from "./factoryHandler.js";
-import { upload } from "../util/multer.config.js";
+import { upload } from "../config/multer.config.js";
 import sharp from "sharp";
 import catchAsync from "../util/catchAsync.js";
 import { deleteFile } from "../util/deleteFile.js";
@@ -40,7 +40,7 @@ export const productSanitizer = (req, res, next) => {
     "viewCount",
     "salesCount",
     "status",
-    "defaultVariant"
+    "defaultVariant",
   ];
 
   // Filter req.body to only include allowed fields
@@ -94,7 +94,7 @@ export const resizeImages = catchAsync(async (req, res, next) => {
 });
 
 export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
-  const param = req.params.slug; 
+  const param = req.params.slug;
 
   let filter;
 
@@ -105,14 +105,11 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
   }
 
   // 1. Get current product
-  const product = await Product.findOne(filter).select(
-    "+coverImage +images"
-  );
+  const product = await Product.findOne(filter).select("+coverImage +images");
 
   if (!product) {
     // Clean up newly uploaded files if product not found
-    if (req.body.coverImage)
-      deleteFile("products", req.body.coverImage);
+    if (req.body.coverImage) deleteFile("products", req.body.coverImage);
 
     if (req.body.images) {
       req.body.images.forEach((imageName) => {
