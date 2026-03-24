@@ -14,6 +14,7 @@ import addressRouter from "./routes/addresss.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import stripeRouter from "./routes/stripe.route.js";
 import orderRouter from "./routes/order.route.js";
+import dashboardRouter from "./routes/dashboard.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
@@ -49,6 +50,7 @@ app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/stripe", stripeRouter);
+app.use("/api/v1/admin/dashboard", dashboardRouter);
 app.use(globalErrorHandler);
 
 export default app;

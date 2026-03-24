@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -14,8 +14,9 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/app/context/AuthenticationProvider";
 // import { cn } from "@/lib/utils";
-
+import { logout } from "@/lib/api/auth";
 const NAV_ITEMS = [
   {
     href: "/admin",
@@ -54,15 +55,21 @@ const NAV_ITEMS = [
   },
 ];
 
-export function Sidebar({ user }) {
+export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
+  function onLogout() {
+    logout();
+    router.push("/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-(--color-primary) text-button-label flex flex-col z-50">
       {/* Logo */}
       <div className="p-6 border-b border-white/10">
         <h1 className="text-2xl font-bold tracking-tight text-(--color-brand-light)">
-          AdminHub
+          ZM shop
         </h1>
         <p className="text-xs text-link mt-1">E-Commerce Management</p>
       </div>
@@ -110,7 +117,10 @@ export function Sidebar({ user }) {
           </div>
         </div>
 
-        <button className="flex items-center gap-3 px-4 py-3 mt-2 w-full rounded-lg text-link hover:bg-white/10 hover:text-error transition-all duration-200">
+        <button
+          className="flex items-center gap-3 px-4 py-3 mt-2 w-full rounded-lg text-link hover:bg-white/10 hover:text-error transition-all duration-200"
+          onClick={onLogout}
+        >
           <LogOut size={20} />
           <span>Sign Out</span>
         </button>

@@ -1,6 +1,7 @@
 import { getUserOrders } from "@/lib/api/orders";
 import { useQuery } from "@tanstack/react-query";
 import OrderCard from "./OrderCard";
+import LoadingSpinner from "../../LoadingSpinner";
 
 export default function OrderList({ user }) {
   const { data, isError, isFetching, error, isSuccess } = useQuery({
@@ -21,13 +22,7 @@ export default function OrderList({ user }) {
   }
 
   if (isFetching) {
-    return (
-      <main className="min-h-screen p-4">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </main>
-    );
+    return <LoadingSpinner />;
   }
   if (isSuccess) console.log(data);
   return (

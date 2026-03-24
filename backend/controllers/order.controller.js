@@ -35,9 +35,8 @@ export const createOrder = catchAsync(async (req, res, next) => {
     { address, phone },
     false,
     req.cart,
-    null
+    null,
   );
-
 
   res.status(201).json({
     status: "success",
@@ -45,7 +44,8 @@ export const createOrder = catchAsync(async (req, res, next) => {
   });
 });
 
-export const cancelOrder = catchAsync(async (req, res, next) => { //Good in case of cash on delivery, in online payment, we will handle cancellation via stripe webhooks
+export const cancelOrder = catchAsync(async (req, res, next) => {
+  //Good in case of cash on delivery, in online payment, we will handle cancellation via stripe webhooks
   const { orderId } = req.params;
   const userId = req.user._id;
   await cancelOrderService(userId, orderId);
@@ -54,7 +54,7 @@ export const cancelOrder = catchAsync(async (req, res, next) => { //Good in case
     .json({ status: "success", message: "Order cancelled successfully." });
 });
 
-export const orderStats = catchAsync(async (req, res, next) => {
+export const userOrderStats = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   const stats = await Order.aggregate([
     {

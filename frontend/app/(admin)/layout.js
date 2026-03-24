@@ -22,11 +22,11 @@ export default function RootLayout({ children }) {
           <Provider>
             <AppEventListener />
             <AuthLoadingOverlay />
-            <Sidebar />
-            <main className="px-3 m-0 md:px-6 lg:px-14">
-              <div className="container mx-auto">{children}</div>
+            <div className="flex min-h-screen bg-(--color-background)">
+              <Sidebar />
+              <main className="flex-1 ml-64 p-8 overflow-auto">{children}</main>
               <Toaster position="top-center" />
-            </main>
+            </div>
           </Provider>
         </CategoriesWrapper>
       </body>
