@@ -145,7 +145,6 @@ export function SalesChart({
   };
 
   const renderChart = () => {
-    console.log(chartData);
 
     const commonProps = {
       data: chartData,

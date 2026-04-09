@@ -1,9 +1,9 @@
 // src/components/admin/StatCard.tsx
 "use client";
 
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "../../../lib/utils";
-import LoadingSpinner from "../LoadingSpinner";
+
 export function StatCard({
   title,
   value,
@@ -29,7 +29,7 @@ export function StatCard({
             {value}
           </h3>
 
-          {change !== undefined && (
+          {change && (
             <div className="flex items-center gap-2 mt-3">
               <span
                 className={`

@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema(
       default: false,
       select: false,
     },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+      select: false
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -87,6 +92,17 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    ordersStats: {
+      count: {
+        type: Number,
+        default: 0
+      },
+      totalSpent: {
+        type: Number,
+        default: 0
+      },
+      lastUpdated: { type: Date }
+    }
   },
   {
     timestamps: true,
@@ -96,7 +112,7 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ googleId: 1 });
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 12);
+    this.password = bcrypt.hash(this.password, 12);
     this.passwordChangedAt = Date.now() - 1000;
   }
   next();
@@ -130,6 +146,9 @@ userSchema.methods.makeResetPasswordToken = function () {
 };
 
 userSchema.pre(/^find/, function (next) {
+  if (this.options.bypassDeletedFilter) { //for admin usage
+    return next();
+  }
   this.find({ isDeleted: false });
   next();
 });

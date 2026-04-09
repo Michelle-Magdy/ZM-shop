@@ -98,6 +98,7 @@ export const getOne = (Model, filter = null, populateOptions = null) =>
   });
 export const getAll = (Model, config = {}) =>
   catchAsync(async (req, res, next) => {
+    const { populateOptions, extraSelections, ...baseFilter } = config;
     const features = new APIFeatures(Model, req.query)
       .filter()
       .search()
@@ -107,7 +108,13 @@ export const getAll = (Model, config = {}) =>
       .limitFields()
       .paginate();
 
-    const result = await features.execute(Model, config);
+    if (populateOptions)
+      features.populate(populateOptions);
+
+    if (extraSelections)
+      features.extraSelect(extraSelections);
+
+    const result = await features.execute(Model, baseFilter);
 
     res.status(200).json({
       status: "Success",

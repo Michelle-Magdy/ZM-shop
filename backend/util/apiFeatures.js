@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
@@ -8,6 +10,8 @@ class APIFeatures {
     this.page = 1;
     this.limit = 20;
     this.skip = 0;
+    this.populateOptions = null;
+    this.extraSelections = null;
   }
 
   // =============================
@@ -47,29 +51,36 @@ class APIFeatures {
 
     let parsed = JSON.parse(queryStr);
 
-    const convertNumbers = (obj) => {
+    const convertTypes = (obj) => {
       for (let key in obj) {
         if (typeof obj[key] === "object" && obj[key] !== null) {
-          convertNumbers(obj[key]);
+          convertTypes(obj[key]);
         } else if (!isNaN(obj[key]) && obj[key] !== "" && obj[key] !== null) {
           obj[key] = Number(obj[key]);
+        } else if (obj[key] === "true") {
+          obj[key] = true;
+        } else if (obj[key] === "false") {
+          obj[key] = false;
+        } else if (mongoose.Types.ObjectId.isValid(obj[key])) {
+          obj[key] = new mongoose.Types.ObjectId(obj[key]);
         }
       }
     };
 
-    convertNumbers(parsed);
+    convertTypes(parsed);
     this.mongoFilter = { ...this.mongoFilter, ...parsed };
 
     return this;
   }
 
   // =============================
-  // 2️⃣ SEARCH (title + description)
+  // 2️⃣ SEARCH
   // =============================
-  search() {
+  search(searchFields) {
     if (this.queryString.search) {
-      const searchQuery = {
-        $or: [
+      const searchQuery = !searchFields ? {
+        //Default title and description
+        $or: [  
           {
             title: {
               $regex: this.queryString.search,
@@ -83,6 +94,14 @@ class APIFeatures {
             },
           },
         ],
+      } : {
+        $or: searchFields.map(field => ({
+          [field]: {
+            $regex: this.queryString.search,
+            $options: "i"
+          }
+        }
+        ))
       };
 
       this._addToFilter(searchQuery);
@@ -263,11 +282,34 @@ class APIFeatures {
   }
 
   // =============================
-  // 8️⃣ EXECUTE QUERY
+  // 8️⃣ POPULATE FIELDS
+  // =============================
+
+  populate(fields) {
+    if (fields && fields.length > 0) {
+      this.populateOptions = fields;
+    }
+    return this;
+  }
+
+  // =============================
+  // 9️⃣SELECT FIELDS
+  // =============================
+  //must be called after limitFields to avoid being overridden
+  extraSelect(fields) {
+    if (fields) {
+      this.extraSelections = fields;
+    }
+    return this;
+  }
+
+  // =============================
+  // 🔟 EXECUTE QUERY
   // =============================
   async execute(Model, baseFilter = {}) {
+    const { bypassDeletedFilter, ...actualFilter } = baseFilter;
     const finalFilter = {
-      ...baseFilter,
+      ...actualFilter,
       ...this.mongoFilter,
     };
 
@@ -275,21 +317,33 @@ class APIFeatures {
       finalFilter.$and = [...baseFilter.$and, ...this.mongoFilter.$and];
     }
 
-    console.log("=== FINAL FILTER ===");
-    console.log(JSON.stringify(finalFilter, null, 2));
+    let selectFields = this.fields;
+    if (this.extraSelections) {
+      if (this.fields)
+        selectFields = `${this.fields} ${this.extraSelections}`;
+      else
+        selectFields = this.extraSelections;
+    }
 
-    const query = Model.find(finalFilter)
+
+    let query = Model.find(finalFilter, null, {
+      bypassDeletedFilter: bypassDeletedFilter || false
+    })
       .sort(this.sortBy)
-      .select(this.fields)
+      .select(selectFields)
       .skip(this.skip)
       .limit(this.limit);
+
+    if (this.populateOptions) {
+      this.populateOptions.forEach(option => {
+        query.populate(option[0], option[1]);
+      })
+    }
 
     const [documents, totalCount] = await Promise.all([
       query,
       Model.countDocuments(finalFilter),
     ]);
-
-    console.log(`Found ${totalCount} documents`);
 
     return {
       documents,

@@ -18,7 +18,6 @@ export const getChartData = async (from, to, groupBy = "day") => {
     const res = await apiClient.get(
       `${API_BASE_URL}/admin/dashboard/chart?from=${from}&to=${to}&groupBy=${groupBy}`,
     );
-    console.log(from, to, res.data);
 
     return res.data;
   } catch (err) {

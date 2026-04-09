@@ -3,6 +3,7 @@ import Order from "../models/order.model.js";
 import AppError from "../util/appError.js";
 import Product from "../models/product.model.js";
 import stripe from "../stripeConfig.js";
+import User from "../models/user.model.js";
 
 export const createOrderService = async (
     userId,
@@ -16,10 +17,12 @@ export const createOrderService = async (
     session.startTransaction();
 
     try {
+        //calculate total price
         let totalPrice = cart.items.reduce((acc, item) => {
             return acc + item.variant.price * item.quantity;
         }, 0);
 
+        //check for coupon in cart
         if (cart.coupon?.couponId) {
             const coupon = cart.coupon.couponId;
 
@@ -33,6 +36,7 @@ export const createOrderService = async (
             totalPrice = totalPrice - discountAmount;
         }
 
+        //create full order data
         const orderData = {
             userId,
             items: cart.items.map(item => item.toObject()),
@@ -61,9 +65,25 @@ export const createOrderService = async (
             orderData.stripePaymentIntentId = stripePaymentIntentId;
         }
 
+        //create order
         const [order] = await Order.create([orderData], { session });
 
+        //update user order stats
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: {
+                    'ordersStats.count': 1,
+                    'ordersStats.totalSpent': totalPrice
+                },
+                $set: {
+                    'ordersStats.lastUpdated': new Date()
+                }
+            },
+            { session }
+        );
 
+        //update stock
         for (const item of cart.items) {
             const result = await Product.updateOne(
                 {
@@ -80,6 +100,7 @@ export const createOrderService = async (
             }
         }
 
+        //empty cart
         cart.items = [];
         cart.coupon = undefined;
         await cart.save({ session });
@@ -107,6 +128,7 @@ export const cancelOrderService = async (userId, orderId) => {
         if (!order)
             throw new AppError("Order not found or cannot be cancelled.", 400);
 
+        //update stock
         for (const item of order.items) {
             await Product.updateOne(
                 { _id: item.productId, "variants.sku": item.variant.sku },
@@ -114,8 +136,21 @@ export const cancelOrderService = async (userId, orderId) => {
                 { session }
             );
         }
+        //update order status
         order.orderStatus = "CANCELLED";
 
+        //update user orders stats
+        await User.findByIdAndUpdate(userId, {
+            $inc: {
+                'ordersStats.count': -1,
+                'ordersStats.totalSpent': -order.totalPrice
+            },
+            $set: {
+                'ordersStats.lastUpdated': new Date()
+            }
+        }, { session });
+
+        //stripe refund
         if (order.paymentMethod === "ONLINE" && order.paymentStatus === "PAID" && order.refundStatus === "NONE") {
             order.refundStatus = "PENDING";
             await order.save({ session });
