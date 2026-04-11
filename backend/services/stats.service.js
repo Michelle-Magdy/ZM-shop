@@ -34,7 +34,7 @@ export const getMonthlyUsersStats = async () => {
                 isNewLastMonth: {
                     $and: [
                         { $gte: ['$createdAt', startOfLastMonth] },
-                        { $lte: ['createdAt', startOfMonth] }
+                        { $lte: ['$createdAt', startOfMonth] }
                     ]
                 },
                 isAdmin: {

@@ -1,10 +1,10 @@
 import {
     FaCircle,
-    FaEllipsisV,
     FaChevronLeft,
     FaChevronRight,
 } from "react-icons/fa";
 import LoadingSpinner from "../../LoadingSpinner.jsx";
+import ActionButton from "./ActionButton.jsx";
 
 // Helper functions
 const getRoleBadgeStyle = (role) => {
@@ -71,7 +71,12 @@ const getUserColor = (roles) => {
     return getRoleColor(primaryRole);
 };
 
-export default function UsersTableBodyView({ data, loading, error, onPageChange }) {
+export default function UsersTableBodyView({
+    data,
+    loading,
+    error,
+    onPageChange,
+}) {
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -99,7 +104,7 @@ export default function UsersTableBodyView({ data, loading, error, onPageChange 
     const { data: users, totalCount, currentPage, totalPages } = data;
     const startRange = (currentPage - 1) * users.length + 1;
     const endRange = startRange + users.length - 1;
-
+    
     return (
         <div className="bg-(--color-card) rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -191,9 +196,7 @@ export default function UsersTableBodyView({ data, loading, error, onPageChange 
                                         )}
                                     </td>
                                     <td className="py-4 px-6 text-center">
-                                        <button className="text-secondary-text hover:text-(--color-primary-text) transition-colors p-1">
-                                            <FaEllipsisV className="w-4 h-4" />
-                                        </button>
+                                        <ActionButton userId={user._id} status={status}/>
                                     </td>
                                 </tr>
                             );

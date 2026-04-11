@@ -29,7 +29,7 @@ export function StatCard({
             {value}
           </h3>
 
-          {change && (
+          {change != null && (
             <div className="flex items-center gap-2 mt-3">
               <span
                 className={`

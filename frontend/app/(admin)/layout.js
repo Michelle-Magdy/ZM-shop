@@ -27,6 +27,7 @@ export default function RootLayout({ children }) {
               <main className="flex-1 ml-64 p-8 overflow-auto">{children}</main>
               <Toaster position="top-center" />
             </div>
+            <div id="modal-root" className="relative z-9999" />
           </Provider>
         </CategoriesWrapper>
       </body>

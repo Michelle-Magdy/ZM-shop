@@ -1,4 +1,3 @@
-import { log } from "console";
 import APIFeatures from "../util/apiFeatures.js";
 import catchAsync from "../util/catchAsync.js";
 
@@ -12,7 +11,6 @@ export const deleteOne = (Model) =>
     });
   });
 
-import mongoose from "mongoose";
 
 export const updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
@@ -31,7 +29,8 @@ export const updateOne = (Model) =>
       new: true,
       runValidators: true,
     });
-
+    
+    
     res.status(200).json({
       status: "Success",
       data: {

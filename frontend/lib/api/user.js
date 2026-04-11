@@ -54,3 +54,13 @@ export const getUsers = async (page, search, role, status) => {
   const response = await apiClient.get(url);
   return response.data;
 };
+
+export const updateUser = async (id, data) => {
+  const response = await apiClient.patch(`users/${id}`, data);
+  return response.data;
+}
+
+export const addUser = async (data) => {
+  const response = await apiClient.post("users", data);
+  return response.data;
+}

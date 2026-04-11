@@ -4,7 +4,12 @@ import { StatCard } from "../StateCard.jsx";
 
 export default function UsersStatsGrid({ stats }) {
     const newUsersPercent =
-        ((stats.newThisMonth - stats.newLastMonth) / stats.newLastMonth) * 100;
+        stats.newLastMonth === 0
+            ? stats.newThisMonth > 0
+                ? 100
+                : 0 // or null, or 'N/A'
+            : ((stats.newThisMonth - stats.newLastMonth) / stats.newLastMonth) *
+              100;
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
