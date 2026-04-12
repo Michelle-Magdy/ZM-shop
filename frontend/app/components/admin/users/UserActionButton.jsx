@@ -5,7 +5,7 @@ import { updateUser } from "../../../../lib/api/user.js";
 import { toast } from "react-hot-toast"; // or your toast library
 import { useAuth } from "../../../context/AuthenticationProvider.jsx";
 
-export default function ActionButton({ userId, status }) {
+export default function UserActionButton({ userId, status }) {
     // status => active, suspended or deleted
     const { user: currentUser } = useAuth();
     const isCurrentUser = userId === currentUser?.id;

@@ -4,7 +4,7 @@ import {
     FaChevronRight,
 } from "react-icons/fa";
 import LoadingSpinner from "../../LoadingSpinner.jsx";
-import ActionButton from "./ActionButton.jsx";
+import ActionButton from "./UserActionButton.jsx";
 
 // Helper functions
 const getRoleBadgeStyle = (role) => {

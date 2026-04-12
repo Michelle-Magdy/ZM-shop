@@ -26,6 +26,7 @@ export default function UsersPage() {
                 <UsersStatsGridWrapper />
             </Suspense>
 
+            {/* Users table */}
             <UsersTable />
         </div>
     );

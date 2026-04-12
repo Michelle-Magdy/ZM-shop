@@ -6,6 +6,7 @@ import {
 } from "../services/order.service.js";
 import catchAsync from "../util/catchAsync.js";
 import AppError from "../util/appError.js";
+import APIFeatures from "../util/apiFeatures.js";
 
 export const getUserOrders = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
@@ -128,4 +129,168 @@ export const userOrderStats = catchAsync(async (req, res, next) => {
   };
 
   res.status(200).json({ status: "success", data: result });
+});
+
+
+export const adminOrdersStats = catchAsync(async (req, res, next) => {
+  const now = new Date();
+
+  const stats = await Order.aggregate([
+    {
+      $facet: {
+        // Status breakdown (all time)
+        byStatus: [
+          {
+            $group: {
+              _id: "$orderStatus",
+              count: { $sum: 1 }
+            }
+          }
+        ],
+
+        // Total orders (all time)
+        totalOrders: [
+          { $count: "total" }
+        ]
+      }
+    },
+
+    {
+      $project: {
+        totalOrders: { $arrayElemAt: ["$totalOrders.total", 0] },
+        pending: {
+          $arrayElemAt: [
+            {
+              $filter: {
+                input: "$byStatus",
+                cond: { $eq: ["$$this._id", "PENDING"] }
+              }
+            },
+            0
+          ]
+        },
+        shipped: {
+          $arrayElemAt: [
+            {
+              $filter: {
+                input: "$byStatus",
+                cond: { $eq: ["$$this._id", "SHIPPED"] }
+              }
+            },
+            0
+          ]
+        },
+        delivered: {
+          $arrayElemAt: [
+            {
+              $filter: {
+                input: "$byStatus",
+                cond: { $eq: ["$$this._id", "DELIVERED"] }
+              }
+            },
+            0
+          ]
+        },
+        cancelled: {
+          $arrayElemAt: [
+            {
+              $filter: {
+                input: "$byStatus",
+                cond: { $eq: ["$$this._id", "CANCELLED"] }
+              }
+            },
+            0
+          ]
+        }
+      }
+    },
+
+    {
+      $project: {
+        totalOrders: { $ifNull: ["$totalOrders", 0] },
+        pending: { $ifNull: ["$pending.count", 0] },
+        shipped: { $ifNull: ["$shipped.count", 0] },
+        delivered: { $ifNull: ["$delivered.count", 0] },
+        cancelled: { $ifNull: ["$cancelled.count", 0] }
+      }
+    }
+  ]);
+
+  const result = stats[0] || {
+    totalOrders: 0,
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0
+  };
+
+  res.status(200).json({
+    status: "success",
+    data: result
+  });
+});
+
+export const getOrders = catchAsync(async (req, res, next) => {
+  // Create fresh APIFeatures instance with modified query
+  const features = new APIFeatures(Order, req.query)
+    .filter()
+    .search(["orderNumber", "phone"])
+    .paginate()
+    .populate([["userId", "name"]]);
+
+  const result = await features.execute(Order);
+
+  res.status(200).json({
+    status: "Success",
+    results: result.documents.length,
+    totalCount: result.totalCount,
+    totalPages: result.totalPages,
+    currentPage: result.currentPage,
+    data: result.documents,
+  });
+});
+
+
+export const updateOrderStatus = catchAsync(async (req, res, next) => {
+  const { orderStatus } = req.body;
+  const { orderId } = req.params;
+
+  if (orderStatus === "CANCELLED") {
+    await cancelOrderService(null, orderId, true);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Order cancelled successfully.",
+    });
+  }
+
+  const allowedStatuses = ["PENDING", "SHIPPED", "DELIVERED"];
+  if (!allowedStatuses.includes(orderStatus)) {
+    return next(new AppError("Invalid order status.", 400));
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) return next(new AppError("Order not found", 404));
+
+  const allowedTransitions = {
+    PENDING: ["SHIPPED"],
+    SHIPPED: ["DELIVERED"],
+    DELIVERED: [],
+    CANCELLED: [],
+  };
+
+  if (!allowedTransitions[order.orderStatus].includes(orderStatus)) {
+    return next(new AppError("Invalid status transition", 400));
+  }
+
+  order.orderStatus = orderStatus;
+  if(orderStatus === "DELIVERED" && order.paymentMethod === "CASH")
+    order.paymentStatus = "PAID";
+  
+  await order.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Order status updated successfully.",
+  });
 });

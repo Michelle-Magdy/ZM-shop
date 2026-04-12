@@ -1,8 +1,6 @@
 "use client";
 
-import { Package, Truck, CheckCircle2, Clock } from "lucide-react";
-import OrderCard from "@/app/components/account/Orders/OrderCard";
-import { useQuery } from "@tanstack/react-query";
+import { Package } from "lucide-react";
 import OrderStats from "@/app/components/account/Orders/OrderStats";
 import { useAuth } from "@/app/context/AuthenticationProvider";
 import OrderList from "@/app/components/account/Orders/OrderList";

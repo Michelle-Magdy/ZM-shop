@@ -116,14 +116,16 @@ export const createOrderService = async (
     }
 };
 
-export const cancelOrderService = async (userId, orderId) => {
+export const cancelOrderService = async (userId, orderId, adminUsage = false) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const order = await Order.findOne(
-            { _id: orderId, userId, orderStatus: "PENDING" }
-        ).session(session);
+        const query = adminUsage
+            ? { _id: orderId, orderStatus: { $in: ["PENDING", "SHIPPED"] } }
+            : { _id: orderId, userId, orderStatus: "PENDING" };
+
+        const order = await Order.findOne(query).session(session);
 
         if (!order)
             throw new AppError("Order not found or cannot be cancelled.", 400);
@@ -140,6 +142,9 @@ export const cancelOrderService = async (userId, orderId) => {
         order.orderStatus = "CANCELLED";
 
         //update user orders stats
+        if(adminUsage)
+            userId = order.userId;
+
         await User.findByIdAndUpdate(userId, {
             $inc: {
                 'ordersStats.count': -1,
@@ -183,3 +188,4 @@ export const cancelOrderService = async (userId, orderId) => {
         session.endSession();
     }
 }
+
