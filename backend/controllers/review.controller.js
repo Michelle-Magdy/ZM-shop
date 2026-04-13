@@ -3,6 +3,8 @@ import AppError from "../util/appError.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, deleteOne, getAll, updateOne } from "./factoryHandler.js";
 import Order from "../models/order.model.js";
+import reportEmitter from "../util/reportEvents.js";
+import ReviewReport from "../models/reviewReport.model.js";
 
 export const productReviewSanitizer = (req, res, next) => {
   const fields = ["rating", "title", "description"];
@@ -122,3 +124,56 @@ export const handleHelpfulReview = catchAsync(async (req, res, next) => {
     data: { review }
   });
 });
+
+export const handleReportReview = catchAsync(async (req, res, next) => {
+  const userId = req.user._id;
+  const { reviewId } = req.params;
+  const { reason } = req.body;
+
+  const review = await Review.findById(reviewId)
+    .populate('productId', 'title');
+
+  if (!review) {
+    return next(new AppError('Review not found', 404));
+  }
+
+  // Prevent duplicate
+  const existing = await ReviewReport.findOne({
+    reviewId,
+    reporterId: req.user._id
+  });
+
+
+  if (existing) {
+    return next(new AppError("You already reported this review.", 401));
+  }
+
+  //Prevent reporting own review
+  if (review.userId === userId) {
+    return next(new AppError("You can't report your own review.", 401));
+  }
+
+  // Create with verified denormalized data
+  const report = await ReviewReport.create({
+    reviewId: review._id,
+    reporterId: userId,
+    reason,
+    productTitle: review.productId.title,
+    reviewAuthorName: review.userId.name,
+    reporterName: req.user.name,
+    reviewTitle: review.title
+  });
+
+  // Emit event with ready data
+  reportEmitter.emit('new-report', {
+    id: report._id,
+    reporterName: req.user.name,
+    reviewAuthorName: report.reviewAuthorName,
+    productTitle: report.productTitle,
+    reviewTitle: report.reviewTitle,
+    reason: report.reason,
+    timestamp: report.createdAt
+  });
+
+  res.status(201).json({ status: 'success', data: report });
+})

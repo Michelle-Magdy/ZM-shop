@@ -47,3 +47,8 @@ export const deleteReview = async (reviewId) => {
         throw err;
     }
 }
+
+export const reportReview = async (reviewId, reason) => {
+    const res = await apiClient.patch(`reviews/${reviewId}/report`, { reason });
+    return res.data;
+}

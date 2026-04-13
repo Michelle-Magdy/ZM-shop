@@ -8,6 +8,7 @@ import { getDisplayedHelpfulCount } from "@/util/ReviewHelper";
 import toast from "react-hot-toast";
 import ReviewDialog from "./ReviewDialogue.jsx";
 import ReviewDelete from "./ReviewDelete.jsx";
+import ReportReviewButton from "./ReportReviewButton.jsx";
 
 //Delete, edit, report not working yet
 
@@ -127,9 +128,7 @@ export default function ReviewCard({ review, isUserReview }) {
               <ReviewDelete reviewId={reviewId} />
             </>
           ) : (
-            <button className="text-sm text-secondary-text hover:text-(--color-primary-text) transition-colors">
-              Report
-            </button>
+            <ReportReviewButton reviewId={reviewId}/>
           )}
         </div>
       </div>

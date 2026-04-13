@@ -10,6 +10,7 @@ import {
   canAddReview,
   handleHelpfulReview,
   canEditReview,
+  handleReportReview,
 } from "../controllers/review.controller.js";
 import { protect } from "../controllers/auth.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
@@ -20,6 +21,7 @@ router.route("/:reviewId")
   .patch(checkValidMongoId("reviewId"), protect, canEditReview, productReviewSanitizer, includeReviewParam, editProductReview);
 
 router.patch("/:reviewId/helpful", checkValidMongoId("reviewId"), protect, handleHelpfulReview);
+router.patch("/:reviewId/report", checkValidMongoId("reviewId"), protect, handleReportReview)
 
 router
   .route("/product/:productId")

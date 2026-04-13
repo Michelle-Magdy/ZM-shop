@@ -32,11 +32,15 @@ const formatUser = (user) => ({
 export const login = catchAsync(async (req, res, next) => {
   const { email, password, rememberMe = false } = req.body;
   const user = await User.findOne({ email })
-    .select("+password")
+    .select("+password +isSuspended")
     .populate("roles");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
+  }
+
+  if(user.isSuspended){
+    return next(new AppError("Your account was suspended by admin.", 401));
   }
 
   user.lastLogin = new Date();

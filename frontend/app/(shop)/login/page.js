@@ -51,7 +51,7 @@ export default function Login() {
         return Promise.reject(new Error("Already authenticated"));
       }
     },
-    onError: (e) => setError("general", { message: e.response?.data?.message }),
+    onError: (e) => setError("general", { message: e.message }),
     onSuccess: (res) => {
       setUser(res.user);
       toast.success("Welcome back " + res.user.name);
