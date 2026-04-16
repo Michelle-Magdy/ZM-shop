@@ -3,7 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import Image from "next/image";
-import { PRODUCT_IMAGE_URL } from "@/lib/apiConfig";
+import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import {
   FaTrash,
   FaShoppingCart,
@@ -103,7 +103,7 @@ export default function WishlistPage() {
               className="relative w-full sm:w-24 h-48 sm:h-24 shrink-0 rounded-lg overflow-hidden bg-badge/20"
             >
               <Image
-                src={`${PRODUCT_IMAGE_URL}/products/${item.coverImage}`}
+                src={`${IMAGES_BASE_URL}/products/${item.coverImage}`}
                 alt={item.title}
                 fill
                 className="object-cover"

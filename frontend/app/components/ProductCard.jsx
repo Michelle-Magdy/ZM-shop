@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "./home/LikeButton";
 import { FaStar } from "react-icons/fa";
-import { PRODUCT_IMAGE_URL } from "@/lib/apiConfig";
+import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import AddToCartButton from "../UI/AddToCartButton";
 
 export default function ProductCard({ product }) {
@@ -30,7 +30,7 @@ export default function ProductCard({ product }) {
         <Image
           src={
             product?.coverImage
-              ? `${PRODUCT_IMAGE_URL}/products/${product.coverImage}`
+              ? `${IMAGES_BASE_URL}/products/${product.coverImage}`
               : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg"
           }
           fill

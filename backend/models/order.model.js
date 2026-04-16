@@ -5,7 +5,6 @@ const orderSchema = new mongoose.Schema(
   {
     orderNumber: {
       type: String,
-      unique: true,
       index: true,
     },
     userId: {
@@ -66,8 +65,8 @@ const orderSchema = new mongoose.Schema(
     },
     refundStatus: {
       type: String,
-      enum: ['NONE', 'PENDING', 'SUCCESS', 'FAILED'],
-      default: 'NONE'
+      enum: ["NONE", "PENDING", "SUCCESS", "FAILED"],
+      default: "NONE",
     },
     refundError: {
       type: String,
@@ -145,7 +144,6 @@ orderSchema.pre("save", async function (next) {
 });
 
 orderSchema.index({ userId: 1 });
-orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ "address.location": "2dsphere" });
 
 const Order = mongoose.model("Order", orderSchema);

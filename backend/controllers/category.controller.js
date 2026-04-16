@@ -6,8 +6,10 @@ import {
 } from "../util/category.utils.js";
 import catchAsync from "../util/catchAsync.js";
 import { createOne, updateOne } from "./factoryHandler.js";
-import { softDeleteCategory } from "../services/category.service.js";
-import multer from "multer";
+import {
+  softDeleteCategory,
+  updateDescendantPaths,
+} from "../services/category.service.js";
 import Product from "../models/product.model.js";
 import sharp from "sharp";
 import { upload } from "../config/multer.config.js";
@@ -35,41 +37,47 @@ export const resizeImage = catchAsync(async (req, res, next) => {
 });
 
 export const deleteOldImage = catchAsync(async (req, res, next) => {
-  const { identifier } = req.params;
-  let category;
-  if (mongoose.Types.ObjectId.isValid(identifier)) {
-    category = await Category.findById(identifier);
-  } else {
-    category = await Category.findOne({ slug: identifier });
-  }
+  const category = req.currentCategory;
 
   if (!category) {
     if (req.body.image) deleteFile("categories", req.body.image);
-    return next(new AppError("category is not found", 404));
+    return next(new AppError("category not found", 404));
   }
-  if (category.parent && req.body.image) {
+
+  // check if add image to subcategory
+  if (req.body.parent !== "" && req.body.image) {
     deleteFile("categories", req.body.image);
     return next(new AppError("cannot add image to subcategory", 500));
   }
 
-  if (req.body.image && category.image) {
+  // check if the category become sub and has image
+  if (
+    (req.body.image && category.image) ||
+    (req.body.parent !== "" && category.image) ||
+    (category.image && category.parent)
+  ) {
     deleteFile("categories", category.image);
   }
-  req.body.currentCategory = category;
+
+  if (req.body.parent !== "" && category.image) {
+    req.body.image = "";
+  }
+  req.currentCategory = category;
 
   next();
 });
 
 export const getOneCategory = catchAsync(async (req, res, next) => {
-  const { identifier } = req.params;
+  const { id } = req.params;
   let category;
-  if (mongoose.Types.ObjectId.isValid(identifier)) {
+  if (mongoose.Types.ObjectId.isValid(id)) {
     category = await Category.findOne({
-      slug: identifier,
+      _id: id,
     }).lean();
   } else {
-    category = await Category.findOne({ slug: identifier }).lean();
+    category = await Category.findOne({ slug: id }).lean();
   }
+  if (!category) throw new AppError("cannot find this category", 404);
 
   const tree = await getAllSubcategories(category._id);
   if (!tree || !category)
@@ -84,6 +92,7 @@ export const getOneCategory = catchAsync(async (req, res, next) => {
     data: returnCategory,
   });
 });
+
 export const getCategoryTree = catchAsync(async (req, res, next) => {
   const tree = await buildCategoryTree();
   if (!tree) return next(new AppError("failed to get the category tree", 500));
@@ -96,23 +105,76 @@ export const createCategory = catchAsync(async (req, res, next) => {
   const { name, parent, description, image } = req.body;
   const newCategory = {
     name,
-    parent,
+    parent: parent && parent !== "" ? parent : null,
     description,
   };
   if (!parent) {
     newCategory.image = image;
-  } else {
+  } else if (image) {
     deleteFile("categories", image);
   }
 
   return createOne(Category, newCategory)(req, res, next);
 });
-export const updateCategory = updateOne(Category);
+
+export const updateCategoryHandler = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // initiate a transaction ACID
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const category = req.currentCategory;
+    const oldParent = category.parent;
+    const newParent =
+      req.body.parent !== undefined
+        ? req.body.parent === ""
+          ? null
+          : req.body.parent
+        : oldParent;
+    const oldName = category.name;
+    const newName = req.body.name !== undefined ? req.body.name : oldName;
+
+    const parentChanged = oldParent?.toString() !== newParent;
+
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id,
+      {
+        parent: newParent,
+        name: newName,
+        description: req.body.description,
+        image: req.body.image,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (parentChanged || newName !== oldName) {
+      await updateDescendantPaths(updatedCategory, session);
+    }
+
+    await session.commitTransaction();
+
+    res.status(200).json({
+      message: "updated category successfully!",
+      data: updatedCategory,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    next(err);
+  } finally {
+    session.endSession();
+  }
+});
+
 export const deleteCategory = catchAsync(async (req, res, next) => {
-  const { identifier } = req.params;
+  const { id } = req.params;
   let result;
-  if (mongoose.Types.ObjectId.isValid(identifier)) {
-    result = await softDeleteCategory();
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    result = await softDeleteCategory(id);
   }
   if (!result) return next(new AppError("cannot delete this category", 500));
   res.status(200).json(result);
@@ -197,6 +259,39 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
     (attr) => (attr.options = [...attr.options]),
   );
 
-  console.log("filters", filters);
   res.json(filters);
+});
+
+export const getCategoryStats = catchAsync(async (req, res, next) => {
+  const stats = await Category.aggregate([
+    {
+      $facet: {
+        totalCategories: [
+          { $match: { isDeleted: false } },
+          { $count: "count" },
+        ],
+        rootCategories: [
+          {
+            $match: {
+              isDeleted: false,
+              parent: null,
+            },
+          },
+          { $count: "count" },
+        ],
+      },
+    },
+    {
+      $project: {
+        totalCategories: {
+          $ifNull: [{ $arrayElemAt: ["$totalCategories.count", 0] }, 0],
+        },
+        rootCategories: {
+          $ifNull: [{ $arrayElemAt: ["$rootCategories.count", 0] }, 0],
+        },
+      },
+    },
+  ]);
+
+  return res.status(200).json({ message: "category stats", stats });
 });

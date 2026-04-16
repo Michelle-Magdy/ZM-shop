@@ -72,7 +72,7 @@ const userSchema = new mongoose.Schema(
     isSuspended: {
       type: Boolean,
       default: false,
-      select: false
+      select: false,
     },
     isVerified: {
       type: Boolean,
@@ -89,20 +89,19 @@ const userSchema = new mongoose.Schema(
     verificationTokenExpiresAt: { type: Date, select: false },
     googleId: {
       type: String,
-      unique: true,
       sparse: true,
     },
     ordersStats: {
       count: {
         type: Number,
-        default: 0
+        default: 0,
       },
       totalSpent: {
         type: Number,
-        default: 0
+        default: 0,
       },
-      lastUpdated: { type: Date }
-    }
+      lastUpdated: { type: Date },
+    },
   },
   {
     timestamps: true,
@@ -146,7 +145,8 @@ userSchema.methods.makeResetPasswordToken = function () {
 };
 
 userSchema.pre(/^find/, function (next) {
-  if (this.options.bypassDeletedFilter) { //for admin usage
+  if (this.options.bypassDeletedFilter) {
+    //for admin usage
     return next();
   }
   this.find({ isDeleted: false });

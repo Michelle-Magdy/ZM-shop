@@ -99,7 +99,7 @@ const productSchema = new mongoose.Schema(
       isActive: { type: Boolean, default: true },
     },
 
-    slug: { type: String, unique: true },
+    slug: { type: String },
     isDeleted: { type: Boolean, default: false },
     isBestSeller: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
@@ -148,7 +148,7 @@ productSchema.virtual("hasVariants").get(function () {
 });
 
 productSchema.virtual("formattedPrice").get(function () {
-  return (this.basePrice / 100).toFixed(2);
+  return (this.price / 100).toFixed(2);
 });
 
 productSchema.virtual("priceRange").get(function () {

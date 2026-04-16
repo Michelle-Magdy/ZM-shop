@@ -10,7 +10,7 @@ import {
 import OrderStatusTimeline from "@/app/components/account/Orders/OrderStatusTimeline";
 import { formatPrice } from "@/util/formatPrice";
 import { formatDate } from "@/util/formatDate";
-import { PRODUCT_IMAGE_URL } from "@/lib/apiConfig";
+import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import Image from "next/image";
 
 export default function OrderCard({ order }) {
@@ -85,7 +85,7 @@ export default function OrderCard({ order }) {
             <Image
               src={
                 mainItem?.coverImage
-                  ? `${PRODUCT_IMAGE_URL}/products/${mainItem.coverImage}`
+                  ? `${IMAGES_BASE_URL}/products/${mainItem.coverImage}`
                   : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg"
               }
               fill
@@ -155,7 +155,7 @@ export default function OrderCard({ order }) {
                   <Image
                     src={
                       mainItem?.coverImage
-                        ? `${PRODUCT_IMAGE_URL}/products/${mainItem.coverImage}`
+                        ? `${IMAGES_BASE_URL}/products/${mainItem.coverImage}`
                         : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg"
                     }
                     fill
