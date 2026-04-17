@@ -162,6 +162,9 @@ productSchema.virtual("priceRange").get(function () {
   };
 });
 
+productSchema.set("toJSON", { virtuals: true });
+productSchema.set("toObject", { virtuals: true });
+
 // indeces
 productSchema.index({ status: 1, categoryIds: 1, isDeleted: 1 });
 productSchema.index({ status: 1, isDeleted: 1, "ratingStats.average": -1 });
@@ -233,6 +236,29 @@ productSchema.pre("save", async function (next) {
   //   } : null;
   // }
 
+  next();
+});
+
+productSchema.pre("findOneAndUpdate", async function (next) {
+  const update = this.getUpdate();
+  if (update.isDeleted !== undefined) {
+    return next();
+  }
+
+  if (update.title) {
+    let baseSlug = slugify(update.title, {
+      lower: true,
+      strict: true, // strip special characters except replacements
+      remove: /[*+~.()'"!:@]/g,
+    });
+    let slug = baseSlug;
+    let counter = 1;
+    while (await this.model.findOne({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+    update.slug = slug;
+  }
+  this.setUpdate(update);
   next();
 });
 

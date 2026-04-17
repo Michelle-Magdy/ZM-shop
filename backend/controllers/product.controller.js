@@ -13,6 +13,7 @@ import catchAsync from "../util/catchAsync.js";
 import { deleteFile } from "../util/deleteFile.js";
 import { findCategoryDescendantsIDs } from "../util/category.utils.js";
 import Category from "../models/category.model.js";
+import AppError from "../util/appError.js";
 export const productSanitizer = (req, res, next) => {
   // List of allowed fields from your schema
   const allowedFields = [
@@ -60,55 +61,59 @@ export const uploadImages = upload.fields([
 ]);
 
 export const resizeImages = catchAsync(async (req, res, next) => {
-  if (!req.files || !req.files.images || !req.files.coverImage) {
+  if (!req.files) {
     return next();
   }
 
-  const coverImageName = `product-${Date.now()}-cover.jpeg`;
+  if (req.files.coverImage) {
+    const coverImageName = `product-${Date.now()}-cover.jpeg`;
 
-  await sharp(req.files.coverImage[0].buffer)
-    .resize(1000, 1000)
-    .toFormat("jpeg")
-    .jpeg({
-      quality: 90,
-    })
-    .toFile(`backend/public/images/products/${coverImageName}`);
-  req.body.coverImage = coverImageName;
-  let images = [];
-  await Promise.all(
-    req.files.images.map(async (image, index) => {
-      const imageName = `product-${Date.now()}-${index}.jpeg`;
+    await sharp(req.files.coverImage[0].buffer)
+      .resize(1000, 1000)
+      .toFormat("jpeg")
+      .jpeg({
+        quality: 90,
+      })
+      .toFile(`backend/public/images/products/${coverImageName}`);
+    req.body.coverImage = coverImageName;
+  }
 
-      await sharp(image.buffer)
-        .resize(900, 900)
-        .toFormat("jpeg")
-        .jpeg({
-          quality: 90,
-        })
-        .toFile(`backend/public/images/products/${imageName}`);
-      images.push(imageName);
-    }),
-  );
-  req.body.images = images;
+  if (req.files.images) {
+    let images = [];
+    await Promise.all(
+      req.files.images.map(async (image, index) => {
+        const imageName = `product-${Date.now()}-${index}.jpeg`;
+
+        await sharp(image.buffer)
+          .resize(900, 900)
+          .toFormat("jpeg")
+          .jpeg({
+            quality: 90,
+          })
+          .toFile(`backend/public/images/products/${imageName}`);
+        images.push(imageName);
+      }),
+    );
+    req.body.images = images;
+  }
   next();
 });
 
 export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
-  const param = req.params.slug;
+  const { slug } = req.params;
 
   let filter;
 
-  if (mongoose.Types.ObjectId.isValid(param)) {
-    filter = { _id: param };
+  if (mongoose.Types.ObjectId.isValid(slug)) {
+    filter = { _id: slug };
   } else {
-    filter = { slug: param };
+    filter = { slug: slug };
   }
-
   // 1. Get current product
   const product = await Product.findOne(filter).select("+coverImage +images");
 
+  // Clean up newly uploaded files if product not found
   if (!product) {
-    // Clean up newly uploaded files if product not found
     if (req.body.coverImage) deleteFile("products", req.body.coverImage);
 
     if (req.body.images) {
@@ -117,23 +122,20 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
       });
     }
 
-    return next(new Error("No product found with that identifier"));
+    return next(new AppError("Product not found", 404));
   }
 
   // 2. Delete old cover image if new one uploaded
   if (req.body.coverImage && product.coverImage) {
     deleteFile("products", product.coverImage);
   }
-
   // 3. Delete old images if new ones uploaded
-  if (
-    req.body.images &&
-    req.body.images.length > 0 &&
-    product.images.length > 0
-  ) {
-    product.images.forEach((imageName) => {
+  if (req.body.images && req.body.images.length + product.images.length > 5) {
+    req.body.images.forEach((imageName) => {
       deleteFile("products", imageName);
     });
+
+    return next(new AppError("Each Product can have only 5 images", 400));
   }
 
   next();
@@ -149,6 +151,15 @@ export const getAllProducts = getAll(Product);
 
 export const getProductsByCategory = catchAsync(async (req, res, next) => {
   const { identifier } = req.params;
+  if (identifier === "all")
+    return getAll(Product, { isDeleted: false })(req, res, next);
+  if (identifier === "none")
+    return getAll(Product, { isDeleted: false, categoryIds: [] })(
+      req,
+      res,
+      next,
+    );
+
   let category;
   if (mongoose.Types.ObjectId.isValid(identifier)) {
     category = await Category.findOne({ _id: identifier, isDeleted: false });
@@ -218,5 +229,102 @@ export const getTopDiscounts = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: products,
+  });
+});
+
+export const bulkUpdateProductsHandler = catchAsync(async (req, res, next) => {
+  const { slugs, updates } = req.body;
+  if (!slugs || slugs.length <= 0) {
+    return new AppError("slugs array required", 400);
+  }
+
+  if (!updates || typeof updates !== "object") {
+    return new AppError("updates object required", 400);
+  }
+
+  const result = await Product.updateMany(
+    {
+      slug: { $in: slugs },
+    },
+    { $set: updates, updatedAt: new Date() },
+  );
+
+  return res.json({
+    success: true,
+    modifiedCount: result.modifiedCount,
+    matchedCount: result.matchedCount,
+  });
+});
+
+export const bulkDeleteProductsHandler = catchAsync(async (req, res, next) => {
+  const { slugs } = req.body;
+  if (!slugs || slugs.length <= 0) {
+    return new AppError("slugs array required", 400);
+  }
+  const result = await Product.updateMany(
+    {
+      slug: { $in: slugs },
+    },
+    { $set: { isDeleted: ture }, updatedAt: new Date() },
+  );
+
+  return res.json({
+    success: true,
+    modifiedCount: result.modifiedCount,
+    matchedCount: result.matchedCount,
+  });
+});
+export const getStats = catchAsync(async (req, res) => {
+  const [
+    totalStats,
+    activeCount,
+    lowStockCount,
+    featuredCount,
+    totalSalesCount,
+    avgRating,
+  ] = await Promise.all([
+    // Total products
+    Product.countDocuments({ isDeleted: false }),
+
+    // Active products
+    Product.countDocuments({ status: "active", isDeleted: false }),
+
+    // Low stock (main stock OR any variant stock <= 5)
+    Product.countDocuments({
+      isDeleted: false,
+      $or: [{ stock: { $lte: 5 } }, { "variants.stock": { $lte: 5 } }],
+    }),
+
+    // Featured products
+    Product.countDocuments({ isDeleted: false, isFeatured: true }),
+
+    // ✅ Total product sales (from product.salesCount)
+    Product.aggregate([
+      { $match: { isDeleted: false } },
+      { $group: { _id: null, total: { $sum: "$salesCount" } } },
+    ]),
+
+    // Average rating (only products with ratings)
+    Product.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          "ratingStats.count": { $gt: 0 }, // ✅ Only rated products
+        },
+      },
+      { $group: { _id: null, avg: { $avg: "$ratingStats.average" } } },
+    ]),
+  ]);
+
+  res.json({
+    status: "success",
+    data: {
+      total: totalStats,
+      active: activeCount,
+      lowStock: lowStockCount,
+      featured: featuredCount,
+      totalSales: totalSalesCount[0]?.total || 0, // Product units sold
+      avgRating: avgRating[0]?.avg?.toFixed(1) || "0.0",
+    },
   });
 });

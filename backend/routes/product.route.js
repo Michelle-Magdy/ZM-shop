@@ -14,6 +14,9 @@ import {
   getBestSellerProducts,
   getFeaturedProducts,
   getTopDiscounts,
+  bulkUpdateProductsHandler,
+  bulkDeleteProductsHandler,
+  getStats,
 } from "../controllers/product.controller.js";
 import { protect, authorize } from "../controllers/auth.controller.js";
 
@@ -33,7 +36,21 @@ router
 
 router.get("/bestsellers", getBestSellerProducts);
 router.get("/featured", getFeaturedProducts);
-router.get("/topDiscounts", getTopDiscounts)
+router.get("/topDiscounts", getTopDiscounts);
+router.get("/stats", protect, authorize("admin"), getStats);
+
+router.post(
+  "/bulk-update",
+  protect,
+  authorize("admin"),
+  bulkUpdateProductsHandler,
+);
+router.post(
+  "/bulk-delete",
+  protect,
+  authorize("admin"),
+  bulkDeleteProductsHandler,
+);
 
 router.get("/category/:identifier", getProductsByCategory);
 
@@ -46,7 +63,6 @@ router
     uploadImages,
     resizeImages,
     deleteOldImagesOnUpdate,
-    productSanitizer,
     updateProduct,
   )
   .delete(protect, authorize("admin", "vendor"), deleteProduct);

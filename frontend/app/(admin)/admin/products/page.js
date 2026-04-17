@@ -1,349 +1,301 @@
-// app/admin/products/page.jsx
+// src/app/admin/products/page.jsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation"; // Import router for navigation
+import { Package, Loader2 } from "lucide-react";
+
+// Components
+import { ProductStats } from "../../../components/admin/products/ProductStats";
+import { FilterBar } from "../../../components/admin/products/FilterBar";
+import { ProductCard } from "../../../components/admin/products/ProductCard";
+import { ProductTableRow } from "../../../components/admin/products/ProductTableRow";
+import { Pagination } from "../../../components/admin/products/Pagination";
+import { DeleteModal } from "../../../components/admin/products/DeleteModal";
+
+// API
+import {
+  toggleProductFlag,
+  bulkUpdateProducts,
+} from "../../../../lib/api/products";
+import { useProduct } from "@/lib/hooks/products/useProduct";
+import { useProducts } from "@/lib/hooks/products/useProducts";
+import { useProductMutations } from "@/lib/hooks/products/useProdcutMutations";
+import toast from "react-hot-toast";
+import { useBulkActions } from "@/lib/hooks/products/useBulkActions";
+
+// ============================================
+// MAIN PRODUCTS PAGE COMPONENT
+// ============================================
 
 export default function ProductsPage() {
-  // TODO: Fetch products from your API
-  // const { products, pagination, loading, deleteProduct } = useYourDataFetching();
+  const router = useRouter(); // Initialize router for navigation
 
+  // State
+  const [filters, setFilters] = useState({
+    status: "",
+    category: "all",
+    search: "",
+    page: 1,
+    limit: 10,
+  });
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
-  // TODO: Replace with your actual data
-  const products = [
-    {
-      _id: "1",
-      title: "Samsung Galaxy S24 Ultra",
-      slug: "samsung-galaxy-s24-ultra",
-      price: 109999,
-      compareAtPrice: 119999,
-      stock: 30,
-      status: "active",
-      coverImage: null,
-      categoryIds: ["1", "2"],
-      ratingStats: { average: 4.5, count: 128 },
-      variants: [{}, {}, {}, {}, {}, {}], // 6 variants
-      variantDimensions: ["color", "size"],
-      isFeatured: true,
-      isBestSeller: true,
-      createdAt: "2024-01-15",
-    },
-    {
-      _id: "2",
-      title: "iPhone 15 Pro",
-      slug: "iphone-15-pro",
-      price: 99900,
-      stock: 45,
-      status: "active",
-      ratingStats: { average: 4.8, count: 256 },
-      variants: [{}, {}, {}],
-      variantDimensions: ["storage", "color"],
-      isFeatured: false,
-      isBestSeller: true,
-    },
-    {
-      _id: "3",
-      title: "Sony WH-1000XM5",
-      slug: "sony-wh-1000xm5",
-      price: 34900,
-      stock: 12,
-      status: "draft",
-      ratingStats: { average: 4.6, count: 89 },
-      variants: [],
-      variantDimensions: [],
-    },
-  ];
-
-  const toggleSelectAll = () => {
-    if (selectedProducts.length === products.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(products.map((p) => p._id));
-    }
-  };
-
-  const toggleSelectProduct = (id) => {
+  // custom hooks
+  const {
+    data: products,
+    isLoading,
+    isError,
+    error,
+  } = useProducts(filters.category || "all", filters);
+  const { remove, update, create, bulkDelete, bulkUpdate } =
+    useProductMutations(filters);
+  const { execute, canExecute } = useBulkActions(
+    selectedProducts,
+    setSelectedProducts,
+    { bulkDelete, bulkUpdate },
+  );
+  // Handle product selection for bulk actions
+  const handleSelectProduct = (productSlug) => {
     setSelectedProducts((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+      prev.includes(productSlug)
+        ? prev.filter((slug) => slug !== productSlug)
+        : [...prev, productSlug],
     );
   };
 
-  const handleDelete = async (id) => {
-    // TODO: Call your delete API
-    // await deleteProduct(id);
+  const handleSelectAll = () => {
+    if (selectedProducts.length === products.results) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(products.data.map((p) => p.slug));
+    }
   };
 
-  const getStatusBadge = (status) => {
-    const styles = {
-      active: "bg-green-500/10 text-green-600",
-      draft: "bg-yellow-500/10 text-yellow-600",
-      archived: "bg-gray-500/10 text-gray-600",
-      discontinued: "bg-red-500/10 text-red-600",
-    };
-    return styles[status] || styles.draft;
+  // Handle delete
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
   };
 
-  const formatPrice = (cents) => {
-    return `$${(cents / 100).toFixed(2)}`;
+  const handleConfirmDelete = async (productSlug) => {
+    if (!productToDelete) return;
+    remove.mutate(productSlug, {
+      onSuccess: () => {
+        setProductToDelete(null);
+        setDeleteModalOpen(false);
+        toast.success("Product deleted successfully");
+      },
+      onError: (err) => {
+        console.log(err);
+        toast.error(`Failed to delete product ${err}`);
+      },
+    });
+  };
+
+  // Handle edit - Navigate to edit page
+  const handleEdit = (product) => {
+    // Navigate to edit page with product ID
+    router.push(`/admin/products/${product.slug}`);
+  };
+
+  // Handle add new - Navigate to create page
+  const handleAddNew = () => {
+    // Navigate to new product page with "new" as ID
+    router.push("/admin/products/new");
+  };
+
+  // Handle toggle flags (featured, bestseller)
+  const handleToggleFlag = async (productSlug, flag, value) => {
+    if (!productSlug || !flag) return;
+    update.mutate(
+      {
+        slug: productSlug,
+        data: {
+          [flag]: value,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Product updated successfully!`);
+        },
+        onError: (err) => {
+          console.log(err);
+          toast.error(`Failed to delete product ${err}`);
+        },
+      },
+    );
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action) => {
+    if (!canExecute(action)) {
+      toast.warning("No products selected");
+      return;
+    }
+    execute(action);
+  };
+
+  // Handle export
+  const handleExport = () => {
+    // TODO: Implement CSV export
+    const csv = products.map((p) => ({
+      id: p._id,
+      title: p.title,
+      price: p.price,
+      stock: p.stock,
+      status: p.status,
+    }));
+    console.log("Export data:", csv);
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setFilters((prev) => ({ ...prev, page: newPage }));
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-(--color-primary-text)">
             Products
           </h1>
-          <p className="text-sm text-secondary-text mt-1">
-            Manage your product catalog and inventory
+          <p className="text-(--color-secondary-text) mt-1">
+            Manage your product inventory and variants
           </p>
         </div>
-        <a
-          href="/admin/products/new"
-          className="px-6 py-2.5 bg-(--color-primary) text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
-        >
-          + Add Product
-        </a>
       </div>
+
+      {/* Stats */}
+      <ProductStats />
 
       {/* Filters */}
-      <div className="flex items-center justify-between gap-4 bg-(--color-card) border border-badge rounded-xl p-4">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-badge bg-(--color-background) text-(--color-primary-text) focus:outline-none focus:border-(--color-primary)"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-text">
-              🔍
-            </span>
-          </div>
+      <FilterBar
+        filters={filters}
+        onFilterChange={setFilters}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onAddNew={handleAddNew}
+        onExport={handleExport}
+        selectedCount={selectedProducts.length}
+        onBulkAction={handleBulkAction}
+      />
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-badge bg-(--color-background) text-(--color-primary-text) focus:outline-none focus:border-(--color-primary)"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
-          </select>
-
-          {/* TODO: Add category filter dropdown with your categories */}
-          <select className="px-4 py-2 rounded-lg border border-badge bg-(--color-background) text-(--color-primary-text)">
-            <option value="">All Categories</option>
-          </select>
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="animate-spin text-(--color-primary)" size={40} />
         </div>
-
-        {selectedProducts.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-secondary-text">
-              {selectedProducts.length} selected
-            </span>
-            <button
-              onClick={() => {
-                // TODO: Bulk delete
-              }}
-              className="px-4 py-2 rounded-lg bg-error/10 text-error hover:bg-error hover:text-white transition-colors text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Products Table */}
-      <div className="bg-(--color-card) border border-badge rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-badge/50">
-            <tr>
-              <th className="px-4 py-3 w-12">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedProducts.length === products.length &&
-                    products.length > 0
-                  }
-                  onChange={toggleSelectAll}
-                  className="rounded border-badge"
-                />
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Product
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Price
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Stock
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Variants
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-(--color-primary-text)">
-                Rating
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-semibold text-(--color-primary-text)">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-badge">
-            {products.map((product) => (
-              <tr
-                key={product._id}
-                className="hover:bg-badge/30 transition-colors group"
-              >
-                <td className="px-4 py-4">
+      ) : products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-(--color-secondary-text)">
+          <Package size={64} className="mb-4 opacity-30" />
+          <h3 className="text-lg font-medium text-(--color-primary-text)">
+            No products found
+          </h3>
+          <p className="mt-1">
+            Try adjusting your filters or add a new product
+          </p>
+        </div>
+      ) : viewMode === "grid" ? (
+        /* Grid View */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.data.map((product) => (
+            <ProductCard
+              key={product.slug}
+              product={product}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              onToggleFlag={handleToggleFlag}
+            />
+          ))}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-(--color-card) border border-(--color-badge)/30 rounded-xl overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-(--color-badge)/20 border-b border-(--color-badge)/30">
+              <tr>
+                <th className="px-4 py-3 w-12">
                   <input
                     type="checkbox"
-                    checked={selectedProducts.includes(product._id)}
-                    onChange={() => toggleSelectProduct(product._id)}
-                    className="rounded border-badge"
+                    checked={
+                      selectedProducts.length === products.data.length &&
+                      products.data.length > 0
+                    }
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-(--color-badge) text-(--color-primary) focus:ring-(--color-primary)"
                   />
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-badge flex items-center justify-center text-2xl">
-                      {product.coverImage ? "📷" : "📦"}
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-(--color-primary-text)">
-                        {product.title}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-secondary-text">
-                          {product.slug}
-                        </span>
-                        {product.isFeatured && (
-                          <span className="text-xs px-2 py-0.5 bg-(--color-primary)/10 text-(--color-primary) rounded-full">
-                            Featured
-                          </span>
-                        )}
-                        {product.isBestSeller && (
-                          <span className="text-xs px-2 py-0.5 bg-orange-500/10 text-orange-600 rounded-full">
-                            Best Seller
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(
-                      product.status,
-                    )}`}
-                  >
-                    {product.status}
-                  </span>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="space-y-1">
-                    <p className="font-medium text-(--color-primary-text)">
-                      {formatPrice(product.price)}
-                    </p>
-                    {product.compareAtPrice > product.price && (
-                      <p className="text-sm text-secondary-text line-through">
-                        {formatPrice(product.compareAtPrice)}
-                      </p>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`font-medium ${
-                      product.stock < 10
-                        ? "text-error"
-                        : "text-(--color-primary-text)"
-                    }`}
-                  >
-                    {product.stock}
-                  </span>
-                </td>
-                <td className="px-4 py-4">
-                  {product.variants?.length > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-(--color-primary-text)">
-                        {product.variants.length} variants
-                      </span>
-                      <div className="flex gap-1">
-                        {product.variantDimensions?.map((dim) => (
-                          <span
-                            key={dim}
-                            className="text-xs px-2 py-0.5 bg-badge rounded"
-                          >
-                            {dim}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-secondary-text">
-                      No variants
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-1">
-                    <span className="text-yellow-500">★</span>
-                    <span className="text-(--color-primary-text) font-medium">
-                      {product.ratingStats?.average || 0}
-                    </span>
-                    <span className="text-secondary-text text-sm">
-                      ({product.ratingStats?.count || 0})
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a
-                      href={`/admin/products/${product.slug}`}
-                      className="px-3 py-1.5 text-sm bg-badge text-(--color-primary-text) rounded-lg hover:bg-(--color-primary) hover:text-white transition-colors"
-                    >
-                      Edit
-                    </a>
-                    <button
-                      onClick={() => handleDelete(product._id)}
-                      className="px-3 py-1.5 text-sm bg-error/10 text-error rounded-lg hover:bg-error hover:text-white transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Product
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Price
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Stock
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Rating
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Sales
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Updated
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-(--color-secondary-text)">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-badge">
-          <p className="text-sm text-secondary-text">
-            Showing 1 to {products.length} of 100 results
-          </p>
-          <div className="flex items-center gap-2">
-            <button className="px-4 py-2 rounded-lg border border-badge text-secondary-text hover:bg-badge disabled:opacity-50">
-              Previous
-            </button>
-            <span className="px-4 py-2 text-(--color-primary-text)">
-              Page 1 of 10
-            </span>
-            <button className="px-4 py-2 rounded-lg border border-badge text-(--color-primary-text) hover:bg-badge">
-              Next
-            </button>
-          </div>
+            </thead>
+            <tbody>
+              {products.data.map((product) => (
+                <ProductTableRow
+                  key={product._id}
+                  product={product}
+                  isSelected={selectedProducts.includes(product._id)}
+                  onSelect={handleSelectProduct}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                  onToggleFlag={handleToggleFlag}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && products.data.length > 0 && (
+        <Pagination
+          pagination={{
+            page: products.currentPage,
+            totalPages: products.totalPages,
+            total: products.totalCount,
+          }}
+          onPageChange={handlePageChange}
+        />
+      )}
+
+      {/* Delete Modal */}
+      <DeleteModal
+        product={productToDelete}
+        isOpen={deleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+      />
     </div>
   );
 }
