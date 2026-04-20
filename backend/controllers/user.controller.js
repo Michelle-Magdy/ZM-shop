@@ -3,6 +3,8 @@ import User from "../models/user.model.js";
 import catchAsync from "../util/catchAsync.js";
 import Role from "../models/role.model.js";
 import APIFeatures from "../util/apiFeatures.js";
+import Cart from "../models/cart.model.js";
+import Wishlist from "../models/wishlist.model.js";
 
 import {
   createOne,
@@ -69,6 +71,7 @@ export const addUser = catchAsync(async (req, res, next) => {
     email,
     password,
     roles: [roleId],
+    isVerified: true
   });
 
   if (role === "customer") {

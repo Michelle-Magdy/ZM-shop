@@ -3,8 +3,6 @@ import validator from "validator";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import dotenv from "dotenv";
-import Role from "./role.model.js";
-import { log } from "console";
 dotenv.config();
 
 /**
@@ -111,7 +109,7 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ googleId: 1 });
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
-    this.password = bcrypt.hash(this.password, 12);
+    this.password = await bcrypt.hash(this.password, 12);
     this.passwordChangedAt = Date.now() - 1000;
   }
   next();

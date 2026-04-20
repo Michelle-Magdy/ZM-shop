@@ -25,12 +25,13 @@ export const updateOne = (Model) =>
       filter = { slug: slug };
     }
 
+
     const updatedDocument = await Model.findOneAndUpdate(filter, update, {
       new: true,
       runValidators: true,
     });
     
-    
+
     res.status(200).json({
       status: "Success",
       data: {

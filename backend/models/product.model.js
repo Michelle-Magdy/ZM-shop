@@ -172,6 +172,40 @@ productSchema.index({ title: "text", description: "text" });
 productSchema.index({ "variants.attributeValues.$**": 1 });
 // for variant filtering
 
+productSchema.methods.computeDefaultVariant = function () {
+  
+  if (!this.variants || this.variants.length === 0) {
+    this.defaultVariant = null;
+    return;
+  }
+
+  const activeVariants = this.variants.filter(v => v.isActive !== false);
+
+  if (activeVariants.length === 0) {
+    this.defaultVariant = null;
+    return;
+  }
+
+  const sorted = activeVariants.sort((a, b) => {
+    const aInStock = (a.stock || 0) > 0;
+    const bInStock = (b.stock || 0) > 0;
+    if (aInStock !== bInStock) return bInStock - aInStock;
+    if (a.price !== b.price) return a.price - b.price;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+
+  const best = sorted[0];
+  this.defaultVariant = {
+    sku: best.sku,
+    price: best.price,
+    stock: best.stock,
+    attributeValues: best.attributeValues,
+    _computedAt: new Date()
+  };
+  
+};
+
+
 productSchema.pre("save", async function (next) {
   //Slug generation
   if (this.isModified("title")) {
@@ -212,30 +246,9 @@ productSchema.pre("save", async function (next) {
       }
     }
   }
-
-  //Default variant computation
-  // if (this.isModified("variants") || !this.defaultVariant) {
-  //   const activeVariants = this.variants?.filter(v => v.isActive) || [];
-
-  //   // Sort: in-stock first, then by price, then by creation
-  //   const sorted = activeVariants.sort((a, b) => {
-  //     const aInStock = a.stock > 0;
-  //     const bInStock = b.stock > 0;
-
-  //     if (aInStock !== bInStock) return bInStock - aInStock; // In-stock first
-  //     return a.price - b.price; // Cheapest first
-  //   });
-
-  //   const best = sorted[0];
-
-  //   this.defaultVariant = best ? {
-  //     sku: best.sku,
-  //     price: best.price,
-  //     stock: best.stock,
-  //     attributeValues: best.attributeValues,
-  //   } : null;
-  // }
-
+  if (this.isModified('variants') || !this.defaultVariant || this.isNew) {
+    this.computeDefaultVariant();
+  }
   next();
 });
 
@@ -260,6 +273,12 @@ productSchema.pre("findOneAndUpdate", async function (next) {
   }
   this.setUpdate(update);
   next();
+});
+
+productSchema.post('findOneAndUpdate', async function(doc) {
+  if (!doc || !doc.variants?.length) return;
+  doc.computeDefaultVariant();
+  await doc.save();
 });
 
 productSchema.index({ title: 1 });

@@ -65,13 +65,10 @@ export default function ProductCard({ product }) {
         <div className="flex items-center gap-1 w-fit mb-2">
           <p className="font-serif text-xs text-gray-600">EGP</p>
           <p className="font-bold text-sm">
-            {selectedVariant.price ||
-              product.price?.$numberDecimal ||
-              product.price}
+            {selectedVariant.price}
           </p>
         </div>
 
-        {/* Button - mt-auto pushes to bottom of card */}
         <AddToCartButton
           selectedVariant={selectedVariant}
           productId={product._id}
