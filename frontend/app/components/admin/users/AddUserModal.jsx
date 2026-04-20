@@ -32,7 +32,7 @@ export default function AddUserModal({ isOpen, onClose }) {
             onClose();
         },
         onError: (e) => {
-            toast.error(e.response?.data?.message || "Failed to create user");
+            toast.error(e.message || "Failed to create user");
         },
     });
 

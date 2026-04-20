@@ -40,9 +40,9 @@ export default function SignUp() {
     onError: (e) => {
       console.log(e);
       setError("general", {
-        message: e.response?.data?.message || "Failed Sign up",
+        message: e.message || "Failed Sign up",
       });
-      toast.error(e.response?.data?.message || "Failed Sign up");
+      toast.error(e.message || "Failed Sign up");
     },
   });
 

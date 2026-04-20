@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 import AppError from "../util/appError.js";
-import Product from "../models/product.model.js";
 import stripe from "../stripeConfig.js";
 import User from "../models/user.model.js";
+import { decrementVariantStock, restoreVariantStockAndSync } from "./product.service.js";
 
 export const createOrderService = async (
     userId,
@@ -85,19 +85,12 @@ export const createOrderService = async (
 
         //update stock
         for (const item of cart.items) {
-            const result = await Product.updateOne(
-                {
-                    _id: item.productId,
-                    "variants.sku": item.variant.sku,
-                    "variants.stock": { $gte: item.quantity }
-                },
-                { $inc: { "variants.$.stock": -item.quantity } },
-                { session }
+            await decrementVariantStock(
+                item.productId,
+                item.variant.sku,
+                item.quantity,
+                session
             );
-
-            if (result.modifiedCount === 0) {
-                throw new AppError("Insufficient stock", 400);
-            }
         }
 
         //empty cart
@@ -132,17 +125,18 @@ export const cancelOrderService = async (userId, orderId, adminUsage = false) =>
 
         //update stock
         for (const item of order.items) {
-            await Product.updateOne(
-                { _id: item.productId, "variants.sku": item.variant.sku },
-                { $inc: { "variants.$.stock": item.quantity } },
-                { session }
+            await restoreVariantStockAndSync(
+                item.productId,
+                item.variant.sku,
+                item.quantity,
+                session
             );
         }
         //update order status
         order.orderStatus = "CANCELLED";
 
         //update user orders stats
-        if(adminUsage)
+        if (adminUsage)
             userId = order.userId;
 
         await User.findByIdAndUpdate(userId, {
