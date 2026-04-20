@@ -1,5 +1,21 @@
 import { cleanParams } from "@/util/cleanParams";
 import { apiClient } from "./axios";
+
+const isFormDataPayload = (payload) =>
+  typeof FormData !== "undefined" && payload instanceof FormData;
+
+const getRequestConfig = (payload) => {
+  if (!isFormDataPayload(payload)) {
+    return undefined;
+  }
+
+  return {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  };
+};
+
 export const getAllProducts = async (query = "") => {
   try {
     const cleanQuery = cleanParams(query);
@@ -89,7 +105,7 @@ export const getProductReviews = async (productId) => {
 
 export const createProduct = async (product) => {
   try {
-    const res = await apiClient.post(`/product`, product);
+    const res = await apiClient.post(`/product`, product, getRequestConfig(product));
     return res.data;
   } catch (err) {
     console.log(err);
@@ -99,7 +115,11 @@ export const createProduct = async (product) => {
 
 export const updateProduct = async (productSlug, body) => {
   try {
-    const res = await apiClient.patch(`/product/${productSlug}`, body);
+    const res = await apiClient.patch(
+      `/product/${productSlug}`,
+      body,
+      getRequestConfig(body),
+    );
     return res.data;
   } catch (err) {
     console.log(err);

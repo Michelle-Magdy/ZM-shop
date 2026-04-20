@@ -6,7 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2, ImageIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Loader2,
+  ImageIcon,
+  CornerDownLeft,
+} from "lucide-react";
 
 // Form Components
 import { FormInput } from "../../../../components/admin/products/form/FormInput";
@@ -22,6 +28,7 @@ import { useCategories } from "@/lib/hooks/categories/useCategories";
 import { useProduct } from "@/lib/hooks/products/useProduct";
 import { useProductMutations } from "@/lib/hooks/products/useProdcutMutations";
 import toast from "react-hot-toast";
+import { useAuth } from "@/app/context/AuthenticationProvider";
 
 // ============================================
 // ZOD SCHEMA - Matches Mongoose Model
@@ -44,6 +51,7 @@ const productSchema = z.object({
   isFeatured: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
   isDeleted: z.boolean().default(false),
+  // vendorId: z.string(),
 });
 
 // ============================================
@@ -52,6 +60,7 @@ const productSchema = z.object({
 export default function ProductFormPage() {
   const router = useRouter();
   const { slug } = useParams();
+  const { user } = useAuth();
 
   const isEdit = slug && slug !== "new";
 
@@ -88,12 +97,12 @@ export default function ProductFormPage() {
       description: "",
       status: "draft",
       price: 0,
-      olderPrice: null,
+      olderPrice: 0,
       stock: 1,
-      coverImage: { url: "" },
+      coverImage: null,
       images: [],
       categoryIds: [],
-      vendorId: "vendor_001",
+
       attributeDefinitions: [],
       attributes: [],
       variantDimensions: [],
@@ -247,10 +256,8 @@ export default function ProductFormPage() {
 
   const onSubmit = (data) => {
     try {
+      const normalizedImages = (data.images || []).filter(Boolean);
       const hasNewCoverImage = data.coverImage?.file instanceof File;
-      const hasNewGalleryImages = data.images.some(
-        (img) => img.file instanceof File,
-      );
 
       const formData = new FormData();
 
@@ -263,18 +270,19 @@ export default function ProductFormPage() {
       formData.append("isFeatured", data.isFeatured);
       formData.append("isBestSeller", data.isBestSeller);
       formData.append("isDeleted", data.isDeleted);
+      formData.append("vendorId", user?.id || user?._id);
 
       if (data.olderPrice) {
         formData.append("olderPrice", Math.round(data.olderPrice * 100));
       }
 
-      // === Arrays (categoryIds, variantDimensions) ===
+      // === Arrays ===
       data.categoryIds.forEach((id) => formData.append("categoryIds", id));
       data.variantDimensions.forEach((dim) =>
         formData.append("variantDimensions", dim),
       );
 
-      // === Complex Objects (stringified for FormData) ===
+      // === Complex Objects (stringified) ===
       formData.append(
         "variants",
         JSON.stringify(
@@ -284,18 +292,23 @@ export default function ProductFormPage() {
           })),
         ),
       );
+      const selectedDefault =
+        data.defaultVariant ||
+        data.variants.find((v) => v.isActive) ||
+        data.variants[0] ||
+        null;
 
-      formData.append(
-        "defaultVariant",
-        JSON.stringify(
-          data.defaultVariant
-            ? {
-                ...data.defaultVariant,
-                price: Math.round(data.defaultVariant.price * 100),
-              }
-            : null,
-        ),
-      );
+      if (selectedDefault) {
+        formData.append(
+          "defaultVariant",
+          JSON.stringify({
+            sku: selectedDefault.sku,
+            price: Math.round(selectedDefault.price * 100),
+            stock: selectedDefault.stock,
+            attributeValues: selectedDefault.attributeValues,
+          }),
+        );
+      }
 
       formData.append(
         "attributeDefinitions",
@@ -303,32 +316,44 @@ export default function ProductFormPage() {
       );
       formData.append("attributes", JSON.stringify(data.attributes));
 
-      // === Image Handling ===
-      // Send existing URLs
-      formData.append(
-        "coverImage",
-        hasNewCoverImage ? "" : data.coverImage?.url || "",
-      );
-      data.images
-        .filter((img) => !img.file)
-        .forEach((img) => formData.append("images", img.url));
+      // === Images: Match your backend's expected field names ===
 
-      // Send new files
-      if (hasNewCoverImage) {
-        formData.append("coverImageFile", data.coverImage.file);
+      // Send existing image URLs as JSON string in 'images' field
+      // Your backend's resizeImages uses req.body.existingImages
+      const existingImageUrls = normalizedImages
+        .filter((img) => img?.url && !(img.file instanceof File))
+        .map((img) => img.url);
+
+      if (existingImageUrls.length > 0) {
+        formData.append("existingImages", JSON.stringify(existingImageUrls));
       }
-      data.images.forEach((image) => {
-        if (image.file instanceof File) {
-          formData.append("imageFiles", image.file);
+
+      // Send new cover image with field name 'coverImage' (matches uploadImages config)
+      if (hasNewCoverImage) {
+        formData.append("coverImage", data.coverImage.file);
+      } else if (data.coverImage?.url) {
+        // If no new file, send existing URL so sanitizer can use it
+        formData.append("coverImage", data.coverImage.url);
+      }
+
+      // Send new gallery images with field name 'images' (matches uploadImages config)
+      normalizedImages.forEach((image) => {
+        if (image?.file instanceof File) {
+          formData.append("images", image.file);
         }
       });
 
       if (process.env.NODE_ENV === "development") {
         console.log("=== FormData Entries ===");
         for (let [key, value] of formData.entries()) {
-          console.log(`${key}:`, value);
+          console.log(
+            `${key}:`,
+            value instanceof File ? `File(${value.name})` : value,
+          );
         }
       }
+
+      console.log(Object.fromEntries(formData.entries()));
 
       if (isEdit) {
         update.mutate(
@@ -456,15 +481,22 @@ export default function ProductFormPage() {
               Basic Information
             </h2>
             <div className="space-y-4">
-              <FormInput
-                label="Product Title"
-                {...register("title")}
-                error={errors.title?.message}
-                placeholder={
-                  isEdit
-                    ? product?.title || "Enter product name"
-                    : "Enter product name"
-                }
+              <Controller
+                name="title"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FormInput
+                    label="Product Title"
+                    {...field}
+                    error={fieldState.error?.message}
+                    required
+                    placeholder={
+                      isEdit
+                        ? product?.title || "Enter product name"
+                        : "Enter product name"
+                    }
+                  />
+                )}
               />
 
               <Controller
@@ -576,45 +608,69 @@ export default function ProductFormPage() {
               Pricing & Inventory
             </h2>
             <div className="grid grid-cols-3 gap-4">
-              <FormInput
-                label="Price ($)"
-                type="number"
-                step="0.01"
-                min="0"
-                {...register("price", { valueAsNumber: true })}
-                error={errors.price?.message}
-                placeholder={
-                  isEdit ? product?.formattedPrice || "0.00" : "0.00"
-                }
+              <Controller
+                name="price"
+                control={control}
+                render={({ field, fieldState }) => {
+                  return (
+                    <FormInput
+                      label="Price ($)"
+                      type="number"
+                      min="0"
+                      {...field}
+                      error={fieldState.error?.message}
+                      placeholder={
+                        isEdit ? product?.formattedPrice || "0" : "0"
+                      }
+                    />
+                  );
+                }}
               />
-              <FormInput
-                label="Compare at Price ($)"
-                type="number"
-                step="0.01"
-                min="0"
-                {...register("olderPrice", { valueAsNumber: true })}
-                error={errors.olderPrice?.message}
-                placeholder={
-                  isEdit
-                    ? product?.olderPrice
-                      ? (product.olderPrice / 100).toFixed(2)
-                      : ""
-                    : "0.00"
-                }
-                hint="Original price for comparison"
+
+              <Controller
+                name="olderPrice"
+                control={control}
+                render={({ field, fieldState }) => {
+                  return (
+                    <FormInput
+                      label="Compare at Price ($)"
+                      type="number"
+                      min="0"
+                      {...field}
+                      error={fieldState.error?.message}
+                      placeholder={
+                        isEdit
+                          ? product?.olderPrice
+                            ? (product.olderPrice / 100).toFixed(2)
+                            : ""
+                          : "0"
+                      }
+                      hint="Original price for comparison"
+                    />
+                  );
+                }}
               />
-              <FormInput
-                label="Base Stock"
-                type="number"
-                min="0"
-                {...register("stock", { valueAsNumber: true })}
-                error={errors.stock?.message}
-                placeholder={isEdit ? product?.stock?.toString() || "1" : "1"}
-                hint={
-                  watchedVariantDimensions?.length > 0
-                    ? "Managed by variants"
-                    : "Used when no variants"
-                }
+
+              <Controller
+                name="stock"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FormInput
+                    label="Base Stock"
+                    type="number"
+                    min="0"
+                    {...field}
+                    error={fieldState.errors?.message}
+                    placeholder={
+                      isEdit ? product?.stock?.toString() || "1" : "1"
+                    }
+                    hint={
+                      watchedVariantDimensions?.length > 0
+                        ? "Managed by variants"
+                        : "Used when no variants"
+                    }
+                  />
+                )}
               />
             </div>
           </section>
@@ -655,6 +711,10 @@ export default function ProductFormPage() {
                   variants={field.value}
                   onVariantsChange={(variants) =>
                     setValue("variants", variants, { shouldDirty: true })
+                  }
+                  defaultVariant={watch("defaultVariant")}
+                  onDefaultVariantChange={(variant) =>
+                    setValue("defaultVariant", variant, { shouldDirty: true })
                   }
                   variantDimensions={watchedVariantDimensions}
                   attributeDefinitions={watch("attributeDefinitions")}
@@ -702,8 +762,8 @@ export default function ProductFormPage() {
                 render={({ field }) => (
                   <FormToggle
                     label="Featured Product"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
+                    checked={!!field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
                     hint="Show in featured section"
                   />
                 )}
@@ -715,7 +775,7 @@ export default function ProductFormPage() {
                   <FormToggle
                     label="Best Seller"
                     checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     hint="Mark as popular item"
                   />
                 )}
@@ -728,7 +788,7 @@ export default function ProductFormPage() {
                     <FormToggle
                       label="Soft Deleted"
                       checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
+                      onChange={(e) => field.onChange(e.target.value)}
                       hint="Hide from storefront"
                     />
                   )}

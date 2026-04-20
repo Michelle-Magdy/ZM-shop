@@ -62,6 +62,7 @@ router
     authorize("admin", "vendor"),
     uploadImages,
     resizeImages,
+    productSanitizer,
     deleteOldImagesOnUpdate,
     updateProduct,
   )

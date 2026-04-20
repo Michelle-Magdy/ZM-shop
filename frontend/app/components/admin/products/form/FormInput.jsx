@@ -41,7 +41,7 @@ export const FormInput = ({
         <input
           type={inputType}
           name={name}
-          value={value}
+          value={value ?? ""}
           onChange={onChange}
           placeholder={placeholder}
           min={min}

@@ -9,6 +9,17 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+apiClient.interceptors.request.use((config) => {
+  if (
+    typeof FormData !== "undefined" &&
+    config?.data instanceof FormData &&
+    config.headers
+  ) {
+    delete config.headers["Content-Type"];
+  }
+  return config;
+});
+
 const handleApiError = (error) => {
   if (!error.response) {
     return Promise.reject({
