@@ -7,8 +7,11 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaOldRepublic } from "react-icons/fa6";
 
-export function useProductMutations(filters = {}) {
-  const productsQueryKey = ["products", filters];
+export function useProductMutations(filters = null) {
+  let productsQueryKey = ["products"];
+  if (filters) {
+    productsQueryKey = ["products", filters];
+  }
   const queryClient = useQueryClient();
 
   const create = useMutation({
@@ -35,6 +38,7 @@ export function useProductMutations(filters = {}) {
 
     onSettled: (data, error, variables, context) => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["products", "stats"] });
     },
   });
 
@@ -77,6 +81,7 @@ export function useProductMutations(filters = {}) {
       queryClient.invalidateQueries({
         queryKey: ["product", variables.slug],
       });
+      queryClient.invalidateQueries({ queryKey: ["products", "stats"] });
     },
   });
 
@@ -92,7 +97,7 @@ export function useProductMutations(filters = {}) {
         data: old?.data.filter((p) => p.slug !== deletedSlug),
       }));
 
-      return { previousProduct, previousProducts };
+      return { previousProducts };
     },
 
     onError: (error, deletedSlug, context) => {
@@ -100,6 +105,7 @@ export function useProductMutations(filters = {}) {
     },
     onSettled: (data, err, deletedSlug, context) => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["products", "stats"] });
     },
   });
 
@@ -124,6 +130,7 @@ export function useProductMutations(filters = {}) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["products", "stats"] });
     },
   });
 
@@ -147,6 +154,7 @@ export function useProductMutations(filters = {}) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["products", "stats"] });
     },
   });
 

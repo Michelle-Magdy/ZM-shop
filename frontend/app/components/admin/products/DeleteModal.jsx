@@ -44,7 +44,7 @@ export const DeleteModal = ({ product, onConfirm, onCancel, isOpen }) => {
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(product._id)}
+            onClick={() => onConfirm(product.slug)}
             className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
           >
             Delete Product

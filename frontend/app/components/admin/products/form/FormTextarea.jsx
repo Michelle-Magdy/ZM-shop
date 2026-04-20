@@ -40,6 +40,7 @@ export const FormTextarea = ({
         onChange={onChange}
         placeholder={placeholder}
         rows={rows}
+        required={required}
         maxLength={maxLength}
         disabled={disabled}
         className={`w-full px-4 py-2.5 bg-(--color-card) border rounded-lg text-(--color-primary-text) placeholder:text-(--color-secondary-text) focus:outline-none focus:border-(--color-primary) transition-colors resize-none disabled:opacity-50 ${
