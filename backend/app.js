@@ -2,7 +2,7 @@ import express from "express";
 import globalErrorHandler from "./controllers/errorController.js";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/user.route.js";
-import FAQRouter from "./routes/FAQ.route.js";
+import FAQRouter from "./routes/faq.route.js";
 import productTypeRouter from "./routes/product.type.route.js";
 import productRouter from "./routes/product.route.js";
 import reviewRouter from "./routes/review.route.js";
