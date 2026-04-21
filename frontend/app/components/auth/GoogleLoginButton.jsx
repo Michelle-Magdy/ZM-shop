@@ -8,9 +8,13 @@ export default function GoogleLoginButton() {
     try {
       console.log(credentialResponse.credential);
 
+      const url =
+        process.env.NEXT_PUBLIC_ENV === "development"
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/token`
+          : `${process.env.NEXT_PUBLIC_LOCAL_URL}/api/v1/auth/google/token`;
       // credentialResponse.credential is the Google ID token
       const res = await apiClient.post(
-        "http://localhost:5000/api/v1/auth/google/token",
+        url,
         { token: credentialResponse.credential },
         { withCredentials: true }, // IMPORTANT: Send/receive cookies
       );

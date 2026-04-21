@@ -55,4 +55,3 @@ export default function DiscountCard({ data }) {
     </div>
   );
 }
-//http://localhost:5000/images/mencotton.webp)

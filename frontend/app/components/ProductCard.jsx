@@ -6,8 +6,6 @@ import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import AddToCartButton from "../UI/AddToCartButton";
 
 export default function ProductCard({ product }) {
-  console.log(product);
-  
   const selectedVariant = product.defaultVariant || null;
   return (
     // Single flex container - removed nested wrapper div
@@ -66,9 +64,7 @@ export default function ProductCard({ product }) {
 
         <div className="flex items-center gap-1 w-fit mb-2">
           <p className="font-serif text-xs text-gray-600">EGP</p>
-          <p className="font-bold text-sm">
-            {selectedVariant.price}
-          </p>
+          <p className="font-bold text-sm">{selectedVariant.price}</p>
         </div>
 
         <AddToCartButton

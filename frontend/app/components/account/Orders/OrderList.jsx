@@ -24,7 +24,6 @@ export default function OrderList({ user }) {
   if (isFetching) {
     return <LoadingSpinner />;
   }
-  if (isSuccess) console.log(data);
   return (
     <>
       {isSuccess && (

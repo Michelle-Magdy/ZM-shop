@@ -31,7 +31,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "development" ? process.env.DEVELOPMENT_URL : process.env.PRODUCTION_URL, // Your Next.js URL
+    origin:
+      process.env.NODE_ENV === "development"
+        ? process.env.DEVELOPMENT_URL
+        : process.env.PRODUCTION_URL, // Your Next.js URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   }),
