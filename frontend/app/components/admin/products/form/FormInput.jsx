@@ -41,12 +41,13 @@ export const FormInput = ({
         <input
           type={inputType}
           name={name}
-          value={value}
+          value={value ?? ""}
           onChange={onChange}
           placeholder={placeholder}
           min={min}
           max={max}
           step={step}
+          required={required}
           disabled={disabled}
           className={`w-full px-4 py-2.5 bg-(--color-card) border rounded-lg text-(--color-primary-text) placeholder:text-(--color-secondary-text) focus:outline-none focus:border-(--color-primary) transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             error ? "border-(--color-error)" : "border-(--color-badge)/30"

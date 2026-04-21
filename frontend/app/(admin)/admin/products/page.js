@@ -260,9 +260,9 @@ export default function ProductsPage() {
             <tbody>
               {products.data.map((product) => (
                 <ProductTableRow
-                  key={product._id}
+                  key={product.slug}
                   product={product}
-                  isSelected={selectedProducts.includes(product._id)}
+                  isSelected={selectedProducts.includes(product.slug)}
                   onSelect={handleSelectProduct}
                   onEdit={handleEdit}
                   onDelete={handleDeleteClick}

@@ -4,7 +4,7 @@ import {
   deleteFAQ,
   getAllFAQ,
   updateFAQ,
-} from "../controllers/FAQ.controller.js";
+} from "../controllers/faq.controller.js";
 import { checkValidMongoId } from "../middlewares/checkValidMongoId.js";
 
 const router = express.Router();

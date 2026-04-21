@@ -11,6 +11,7 @@ import {
 } from "../../../../util/productUtils";
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
+import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 
 export const ProductTableRow = ({
   product,
@@ -29,7 +30,7 @@ export const ProductTableRow = ({
         <input
           type="checkbox"
           checked={isSelected}
-          onChange={() => onSelect(product._id)}
+          onChange={() => onSelect(product.slug)}
           className="w-4 h-4 rounded border-(--color-badge) text-(--color-primary) focus:ring-(--color-primary)"
         />
       </td>
@@ -37,7 +38,7 @@ export const ProductTableRow = ({
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-(--color-background) flex-shrink-0">
             <Image
-              src={product.coverImage}
+              src={`${IMAGES_BASE_URL}/products/${product.coverImage}`}
               alt={product.title}
               fill
               className="object-cover"
@@ -97,7 +98,7 @@ export const ProductTableRow = ({
         <div className="flex items-center gap-1">
           <button
             onClick={() =>
-              onToggleFlag(product._id, "isFeatured", !product.isFeatured)
+              onToggleFlag(product.slug, "isFeatured", !product.isFeatured)
             }
             className={`p-2 rounded-lg transition-colors ${product.isFeatured ? "bg-yellow-500/20 text-yellow-400" : "hover:bg-(--color-badge)/20 text-(--color-secondary-text)"}`}
             title={
@@ -111,7 +112,7 @@ export const ProductTableRow = ({
           </button>
           <button
             onClick={() =>
-              onToggleFlag(product._id, "isBestSeller", !product.isBestSeller)
+              onToggleFlag(product.slug, "isBestSeller", !product.isBestSeller)
             }
             className={`p-2 rounded-lg transition-colors ${product.isBestSeller ? "bg-orange-500/20 text-orange-400" : "hover:bg-(--color-badge)/20 text-(--color-secondary-text)"}`}
             title={

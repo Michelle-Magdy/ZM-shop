@@ -11,7 +11,6 @@ export const deleteOne = (Model) =>
     });
   });
 
-
 export const updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { slug, id } = req.params;
@@ -25,12 +24,10 @@ export const updateOne = (Model) =>
       filter = { slug: slug };
     }
 
-
     const updatedDocument = await Model.findOneAndUpdate(filter, update, {
       new: true,
       runValidators: true,
     });
-    
 
     res.status(200).json({
       status: "Success",
@@ -108,11 +105,9 @@ export const getAll = (Model, config = {}) =>
       .limitFields()
       .paginate();
 
-    if (populateOptions)
-      features.populate(populateOptions);
+    if (populateOptions) features.populate(populateOptions);
 
-    if (extraSelections)
-      features.extraSelect(extraSelections);
+    if (extraSelections) features.extraSelect(extraSelections);
 
     const result = await features.execute(Model, baseFilter);
 
@@ -128,8 +123,12 @@ export const getAll = (Model, config = {}) =>
 
 export const softDeleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-    await Model.findByIdAndUpdate(id, { isDeleted: true });
+    const { id, slug } = req.params;
+    if (id) {
+      await Model.findByIdAndUpdate(id, { isDeleted: true });
+    } else {
+      await Model.findOneAndUpdate({ slug }, { isDeleted: true });
+    }
 
     res.status(204).json({
       status: "Success",

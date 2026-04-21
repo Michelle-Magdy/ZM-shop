@@ -25,17 +25,6 @@ export const SEOSection = ({ title, slug, onSlugChange }) => {
         SEO Settings
       </label>
 
-      <FormInput
-        label="URL Slug"
-        value={slug}
-        onChange={(e) => {
-          onSlugChange(e.target.value);
-          setIsEditing(true);
-        }}
-        placeholder="product-url-slug"
-        hint="This will be used in the product URL"
-      />
-
       <div className="p-3 bg-(--color-badge)/10 rounded-lg">
         <p className="text-xs text-(--color-secondary-text)">
           Preview:{" "}

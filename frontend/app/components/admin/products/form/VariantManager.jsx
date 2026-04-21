@@ -13,8 +13,12 @@ export const VariantManager = ({
   attributeDefinitions,
   basePrice,
   baseStock,
+  defaultVariant,
+  onDefaultVariantChange,
 }) => {
   const [showGenerator, setShowGenerator] = useState(false);
+  const isDefaultVariant = (variant) =>
+    defaultVariant?.sku && defaultVariant.sku === variant.sku;
 
   // Generate all possible variant combinations
   const generateVariants = () => {
@@ -90,7 +94,13 @@ export const VariantManager = ({
   };
 
   const removeVariant = (index) => {
-    onVariantsChange(variants.filter((_, i) => i !== index));
+    const removed = variants[index];
+    const nextVariants = variants.filter((_, i) => i !== index);
+    onVariantsChange(nextVariants);
+
+    if (defaultVariant?.sku === removed?.sku) {
+      onDefaultVariantChange?.(nextVariants[0] || null);
+    }
   };
 
   const duplicateVariant = (index) => {
@@ -190,6 +200,9 @@ export const VariantManager = ({
                 <th className="px-3 py-2 text-left text-xs font-medium text-(--color-secondary-text)">
                   Active
                 </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-(--color-secondary-text)">
+                  Default
+                </th>
                 <th className="px-3 py-2 text-right text-xs font-medium text-(--color-secondary-text)">
                   Actions
                 </th>
@@ -245,11 +258,21 @@ export const VariantManager = ({
                   <td className="px-3 py-2">
                     <input
                       type="checkbox"
-                      checked={variant.isActive}
+                      checked={!!variant.isActive}
                       onChange={(e) =>
                         updateVariant(index, { isActive: e.target.checked })
                       }
                       className="w-4 h-4 rounded border-(--color-badge) text-(--color-primary) focus:ring-(--color-primary)"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="radio"
+                      name="defaultVariant"
+                      checked={!!isDefaultVariant(variant)}
+                      onChange={() => onDefaultVariantChange?.(variant)}
+                      className="w-4 h-4 text-(--color-primary) focus:ring-(--color-primary)"
+                      title="Set as default variant"
                     />
                   </td>
                   <td className="px-3 py-2 text-right">

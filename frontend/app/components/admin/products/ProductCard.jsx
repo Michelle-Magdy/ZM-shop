@@ -80,7 +80,7 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleFlag }) => {
             <div className="absolute right-0 top-full mt-1 w-40 bg-(--color-card) border border-(--color-badge)/30 rounded-lg shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-10 animate-enter">
               <button
                 onClick={() =>
-                  onToggleFlag(product._id, "isFeatured", !product.isFeatured)
+                  onToggleFlag(product.slug, "isFeatured", !product.isFeatured)
                 }
                 className="w-full px-4 py-2 text-left text-sm hover:bg-(--color-badge)/20 text-(--color-primary-text) first:rounded-t-lg"
               >
@@ -89,7 +89,7 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleFlag }) => {
               <button
                 onClick={() =>
                   onToggleFlag(
-                    product._id,
+                    product.slug,
                     "isBestSeller",
                     !product.isBestSeller,
                   )

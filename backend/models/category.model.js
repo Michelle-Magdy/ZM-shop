@@ -31,7 +31,6 @@ categorySchema.virtual("subcategories", {
 categorySchema.index(
   { name: 1 },
   {
-    unique: true,
     partialFilterExpression: {
       isDeleted: false,
     },

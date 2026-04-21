@@ -14,46 +14,238 @@ import { deleteFile } from "../util/deleteFile.js";
 import { findCategoryDescendantsIDs } from "../util/category.utils.js";
 import Category from "../models/category.model.js";
 import AppError from "../util/appError.js";
-export const productSanitizer = (req, res, next) => {
-  // List of allowed fields from your schema
-  const allowedFields = [
-    "title",
-    "price",
-    "olderPrice",
-    "stock",
-    "coverImage",
-    "images",
-    "avgRating",
-    "nReviews",
-    "description",
-    "productTypeId",
-    "categoryIds",
-    "attributeDefinitions",
-    "attributes",
-    "variantDimensions",
-    "variants",
-    "slug",
-    "isDeleted",
-    "isBestSeller",
-    "isFeatured",
-    "vendorId",
-    "ratingStats",
-    "viewCount",
-    "salesCount",
-    "status",
-    "defaultVariant",
-  ];
 
-  // Filter req.body to only include allowed fields
-  const sanitizedBody = {};
-  allowedFields.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      sanitizedBody[field] = req.body[field];
+const safeJsonParse = (value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeToArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value === undefined || value === null || value === "") {
+    return [];
+  }
+
+  if (typeof value === "string") {
+    const parsed = safeJsonParse(value);
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
-  });
 
-  req.body = sanitizedBody;
-  next();
+    return [value];
+  }
+
+  return [value];
+};
+
+const uniqueStrings = (values = []) => [...new Set(values)];
+
+export const productSanitizer = (req, res, next) => {
+  try {
+    // If using old nested approach: req.body.data contains JSON
+    // If using new flat approach: req.body already has flat fields from multer
+    const sourceBody = req.body?.data ? safeJsonParse(req.body.data) : req.body;
+    const normalizedBody = { ...(sourceBody || {}) };
+    console.log("normalized", normalizedBody);
+
+    // === 1. Parse JSON string fields ===
+    const jsonFields = [
+      "categoryIds",
+      "attributeDefinitions",
+      "attributes",
+      "variantDimensions",
+      "variants",
+      "defaultVariant",
+      "ratingStats",
+      "existingImages", // ← ADDED: frontend sends this as JSON string
+    ];
+
+    jsonFields.forEach((field) => {
+      if (typeof normalizedBody[field] === "string") {
+        normalizedBody[field] = safeJsonParse(normalizedBody[field]);
+      }
+    });
+
+    // === 2. Ensure arrays are actually arrays ===
+    const arrayFields = [
+      "images",
+      "categoryIds",
+      "variantDimensions",
+      "attributeDefinitions",
+      "attributes",
+      "variants",
+      "existingImages", // ← ADDED
+    ];
+
+    arrayFields.forEach((field) => {
+      if (normalizedBody[field] && !Array.isArray(normalizedBody[field])) {
+        if (typeof normalizedBody[field] === "string") {
+          const parsed = safeJsonParse(normalizedBody[field]);
+          if (Array.isArray(parsed)) {
+            normalizedBody[field] = parsed;
+          }
+        } else if (normalizedBody[field]) {
+          normalizedBody[field] = [normalizedBody[field]];
+        }
+      }
+    });
+
+    // === 3. Handle number fields ===
+    const numberFields = [
+      "price",
+      "olderPrice",
+      "stock",
+      "avgRating",
+      "nReviews",
+      "viewCount",
+      "salesCount",
+    ];
+
+    numberFields.forEach((field) => {
+      if (normalizedBody[field] === "" || normalizedBody[field] === null) {
+        normalizedBody[field] = null;
+        return;
+      }
+
+      if (normalizedBody[field] !== undefined) {
+        const numericValue = Number(normalizedBody[field]);
+        if (Number.isNaN(numericValue)) {
+          throw new AppError(`Invalid number value for ${field}`, 400);
+        } else {
+          normalizedBody[field] = numericValue;
+        }
+      }
+    });
+
+    // === 4. Handle boolean fields ===
+    const booleanFields = ["isDeleted", "isBestSeller", "isFeatured"];
+    booleanFields.forEach((field) => {
+      if (typeof normalizedBody[field] === "string") {
+        normalizedBody[field] = normalizedBody[field] === "true";
+      }
+      // Already boolean? Leave as-is
+    });
+
+    // === 5. Handle multer files — MERGE with existing images ===
+    // Multer puts: single file in req.file, multiple in req.files (array or object)
+
+    // Keep any resized/stored filename already set by previous middleware.
+    // If missing, try to derive it from uploaded files.
+    if (
+      typeof normalizedBody.coverImage === "string" &&
+      normalizedBody.coverImage
+    ) {
+      // keep as-is (could be URL or local filename like product-*.jpeg)
+    } else if (req.file && req.file.fieldname === "coverImage") {
+      // Single upload middleware was used for cover
+      normalizedBody.coverImage =
+        req.file.path || req.file.location || req.file.filename || null;
+    } else if (req.files?.coverImage?.[0]) {
+      // .fields() middleware shape
+      const coverFile = req.files.coverImage[0];
+      normalizedBody.coverImage =
+        coverFile.path || coverFile.location || coverFile.filename || null;
+    }
+
+    // Handle gallery images: merge existing URLs + new uploaded files
+    const uploadedImages = [];
+    if (normalizedBody.images) {
+      if (req.files) {
+        // Multer .array() or .fields() was used
+        if (Array.isArray(req.files)) {
+          // .array('images') — all files in one array
+          uploadedImages.push(
+            ...req.files
+              .filter((f) => f.fieldname === "images")
+              .map((f) => f.path || f.location || f.filename),
+          );
+        } else if (typeof req.files === "object") {
+          // .fields([...]) — files grouped by fieldname
+          if (req.files.images) {
+            uploadedImages.push(
+              ...req.files.images.map(
+                (f) => f.path || f.location || f.filename,
+              ),
+            );
+          }
+        }
+      }
+
+      // Preserve filenames already set by resize middleware, then merge with
+      // existing image URLs and any uploaded file paths that can be resolved.
+      const resizedImages = normalizeToArray(normalizedBody.images).filter(
+        (image) => typeof image === "string" && image,
+      );
+
+      // Merge: existing image URLs + newly uploaded file paths + resized names
+      const existingImageUrls = Array.isArray(normalizedBody.existingImages)
+        ? normalizedBody.existingImages
+        : [];
+
+      normalizedBody.images = [
+        ...existingImageUrls,
+        ...resizedImages,
+        ...uploadedImages,
+      ].filter((image) => typeof image === "string" && image);
+      normalizedBody.images = uniqueStrings(normalizedBody.images);
+
+      // === 6. Clean up temporary fields not in schema ===
+      delete normalizedBody.existingImages; // internal field, not in schema
+    }
+
+    // === 7. Filter to allowed fields only ===
+    const allowedFields = [
+      "title",
+      "price",
+      "olderPrice",
+      "stock",
+      "coverImage",
+      "images",
+      "avgRating",
+      "nReviews",
+      "description",
+      "productTypeId",
+      "categoryIds",
+      "attributeDefinitions",
+      "attributes",
+      "variantDimensions",
+      "variants",
+      "slug",
+      "isDeleted",
+      "isBestSeller",
+      "isFeatured",
+      "vendorId",
+      "ratingStats",
+      "viewCount",
+      "salesCount",
+      "status",
+      "defaultVariant",
+    ];
+
+    const sanitizedBody = {};
+    allowedFields.forEach((field) => {
+      if (normalizedBody[field] !== undefined) {
+        sanitizedBody[field] = normalizedBody[field];
+      }
+    });
+
+    req.body = sanitizedBody;
+    console.log("Sanitized body:", sanitizedBody);
+
+    next();
+  } catch (error) {
+    return next(error);
+  }
 };
 export const uploadImages = upload.fields([
   { name: "coverImage", maxCount: 1 },
@@ -61,11 +253,13 @@ export const uploadImages = upload.fields([
 ]);
 
 export const resizeImages = catchAsync(async (req, res, next) => {
-  if (!req.files) {
-    return next();
-  }
+  const existingImages = normalizeToArray(req.body?.existingImages).filter(
+    (image) => typeof image === "string" && image,
+  );
 
-  if (req.files.coverImage) {
+  const uploadedImages = [];
+
+  if (req.files?.coverImage) {
     const coverImageName = `product-${Date.now()}-cover.jpeg`;
 
     await sharp(req.files.coverImage[0].buffer)
@@ -78,8 +272,7 @@ export const resizeImages = catchAsync(async (req, res, next) => {
     req.body.coverImage = coverImageName;
   }
 
-  if (req.files.images) {
-    let images = [];
+  if (req.files?.images) {
     await Promise.all(
       req.files.images.map(async (image, index) => {
         const imageName = `product-${Date.now()}-${index}.jpeg`;
@@ -91,11 +284,21 @@ export const resizeImages = catchAsync(async (req, res, next) => {
             quality: 90,
           })
           .toFile(`backend/public/images/products/${imageName}`);
-        images.push(imageName);
+        uploadedImages.push(imageName);
       }),
     );
-    req.body.images = images;
   }
+
+  const mergedImages = [...existingImages, ...uploadedImages];
+  if (mergedImages.length > 5) {
+    uploadedImages.forEach((imageName) => deleteFile("products", imageName));
+    return next(new AppError("Each Product can have only 5 images", 400));
+  }
+
+  if (mergedImages.length > 0) {
+    req.body.images = mergedImages;
+  }
+
   next();
 });
 
@@ -115,27 +318,34 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
   // Clean up newly uploaded files if product not found
   if (!product) {
     if (req.body.coverImage) deleteFile("products", req.body.coverImage);
-
-    if (req.body.images) {
-      req.body.images.forEach((imageName) => {
-        deleteFile("products", imageName);
-      });
+    if (Array.isArray(req.body.images)) {
+      req.body.images.forEach((imageName) => deleteFile("products", imageName));
     }
-
     return next(new AppError("Product not found", 404));
   }
 
   // 2. Delete old cover image if new one uploaded
-  if (req.body.coverImage && product.coverImage) {
+  if (
+    req.body.coverImage &&
+    product?.coverImage &&
+    req.body.coverImage !== product.coverImage
+  ) {
     deleteFile("products", product.coverImage);
   }
-  // 3. Delete old images if new ones uploaded
-  if (req.body.images && req.body.images.length + product.images.length > 5) {
-    req.body.images.forEach((imageName) => {
-      deleteFile("products", imageName);
-    });
 
+  // 3. Validate total gallery images and remove dropped old images
+  if (Array.isArray(req.body.images) && req.body.images.length > 5) {
+    req.body.images.forEach((imageName) => deleteFile("products", imageName));
     return next(new AppError("Each Product can have only 5 images", 400));
+  }
+
+  if (Array.isArray(req.body.images)) {
+    const nextImages = new Set(req.body.images);
+    (product.images || []).forEach((oldImage) => {
+      if (!nextImages.has(oldImage)) {
+        deleteFile("products", oldImage);
+      }
+    });
   }
 
   next();
@@ -146,6 +356,7 @@ export const updateProduct = updateOne(Product);
 export const deleteProduct = softDeleteOne(Product);
 export const getProduct = getOne(Product, null, [
   { path: "vendorId", select: "name" },
+  // { path: "categoryIds", select: "name" },
 ]);
 export const getAllProducts = getAll(Product);
 
