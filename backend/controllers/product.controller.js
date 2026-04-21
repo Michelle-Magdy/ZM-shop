@@ -247,6 +247,7 @@ export const productSanitizer = (req, res, next) => {
     return next(error);
   }
 };
+
 export const uploadImages = upload.fields([
   { name: "coverImage", maxCount: 1 },
   { name: "images", maxCount: 5 },

@@ -6,6 +6,8 @@ import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import AddToCartButton from "../UI/AddToCartButton";
 
 export default function ProductCard({ product }) {
+  console.log(product);
+  
   const selectedVariant = product.defaultVariant || null;
   return (
     // Single flex container - removed nested wrapper div

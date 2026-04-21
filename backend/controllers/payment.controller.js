@@ -37,8 +37,7 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
                 product_data: {
                     name: item.title,
                     description: variantDescription ? `Variant - ${variantDescription}` : undefined,
-                    // images: item.coverImage ? [`http://localhost:5000/images/products/${item.coverImage}`] : [],
-                    images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh3CYjiccTjNuV8TfekJQTliblU0S7tzQTIQ&s"]
+                    images: item.coverImage ? process.env.NODE_ENV === "development" ? [`${process.env.BACK_DEVELOPMENT_URL}/images/products/${item.coverImage}`] : [`${process.env.BACK_PRODUCTION_URL}/images/products/${item.coverImage}`] : []
                 },
                 unit_amount: Math.round(item.variant.price * 100), // cents
             },
@@ -61,18 +60,22 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
         });
     }
 
+    const redirectionURL = process.env.NODE_ENV === "development" ? process.env.DEVELOPMENT_URL : process.env.PRODUCTION_URL;
+
+
     const session = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
         line_items,
-        success_url: `http://localhost:3000/cart`,
-        cancel_url: `http://localhost:3000/cart`,
+        success_url: `${redirectionURL}/cart`,
+        cancel_url: `${redirectionURL}/cart`,
         metadata: {
             userId: req.user._id.toString(),
             address: req.body.address.toString(),
             phone: req.body.phone.toString()
         }
     });
+
 
     res.status(200).json({
         priceChanged: req.priceChanged,
@@ -88,7 +91,6 @@ const refundWithIdempotency = (paymentIntentId, idempotencySuffix) => {
 };
 
 export const stripeWebhook = async (req, res) => {
-    
     const sig = req.headers["stripe-signature"];
     let event;
 

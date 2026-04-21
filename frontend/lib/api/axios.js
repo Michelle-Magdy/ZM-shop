@@ -1,8 +1,15 @@
 // api/client.ts
 import axios from "axios";
 
+const isDevelopment = process.env.NEXT_PUBLIC_ENV === "development";
+
+const baseURL = isDevelopment
+  ? `${process.env.NEXT_PUBLIC_API_DEVELOPMENT_URL}/api/v1`
+  : `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
+
+
 export const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api/v1`,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
