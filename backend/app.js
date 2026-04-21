@@ -19,9 +19,14 @@ import reportsRouter from "./routes/reports.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import dotenv from "dotenv";
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(
@@ -34,7 +39,7 @@ app.use(
 
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
-app.use(express.static("./backend/public"));
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRouter);

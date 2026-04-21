@@ -2,9 +2,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FaStar } from "react-icons/fa";
+import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 
 export default function ProductSearchItem({ product }) {
-  const PRODUCT_IMAGE_URL = "http://localhost:5000/images/products";
+  const productImageSrc = product?.coverImage
+    ? `${IMAGES_BASE_URL}/products/${product.coverImage}`
+    : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
   return (
     <Link
       href={`/product/${product.slug}`}
@@ -18,10 +21,7 @@ export default function ProductSearchItem({ product }) {
           </p>
         )}
         <Image
-          src={
-            `${PRODUCT_IMAGE_URL}/${product?.coverImage}` ||
-            "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg "
-          }
+          src={productImageSrc}
           fill
           sizes="80px"
           alt={product.title}
