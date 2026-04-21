@@ -11,15 +11,16 @@ export const createTokenAndSetCookie = (user, res, rememberMe = false) => {
   const cookieOptions = {
     expires: new Date(
       Date.now() +
-        (rememberMe ? 30 : parseInt(process.env.JWT_EXPIRES_IN)) *
-          24 *
-          60 *
-          60 *
-          1000,
+      (rememberMe ? 30 : parseInt(process.env.JWT_EXPIRES_IN)) *
+      24 *
+      60 *
+      60 *
+      1000,
     ),
     httpOnly: true, // prevent xss
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict", // prevent csrf
+    sameSite:
+      process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 30 * 60 * 60 * 1000, //! edit this for refresh tokens
   };
 
