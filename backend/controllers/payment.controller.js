@@ -65,7 +65,7 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
         mode: "payment",
         payment_method_types: ["card"],
         line_items,
-        success_url: `http://localhost:3000/success`,
+        success_url: `http://localhost:3000/cart`,
         cancel_url: `http://localhost:3000/cart`,
         metadata: {
             userId: req.user._id.toString(),
@@ -88,6 +88,7 @@ const refundWithIdempotency = (paymentIntentId, idempotencySuffix) => {
 };
 
 export const stripeWebhook = async (req, res) => {
+    
     const sig = req.headers["stripe-signature"];
     let event;
 
@@ -140,6 +141,8 @@ export const stripeWebhook = async (req, res) => {
 
         try {
             // ✅ Transaction-safe order creation
+            console.log("Creating order");
+
             await createOrderService(userId, { address, phone }, true, cart, session.id, session.payment_intent);
         } catch (err) {
             console.log("Error creating order from webhook:", err);

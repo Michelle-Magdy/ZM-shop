@@ -8,6 +8,7 @@ import ProductSpecifications from "./ProductSpecifications";
 import VariantSelector from "./VariantSelector";
 
 export default function ProductView({ product }) {
+    console.log(product);
     const [selectedVariant, setSelectedVariant] = useState(
         product.defaultVariant,
     );
