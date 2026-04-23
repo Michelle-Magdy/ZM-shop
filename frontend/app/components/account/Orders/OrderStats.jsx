@@ -33,7 +33,6 @@ export default function OrderStats({ user }) {
       </main>
     );
   }
-  if (isSuccess) console.log(data);
 
   return (
     <>

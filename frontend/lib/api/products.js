@@ -1,4 +1,5 @@
-import { cleanParams } from "@/util/cleanParams";
+import { cleanParams } from "@/lib/util/cleanParams";
+import { API_BASE_URL } from "../apiConfig";
 import { apiClient } from "./axios";
 
 const isFormDataPayload = (payload) =>
@@ -14,6 +15,52 @@ const getRequestConfig = (payload) => {
       "Content-Type": "multipart/form-data",
     },
   };
+};
+
+const appendQueryParam = (searchParams, key, value) => {
+  if (value === undefined || value === null || value === "") {
+    return;
+  }
+
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    return;
+  }
+
+  searchParams.set(key, String(value));
+};
+
+const buildCategorySearchParams = (queryParams = {}) => {
+  const rawParams = cleanParams(queryParams);
+  const searchParams = new URLSearchParams();
+
+  appendQueryParam(searchParams, "sort", rawParams.sort || "title");
+  appendQueryParam(searchParams, "status", rawParams.status || "active");
+
+  // Allow both flattened API keys and UI shape (price: { min, max }).
+  const minPrice =
+    rawParams["defaultVariant.price[gte]"] ?? rawParams?.price?.min;
+  const maxPrice =
+    rawParams["defaultVariant.price[lte]"] ?? rawParams?.price?.max;
+  appendQueryParam(searchParams, "defaultVariant.price[gte]", minPrice);
+  appendQueryParam(searchParams, "defaultVariant.price[lte]", maxPrice);
+
+  const appendListMap = (prefix, map) => {
+    if (!map || typeof map !== "object") {
+      return;
+    }
+
+    Object.entries(map).forEach(([name, values]) => {
+      if (!Array.isArray(values) || values.length === 0) {
+        return;
+      }
+      searchParams.set(`${prefix}[${name}]`, values.join(","));
+    });
+  };
+
+  appendListMap("attributes", rawParams.attributes);
+  appendListMap("variants", rawParams.variants);
+
+  return searchParams;
 };
 
 export const getAllProducts = async (query = "") => {
@@ -69,12 +116,22 @@ export const searchProducts = async (query) => {
 
 export const getProductsByCategory = async (categorySlug, queryParams) => {
   try {
-    const cleanQuery = cleanParams(queryParams);
-    const searchString = new URLSearchParams(cleanQuery).toString() || "";
-    console.log(searchString);
+    const searchParams = buildCategorySearchParams(queryParams);
+    const searchString = searchParams.toString();
+
+    if (typeof window === "undefined") {
+      const url = `${API_BASE_URL}/product/category/${categorySlug}${searchString ? `?${searchString}` : ""}`;
+      const res = await fetch(url, { cache: "no-store" });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch category products (${res.status})`);
+      }
+
+      return await res.json();
+    }
 
     const res = await apiClient.get(
-      `/product/category/${categorySlug}?${searchString}`,
+      `/product/category/${categorySlug}${searchString ? `?${searchString}` : ""}`,
     );
     return res.data;
   } catch (err) {
@@ -105,7 +162,11 @@ export const getProductReviews = async (productId) => {
 
 export const createProduct = async (product) => {
   try {
-    const res = await apiClient.post(`/product`, product, getRequestConfig(product));
+    const res = await apiClient.post(
+      `/product`,
+      product,
+      getRequestConfig(product),
+    );
     return res.data;
   } catch (err) {
     console.log(err);

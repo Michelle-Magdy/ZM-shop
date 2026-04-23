@@ -9,7 +9,7 @@ export default function GoogleLoginButton() {
       console.log(credentialResponse.credential);
 
       const url =
-        process.env.NEXT_PUBLIC_ENV === "development"
+        process.env.NODE_ENV === "development"
           ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google/token`
           : `${process.env.NEXT_PUBLIC_LOCAL_URL}/api/v1/auth/google/token`;
       // credentialResponse.credential is the Google ID token

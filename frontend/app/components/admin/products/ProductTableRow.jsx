@@ -8,7 +8,7 @@ import {
   calculateDiscount,
   getTotalStock,
   formatDate,
-} from "../../../../util/productUtils";
+} from "../../../../lib/util/productUtils";
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";

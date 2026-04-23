@@ -56,7 +56,6 @@ export const productSanitizer = (req, res, next) => {
     // If using new flat approach: req.body already has flat fields from multer
     const sourceBody = req.body?.data ? safeJsonParse(req.body.data) : req.body;
     const normalizedBody = { ...(sourceBody || {}) };
-    console.log("normalized", normalizedBody);
 
     // === 1. Parse JSON string fields ===
     const jsonFields = [
@@ -240,7 +239,6 @@ export const productSanitizer = (req, res, next) => {
     });
 
     req.body = sanitizedBody;
-    console.log("Sanitized body:", sanitizedBody);
 
     next();
   } catch (error) {

@@ -1,39 +1,53 @@
 "use client";
 import { getCategoryBySlug, getFilters } from "@/lib/api/categories";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FaBars } from "react-icons/fa";
 import { faX } from "@fortawesome/free-solid-svg-icons";
 import FiltersSkeleton from "@/app/UI/Skeletons/FiltersSkeleton";
+import {
+  parseCategoryFilters,
+  filtersToSearchParams,
+} from "@/lib/util/ParseCategoryFilters";
+import useDebounced from "@/lib/hooks/useDebounced";
 
-export default function Filters({ slug }) {
+const SORT_OPTIONS = [
+  { key: "A-Z", value: "title" },
+  { key: "Z-A", value: "-title" },
+  { key: "Price (asc)", value: "defaultVariant.price" },
+  { key: "Price (des)", value: "-defaultVariant.price" },
+  { key: "Rating (asc)", value: "avgRating" },
+  { key: "Rating (dec)", value: "-avgRating" },
+];
+
+export default function Filters({ slug, initialFilters }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [filtersData, setFiltersData] = useState(null);
-  const [activeFilters, setActiveFilters] = useState({
-    price: { min: 0, max: Infinity },
-    attributes: {},
-    variants: {},
-  });
+  const [activeFilters, setActiveFilters] = useState(initialFilters);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const debouncedMin = useDebounced(activeFilters.price.min);
+  const debouncedMax = useDebounced(activeFilters.price.max);
+
+  const isFirstRender = useRef(true);
+
+  // Fetch category → filters metadata
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
-
-        // 1. Fetch the category first
         const category = await getCategoryBySlug(slug);
 
-        // 2. Check if category exists before moving on
         if (category?.data?._id) {
-          // 3. Use the ID from the first result to fetch filters
           const filters = await getFilters(category.data._id);
           setFiltersData(filters);
-          console.log(filters);
+
+          // ✅ Re-parse URL with real min/max prices now that we know them
+          setActiveFilters(parseCategoryFilters(searchParams, filters));
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -42,81 +56,60 @@ export default function Filters({ slug }) {
       }
     }
 
-    if (slug) {
-      loadData();
-    }
+    if (slug) loadData();
   }, [slug]);
 
-  // build active filters from url
   useEffect(() => {
+    if (isFirstRender) {
+      isFirstRender.current = false;
+      return;
+    }
+
     if (!filtersData) return;
 
-    const filters = {
-      price: {
-        min: filtersData.price.min,
-        max: filtersData.price.max,
-      },
-      attributes: {},
-      variants: {},
-    };
+    const currentMin =
+      parseInt(searchParams.get("defaultVariant.price[gte]")) ||
+      filtersData.price.min;
+    const currentMax =
+      parseInt(searchParams.get("defaultVariant.price[lte]")) ||
+      filtersData.price.max;
 
-    // parse price range
-    const minPrice = searchParams.get("price[gte]");
-    const maxPrice = searchParams.get("price[lte]");
-    if (minPrice || maxPrice) {
-      filters.price = {
-        min: minPrice ? parseInt(minPrice) : filtersData.price.min,
-        max: maxPrice ? parseInt(maxPrice) : filtersData.price.max,
+    const minChanged = debouncedMin !== currentMin;
+    const maxChanged = debouncedMax !== currentMax;
+
+    if (minChanged || maxChanged) {
+      const newFilters = {
+        ...activeFilters,
+        price: {
+          min: debouncedMin,
+          max: debouncedMax,
+        },
       };
+
+      // Update URL without calling setActiveFilters again (already in sync)
+      const queryString = filtersToSearchParams(newFilters);
+      router.push(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
     }
-    // attributes
-    searchParams.forEach((value, key) => {
-      const attributeMatch = key.match(/^attributes\[(.+)\]$/);
-      if (attributeMatch) {
-        const attrKey = attributeMatch[1];
-        filters.attributes[attrKey] = value.split(",");
-      }
-      // attributes[ram]=8GB,16GB
-    });
-
-    // variants
-    searchParams.forEach((value, key) => {
-      const variantMatch = key.match(/^variants\[(.+)\]$/);
-      if (variantMatch) {
-        const variantKey = variantMatch[1];
-        filters.variants[variantKey] = value.split(",");
-      }
-    });
-
-    setActiveFilters(filters);
-  }, [filtersData, searchParams]);
+  }, [debouncedMin, debouncedMax]);
 
   const updateURL = (filters) => {
-    const params = new URLSearchParams();
-    // set price
-    if (filters.price) {
-      params.set("price[gte]", filters.price.min.toString());
-      params.set("price[lte]", filters.price.max.toString());
-    }
-    //set attributes
-    if (filters.attributes) {
-      Object.entries(filters.attributes).forEach(([key, values]) => {
-        if (values.length > 0)
-          params.set(`attributes[${key}]`, values.join(","));
-      });
-    }
-    //set variants
-    if (filters.variants) {
-      Object.entries(filters.variants).forEach(([key, values]) => {
-        if (values.length > 0) params.set(`variants[${key}]`, values.join(","));
-      });
-    }
-    const queryString = params.toString();
-    console.log(queryString);
+    const queryString = filtersToSearchParams(filters);
 
     router.push(queryString ? `${pathname}?${queryString}` : pathname, {
       scroll: false,
     });
+  };
+
+  const handleSort = (e) => {
+    const sortValue = e.target.value;
+    const newFilters = {
+      ...activeFilters,
+      sort: sortValue,
+    };
+    setActiveFilters(newFilters);
+    updateURL(newFilters);
   };
 
   const handlePriceChange = (min, max) => {
@@ -128,7 +121,6 @@ export default function Filters({ slug }) {
       },
     };
     setActiveFilters(newFilters);
-    updateURL(newFilters);
   };
 
   const handleAttributeToggle = (key, value) => {
@@ -166,11 +158,14 @@ export default function Filters({ slug }) {
   };
 
   const clearAllFilters = () => {
-    setActiveFilters({
-      priceRange: null,
+    const resetFilters = {
+      sort: "title",
+      price: { min: filtersData.price.min, max: filtersData.price.max },
       attributes: {},
       variants: {},
-    });
+      status: "active",
+    };
+    setActiveFilters(resetFilters);
     router.push(pathname, { scroll: false });
   };
 
@@ -183,7 +178,7 @@ export default function Filters({ slug }) {
   };
 
   if (isLoading) {
-    <FiltersSkeleton />;
+    return <FiltersSkeleton />;
   }
 
   if (!filtersData) return null;
@@ -222,8 +217,9 @@ export default function Filters({ slug }) {
         `}
       >
         {/* Header */}
+
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-primary-text">Filters</h2>
+          <h2 className="text-xl font-bold text-primary-text">Sorting</h2>
           <button
             onClick={() => setIsOpen(false)}
             className="lg:hidden text-primary-text hover:text-gray-700"
@@ -231,6 +227,24 @@ export default function Filters({ slug }) {
           >
             <FontAwesomeIcon icon={faX} className="w-6 h-6" />
           </button>
+        </div>
+        <div className="mb-8">
+          <div className="space-y-4">
+            <select
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-black focus:outline-none"
+              onChange={handleSort}
+            >
+              {SORT_OPTIONS.map(({ key, value }, index) => (
+                <option key={index} value={value}>
+                  {key}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-primary-text">Filters</h2>
         </div>
 
         {/* Clear All Button */}
@@ -256,7 +270,7 @@ export default function Filters({ slug }) {
                 </label>
                 <input
                   type="number"
-                  min={filtersData.price.min}
+                  min={0}
                   max={filtersData.price.max}
                   value={activeFilters.price?.min || filtersData.price.min}
                   onChange={(e) =>

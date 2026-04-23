@@ -58,8 +58,8 @@ export default function ProductCard({ product }) {
 
         <div className="bg-badge w-fit rounded-lg flex items-center gap-1 py-0.5 px-1.5 text-xs mb-1">
           <FaStar className="text-green-700 dark:text-button-label text-[10px]" />
-          <span className="font-bold">{product.avgRating}</span>
-          <span className="text-gray-500">({product.nReviews})</span>
+          <span className="font-bold">{product.avgRating || "0"}</span>
+          <span className="text-gray-500">({product.nReviews || "0"})</span>
         </div>
 
         <div className="flex items-center gap-1 w-fit mb-2">

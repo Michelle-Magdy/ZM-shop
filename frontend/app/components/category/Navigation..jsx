@@ -1,7 +1,7 @@
 "use client";
 import { useCategories } from "@/app/context/CategoriesProvider";
 import Link from "next/link";
-import { getCategoryTree } from "@/util/CategoryHelper";
+import { getCategoryTree } from "@/lib/util/CategoryHelper";
 import { useMemo } from "react";
 
 export default function Navigation({ slug }) {

@@ -11,7 +11,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
-import { debounce } from "../../../../util/productUtils";
+import { debounce } from "../../../../lib/util/productUtils";
 import { useCategories } from "@/lib/hooks/categories/useCategories";
 import LoadingSpinner from "../../LoadingSpinner";
 

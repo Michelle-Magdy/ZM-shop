@@ -17,7 +17,6 @@ export const sendVerificationEmail = async (email, verificationCode) => {
       ),
       category: "Email Verification",
     });
-    console.log(response);
   } catch (err) {
     console.log("Error sending the verification mail", err);
     throw new Error("Error sending the verification mail", err);

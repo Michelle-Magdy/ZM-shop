@@ -4,7 +4,7 @@ import { handleHelpfulReview } from "@/lib/api/reviews";
 import { useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa";
-import { getDisplayedHelpfulCount } from "@/util/ReviewHelper";
+import { getDisplayedHelpfulCount } from "@/lib/util/ReviewHelper.js";
 import toast from "react-hot-toast";
 import ReviewDialog from "./ReviewDialogue.jsx";
 import ReviewDelete from "./ReviewDelete.jsx";
@@ -128,7 +128,7 @@ export default function ReviewCard({ review, isUserReview }) {
               <ReviewDelete reviewId={reviewId} />
             </>
           ) : (
-            <ReportReviewButton reviewId={reviewId}/>
+            <ReportReviewButton reviewId={reviewId} />
           )}
         </div>
       </div>

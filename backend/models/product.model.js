@@ -168,18 +168,18 @@ productSchema.set("toObject", { virtuals: true });
 // indeces
 productSchema.index({ status: 1, categoryIds: 1, isDeleted: 1 });
 productSchema.index({ status: 1, isDeleted: 1, "ratingStats.average": -1 });
+productSchema.index({ title: 1 }, { collation: { locale: "en", strength: 1 } });
 productSchema.index({ title: "text", description: "text" });
 productSchema.index({ "variants.attributeValues.$**": 1 });
 // for variant filtering
 
 productSchema.methods.computeDefaultVariant = function () {
-  
   if (!this.variants || this.variants.length === 0) {
     this.defaultVariant = null;
     return;
   }
 
-  const activeVariants = this.variants.filter(v => v.isActive !== false);
+  const activeVariants = this.variants.filter((v) => v.isActive !== false);
 
   if (activeVariants.length === 0) {
     this.defaultVariant = null;
@@ -200,11 +200,9 @@ productSchema.methods.computeDefaultVariant = function () {
     price: best.price,
     stock: best.stock,
     attributeValues: best.attributeValues,
-    _computedAt: new Date()
+    _computedAt: new Date(),
   };
-  
 };
-
 
 productSchema.pre("save", async function (next) {
   //Slug generation
@@ -246,7 +244,7 @@ productSchema.pre("save", async function (next) {
       }
     }
   }
-  if (this.isModified('variants') || !this.defaultVariant || this.isNew) {
+  if (this.isModified("variants") || !this.defaultVariant || this.isNew) {
     this.computeDefaultVariant();
   }
   next();
@@ -275,7 +273,7 @@ productSchema.pre("findOneAndUpdate", async function (next) {
   next();
 });
 
-productSchema.post('findOneAndUpdate', async function(doc) {
+productSchema.post("findOneAndUpdate", async function (doc) {
   if (!doc || !doc.variants?.length) return;
   doc.computeDefaultVariant();
   await doc.save();

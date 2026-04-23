@@ -206,6 +206,7 @@ export const getAvailableFilters = catchAsync(async (req, res, next) => {
   products.forEach((product) => {
     // Price range
     const range = product.priceRange;
+    console.log(range);
     filters.price.min = Math.min(filters.price.min, range.min);
     filters.price.max = Math.max(filters.price.max, range.max);
 

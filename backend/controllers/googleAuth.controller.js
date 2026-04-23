@@ -85,7 +85,6 @@ export const googleTokenAuth = catchAsync(async (req, res, next) => {
       isVerified: true,
       roles: [process.env.USER_ROLE_ID],
     });
-    console.log(user);
 
     user = await User.findById(user._id).populate("roles");
     if (!user) {

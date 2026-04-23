@@ -1,7 +1,7 @@
 // src/components/admin/products/StatusBadge.jsx
 "use client";
 
-import { getStatusColor } from "../../../../util/productUtils";
+import { getStatusColor } from "../../../../lib/util/productUtils";
 
 export const StatusBadge = ({ status }) => {
   return (

@@ -46,7 +46,6 @@ export const addAddress = catchAsync(async (req, res, next) => {
 
 export const getAddresses = catchAsync(async (req, res, next) => {
   const { user } = req;
-  console.log(user);
 
   const addresses = await Address.find({ userId: user._id });
   if (!addresses) return next(new AppError("cannot fetch addresses", 404));
@@ -83,7 +82,6 @@ export const getAddressFromLocation = catchAsync(async (req, res, next) => {
   }
   const data = await fetchRes.json();
 
-  console.log(data);
   return res.status(200).json(data);
 });
 

@@ -20,7 +20,7 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
   let baseFilter = { bypassDeletedFilter: true };
 
   if (role) {
-    const roleDoc = await Role.findOne({ name: role }).select('_id');
+    const roleDoc = await Role.findOne({ name: role }).select("_id");
     if (!roleDoc) {
       return res.status(200).json({
         status: "Success",
@@ -28,7 +28,7 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
         totalCount: 0,
         totalPages: 0,
         currentPage: 1,
-        data: []
+        data: [],
       });
     }
     baseFilter.roles = roleDoc._id;
@@ -54,24 +54,27 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-
 export const getUser = getOne(User); // id must be in params as 'id'
 
 export const addUser = catchAsync(async (req, res, next) => {
   const { name, email, role, password } = req.body;
-  const roleId = role === "customer" ? process.env.USER_ROLE_ID :
-    role === "admin" ? process.env.ADMIN_ROLE_ID :
-      role === "vendor" ? process.env.VENDOR_ROLE_ID : null;
+  const roleId =
+    role === "customer"
+      ? process.env.USER_ROLE_ID
+      : role === "admin"
+        ? process.env.ADMIN_ROLE_ID
+        : role === "vendor"
+          ? process.env.VENDOR_ROLE_ID
+          : null;
 
-  if (!roleId)
-    return next(new AppError("No role was specified", 401));
+  if (!roleId) return next(new AppError("No role was specified", 401));
 
   const user = await User.create({
     name,
     email,
     password,
     roles: [roleId],
-    isVerified: true
+    isVerified: true,
   });
 
   if (role === "customer") {
@@ -83,23 +86,19 @@ export const addUser = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: "success",
-    message: "User was created successfully."
-  })
-})
+    message: "User was created successfully.",
+  });
+});
 
 export const updateUser = catchAsync(async (req, res, next) => {
   let { id } = req.params;
   const update = req.body;
 
-
-  console.log(id);
   const updatedDocument = await User.findByIdAndUpdate(id, update, {
     new: true,
     runValidators: true,
-    bypassDeletedFilter: true
+    bypassDeletedFilter: true,
   });
-  console.log(updatedDocument);
-
 
   res.status(200).json({
     status: "Success",
@@ -138,6 +137,6 @@ export const getUsersStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    ...result
+    ...result,
   });
-})
+});

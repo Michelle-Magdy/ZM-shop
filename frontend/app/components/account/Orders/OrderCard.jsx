@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 
 import OrderStatusTimeline from "@/app/components/account/Orders/OrderStatusTimeline";
-import { formatPrice } from "@/util/formatPrice";
-import { formatDate } from "@/util/formatDate";
+import { formatPrice } from "@/lib/util/formatPrice";
+import { formatDate } from "@/lib/util/formatDate";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import Image from "next/image";
 

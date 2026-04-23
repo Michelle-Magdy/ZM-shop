@@ -78,31 +78,32 @@ class APIFeatures {
   // =============================
   search(searchFields) {
     if (this.queryString.search) {
-      const searchQuery = !searchFields ? {
-        //Default title and description
-        $or: [  
-          {
-            title: {
-              $regex: this.queryString.search,
-              $options: "i",
-            },
-          },
-          {
-            description: {
-              $regex: this.queryString.search,
-              $options: "i",
-            },
-          },
-        ],
-      } : {
-        $or: searchFields.map(field => ({
-          [field]: {
-            $regex: this.queryString.search,
-            $options: "i"
+      const searchQuery = !searchFields
+        ? {
+            //Default title and description
+            $or: [
+              {
+                title: {
+                  $regex: this.queryString.search,
+                  $options: "i",
+                },
+              },
+              {
+                description: {
+                  $regex: this.queryString.search,
+                  $options: "i",
+                },
+              },
+            ],
           }
-        }
-        ))
-      };
+        : {
+            $or: searchFields.map((field) => ({
+              [field]: {
+                $regex: this.queryString.search,
+                $options: "i",
+              },
+            })),
+          };
 
       this._addToFilter(searchQuery);
     }
@@ -319,25 +320,23 @@ class APIFeatures {
 
     let selectFields = this.fields;
     if (this.extraSelections) {
-      if (this.fields)
-        selectFields = `${this.fields} ${this.extraSelections}`;
-      else
-        selectFields = this.extraSelections;
+      if (this.fields) selectFields = `${this.fields} ${this.extraSelections}`;
+      else selectFields = this.extraSelections;
     }
 
-
     let query = Model.find(finalFilter, null, {
-      bypassDeletedFilter: bypassDeletedFilter || false
+      bypassDeletedFilter: bypassDeletedFilter || false,
     })
+      .collation({ locale: "en", strength: 1 })
       .sort(this.sortBy)
       .select(selectFields)
       .skip(this.skip)
       .limit(this.limit);
 
     if (this.populateOptions) {
-      this.populateOptions.forEach(option => {
+      this.populateOptions.forEach((option) => {
         query.populate(option[0], option[1]);
-      })
+      });
     }
 
     const [documents, totalCount] = await Promise.all([
