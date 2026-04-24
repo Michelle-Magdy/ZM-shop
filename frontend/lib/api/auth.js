@@ -95,7 +95,6 @@ export const resetPassword = async (password, token) => {
       {
         password,
       },
-      { withCredentials: true },
     );
     return res.data;
   } catch (err) {

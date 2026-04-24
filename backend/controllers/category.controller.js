@@ -15,6 +15,11 @@ import sharp from "sharp";
 import { upload } from "../config/multer.config.js";
 import { deleteFile } from "../util/deleteFile.js";
 import mongoose from "mongoose";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const uploadImage = upload.single("image");
 
@@ -24,6 +29,11 @@ export const resizeImage = catchAsync(async (req, res, next) => {
   }
 
   const imagePath = `category-${Date.now()}.jpg`;
+  const outputPath = path.join(
+    __dirname,
+    "../public/images/categories",
+    imagePath,
+  );
 
   await sharp(req.file.buffer)
     .resize(1000, 1000)
@@ -31,7 +41,7 @@ export const resizeImage = catchAsync(async (req, res, next) => {
     .jpeg({
       quality: 90,
     })
-    .toFile(`backend/public/images/categories/${imagePath}`);
+    .toFile(outputPath);
   req.body.image = imagePath;
   next();
 });

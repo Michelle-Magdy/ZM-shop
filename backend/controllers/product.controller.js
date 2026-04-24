@@ -14,6 +14,8 @@ import { deleteFile } from "../util/deleteFile.js";
 import { findCategoryDescendantsIDs } from "../util/category.utils.js";
 import Category from "../models/category.model.js";
 import AppError from "../util/appError.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const safeJsonParse = (value) => {
   if (typeof value !== "string") {
@@ -256,10 +258,17 @@ export const resizeImages = catchAsync(async (req, res, next) => {
     (image) => typeof image === "string" && image,
   );
 
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const uploadedImages = [];
 
   if (req.files?.coverImage) {
     const coverImageName = `product-${Date.now()}-cover.jpeg`;
+    const outputPath = path.join(
+      __dirname,
+      "../public/images/products",
+      coverImageName,
+    );
 
     await sharp(req.files.coverImage[0].buffer)
       .resize(1000, 1000)
@@ -267,7 +276,7 @@ export const resizeImages = catchAsync(async (req, res, next) => {
       .jpeg({
         quality: 90,
       })
-      .toFile(`backend/public/images/products/${coverImageName}`);
+      .toFile(outputPath);
     req.body.coverImage = coverImageName;
   }
 
@@ -276,13 +285,18 @@ export const resizeImages = catchAsync(async (req, res, next) => {
       req.files.images.map(async (image, index) => {
         const imageName = `product-${Date.now()}-${index}.jpeg`;
 
+        const outputPath = path.join(
+          __dirname,
+          "../public/images/products",
+          imageName,
+        );
         await sharp(image.buffer)
           .resize(900, 900)
           .toFormat("jpeg")
           .jpeg({
             quality: 90,
           })
-          .toFile(`backend/public/images/products/${imageName}`);
+          .toFile(outputPath);
         uploadedImages.push(imageName);
       }),
     );

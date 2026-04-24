@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import Cart from "../models/cart.model.js";
 import Wishlist from "../models/wishlist.model.js";
-import { generateVerificationToken } from "../util/utils.js";
+import { generateVerificationCode } from "../util/utils.js";
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
@@ -39,7 +39,7 @@ export const login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  if(user.isSuspended){
+  if (user.isSuspended) {
     return next(new AppError("Your account was suspended by admin.", 401));
   }
 
@@ -70,8 +70,14 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
   user.verificationTokenExpiresAt = undefined;
 
   await user.save();
-  await sendWelcomeEmail(user.email, user.name);
-  res.status(200).json({
+  const sentEmail = await sendWelcomeEmail(user.email, user.name);
+  if (!sentEmail?.success) {
+    return res.status(400).json({
+      status: "failed",
+      message: sentEmail?.error,
+    });
+  }
+  return res.status(200).json({
     message: "Email verified successfully",
     user: {
       ...user._doc,
@@ -82,31 +88,48 @@ export const verifyEmail = catchAsync(async (req, res, next) => {
 
 export const signup = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
-  const verificationToken = generateVerificationToken();
+  const normailzedEmail = email.toLocaleLowerCase().trim();
+
+  const existingUser = await User.findOne({
+    email: normailzedEmail,
+  });
+  if (existingUser) throw new AppError("Email Already Exits", 409);
+
+  // send email verification code
+  const verificationCode = generateVerificationCode();
   const verificationTokenExpiresAt = Date.now() + 3 * 60 * 1000;
-  const user = await User.create({
+
+  const newUser = await User.create({
     name,
     email,
     password,
-    verificationToken,
+    verificationToken: verificationCode,
     verificationTokenExpiresAt,
     roles: [process.env.USER_ROLE_ID],
   });
-
-  user.populate("roles");
-  user.password = undefined;
+  await newUser.populate("roles");
+  newUser.password = undefined;
 
   //Create a cart for new user
-  await Cart.create({ userId: user._id, items: [] });
+  await Cart.create({ userId: newUser._id, items: [] });
   // create a wishlist for the new user
-  await Wishlist.create({ userId: user._id, items: [] });
+  await Wishlist.create({ userId: newUser._id, items: [] });
   // create token and set cookie
-  createTokenAndSetCookie(user, res);
+  // createTokenAndSetCookie(user, res);
   // send verification mail
-  await sendVerificationEmail(user.email, verificationToken);
-  res.status(201).json({
+  const sentEmail = await sendVerificationEmail(
+    newUser.email,
+    verificationCode,
+  );
+  if (!sentEmail?.success) {
+    return res.status(400).json({
+      status: "failed",
+      message: sentEmail?.error,
+    });
+  }
+  return res.status(201).json({
     status: "success",
-    user: formatUser(user),
+    user: formatUser(newUser),
   });
 });
 
@@ -178,20 +201,30 @@ export const getCurrentUser = (req, res, next) => {
   });
 };
 
-//! CONTINUE RESET PASSWORD AND SENDING EMAILS
 
 export const forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
-  const user = await User.findOne({ email });
+  const normailzedEmail = email.toLocaleLowerCase().trim();
+  const user = await User.findOne({ email:normailzedEmail });
   if (!user) {
     return next(new AppError("user not found", 404));
   }
-  const resetToken = user.makeResetPasswordToken();
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  user.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  
+  console.log(resetToken);
+
+  user.passwordResetExpiresAt =
+    Date.now() + Number(process.env.RESET_PASSWORD_EXPRIRES_IN || 600000);
+  
   await user.save({ validateBeforeSave: false });
   await sendResetPasswordEmail(
     user.email,
     user.name,
-    `${process.env.CLIENT_URL}/reset-password/${resetToken}`,
+    `${process.env.NODE_ENV === "development" ? process.env.DEVELOPMENT_URL : process.env.PRODUCTION_URL}/reset-password/${resetToken}`,
   );
   res.status(200).json({
     message: "token sent successfully",
@@ -209,7 +242,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     passwordResetToken: hashedResetToken,
     passwordResetExpiresAt: { $gte: Date.now() },
-  });
+  }).select("+passwordResetToken +passwordResetExpiresAt");
   if (!user) return next(new AppError("forbidden to go to this route", 401));
 
   user.password = password;

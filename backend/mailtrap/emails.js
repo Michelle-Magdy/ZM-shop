@@ -1,64 +1,66 @@
-import { client, sender } from "./mailtrap.config.js";
 import {
-  PASSWORD_RESET_REQUEST_TEMPLATE,
-  VERIFICATION_EMAIL_TEMPLATE,
+  getPasswordResetRequestTemplate,
+  getVerificationEmailTemplate,
+  getWelcomeEmailTemplate,
 } from "./emails.templates.js";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  // remove this in production
+  tls: { rejectUnauthorized: false },
+  debug: true,
+  logger: true,
+});
+
+const sendEmail = async (to, subject, html) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"ZM Shop" <${process.env.EMAIL_FROM || "no-reply@zmshop.com"}>`,
+      to,
+      subject,
+      html,
+    });
+
+    console.log(`Email sent to ${to}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`Failed to send email to ${to}:`, err.message);
+    return { success: false, error: err.message };
+  }
+};
 
 export const sendVerificationEmail = async (email, verificationCode) => {
-  const recipient = [{ email }];
-  try {
-    const response = await client.send({
-      from: sender,
-      to: recipient,
-      subject: "Verify your email",
-      html: VERIFICATION_EMAIL_TEMPLATE.replace(
-        "{verificationCode}",
-        verificationCode,
-      ),
-      category: "Email Verification",
-    });
-  } catch (err) {
-    console.log("Error sending the verification mail", err);
-    throw new Error("Error sending the verification mail", err);
-  }
+  return sendEmail(
+    email,
+    "Verify your email",
+    getVerificationEmailTemplate({ verificationCode }),
+  );
 };
 
 export const sendWelcomeEmail = async (email, name) => {
-  const recipient = [{ email }];
-  try {
-    client
-      .send({
-        from: sender,
-        to: recipient,
-        subject: "Welcome To ZM Shop",
-        template_uuid: "d32c99dc-20b6-48c3-8e44-c51a141f9d0d",
-        template_variables: {
-          company_info_name: "ZM Shop",
-          name: name,
-        },
-      })
-      .then(console.log, console.error);
-  } catch (err) {
-    throw new Error("Failed sending Welcome Email", err);
-  }
+  const loginURL =
+    process.env.NODE_ENV === "production"
+      ? `${process.env.PRODUCTION_URL}/login`
+      : `${process.env.DEVELOPMENT_URL || "http://localhost:3000"}/login`;
+
+  return sendEmail(
+    email,
+    "Welcome to ZM Shop",
+    getWelcomeEmailTemplate({ name, loginURL }),
+  );
 };
 
-export const sendResetPasswordEmail = async (email, name, url) => {
-  const recipients = [{ email }];
-
-  try {
-    client
-      .send({
-        from: sender,
-        to: recipients,
-        subject: "Reset Password",
-        html: PASSWORD_RESET_REQUEST_TEMPLATE.replace(
-          "{resetURL}",
-          url,
-        ).replace("{name}", name),
-      })
-      .then(console.log, console.error);
-  } catch (err) {
-    throw new Error("Failed sending reset password Email", err);
-  }
+export const sendResetPasswordEmail = async (email, name, resetURL) => {
+  return sendEmail(
+    email,
+    "Reset Password",
+    getPasswordResetRequestTemplate({ name, resetURL }),
+  );
 };
