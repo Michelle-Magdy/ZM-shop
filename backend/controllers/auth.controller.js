@@ -39,7 +39,7 @@ export const login = catchAsync(async (req, res, next) => {
     return next(new AppError("Incorrect email or password", 401));
   }
 
-  if(user.isSuspended){
+  if (user.isSuspended) {
     return next(new AppError("Your account was suspended by admin.", 401));
   }
 
@@ -110,10 +110,11 @@ export const signup = catchAsync(async (req, res, next) => {
   });
 });
 
-export const logout = catchAsync((req, res, next) => {
+export const logout = catchAsync((req, res) => {
   res.clearCookie("jwt", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
 
@@ -122,6 +123,7 @@ export const logout = catchAsync((req, res, next) => {
     message: "Logout successful.",
   });
 });
+
 
 export const protect = catchAsync(async (req, res, next) => {
   let token;
