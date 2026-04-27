@@ -15,7 +15,9 @@ export const getOrderStats = async () => {
 };
 
 export const getAdminOrdersStats = async () => {
-  const res = await apiClient.get("orders/admin/stats");
+  // const res = await apiClient.get("orders/admin/stats");
+   const apiServer = await serverApiClient();
+   const res = await apiServer.get("orders/admin/stats");
   return res.data;
 };
 
