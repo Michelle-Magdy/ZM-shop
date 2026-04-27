@@ -22,9 +22,9 @@ export default function UsersPage() {
             </div>
 
             {/* Stats Cards */}
-            <Suspense fallback={<LoadingSpinner/>}>
+            {/* <Suspense fallback={<LoadingSpinner/>}> */}
                 <UsersStatsGridWrapper />
-            </Suspense>
+            {/* </Suspense> */}
 
             {/* Users table */}
             <UsersTable />
