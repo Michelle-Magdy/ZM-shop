@@ -113,34 +113,37 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.pre("save", async function (next) {
-  if (this.isModified("items") || this.isNew) {
-    this.totalPrice = this.items.reduce((acc, item) => {
-      return acc + item.variant.price * item.quantity;
-    }, 0);
-  }
-  if (this.isNew && !this.orderNumber) {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const yearMonth = `${year}${month}`;
+  try {
+    if (this.isModified("items") || this.isNew) {
+      this.totalPrice = this.items.reduce((acc, item) => {
+        return acc + item.variant.price * item.quantity;
+      }, 0);
+    }
 
-    const counter = await OrderCounter.findOneAndUpdate(
-      {
-        _id: "OrderNumber",
-        yearMonth,
-      },
-      {
-        $inc: { sequence: 1 }, // increment sequence by 1
-      },
-      {
-        upsert: true, // create if new update if exists
-        new: true, // return updated document
-      },
-    );
-    const sequence = String(counter.sequence).padStart(4, "0");
-    this.orderNumber = `ORD-${yearMonth}-${sequence}`;
+    if (this.isNew && !this.orderNumber) {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const yearMonth = `${year}${month}`;
+
+      const counter = await OrderCounter.findOneAndUpdate(
+        { _id: `OrderNumber-${yearMonth}` },
+        { $inc: { sequence: 1 } },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
+      const sequence = String(counter.sequence).padStart(4, "0");
+
+      this.orderNumber = `ORD-${yearMonth}-${sequence}`;
+    }
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 orderSchema.index({ userId: 1 });
