@@ -4,10 +4,10 @@ import { validateCartItems } from "../services/cart.service.js";
 import Cart from "../models/cart.model.js";
 import stripe from "../stripeConfig.js";
 import Order from "../models/order.model.js";
+import AppError from "../util/appError.js";
 
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
-
     const subtotal = cart.items.reduce((sum, item) =>
         sum + item.variant.price * item.quantity, 0
     );
@@ -159,7 +159,7 @@ export const stripeWebhook = async (req, res) => {
 
     console.log("\n========== FETCHING CART ==========");
     const cart = await Cart.findOne({ userId })
-        .populate("items.productId", "variant")
+        .populate("items.productId", "variants")
         .populate("coupon.couponId");
 
     console.log("🛒 Cart found:", !!cart);

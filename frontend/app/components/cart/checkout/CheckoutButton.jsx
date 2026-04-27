@@ -19,8 +19,7 @@ export default function CheckoutButton() {
 
   const handleCheckout = async (paymentMethod, address, phone) => {
     try {
-      setIsLoading(true);
-
+      setIsLoading(true);      
       if (paymentMethod === "online") {
         const session = await getCheckoutSession(address, phone);
         if (session.priceChanged) {
