@@ -3,6 +3,7 @@ import { createOrderService } from "../services/order.service.js";
 import { validateCartItems } from "../services/cart.service.js";
 import Cart from "../models/cart.model.js";
 import stripe from "../stripeConfig.js";
+import Order from "../models/order.model.js";
 
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
