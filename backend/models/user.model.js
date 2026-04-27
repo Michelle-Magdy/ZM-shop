@@ -130,17 +130,6 @@ userSchema.methods.passwordChangedAfter = function (JWTTimeStamp) {
   return false;
 };
 
-userSchema.methods.makeResetPasswordToken = function () {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  this.passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  this.passwordResetExpiresAt =
-    Date.now() + Number(process.env.RESET_PASSWORD_EXPRIRES_IN);
-  return resetToken;
-};
 
 userSchema.pre(/^find/, function (next) {
   if (this.options.bypassDeletedFilter) {

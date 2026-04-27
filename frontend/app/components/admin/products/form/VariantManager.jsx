@@ -20,6 +20,21 @@ export const VariantManager = ({
   const isDefaultVariant = (variant) =>
     defaultVariant?.sku && defaultVariant.sku === variant.sku;
 
+  // Force at least one variant if none exists
+  useEffect(() => {
+    if (variants.length === 0) {
+      const newVariant = {
+        sku: `SKU-${Date.now().toString(36).toUpperCase()}`,
+        attributeValues: {},
+        price: basePrice || 0,
+        stock: baseStock || 0,
+        isActive: true,
+      };
+      onVariantsChange([newVariant]);
+      onDefaultVariantChange?.(newVariant);
+    }
+  }, []);
+
   // Generate all possible variant combinations
   const generateVariants = () => {
     const dimensionAttrs = attributeDefinitions.filter((def) =>
@@ -73,6 +88,10 @@ export const VariantManager = ({
     });
 
     onVariantsChange(newVariants);
+    // Set first generated variant as default if no default exists
+    if (!defaultVariant && newVariants.length > 0) {
+      onDefaultVariantChange?.(newVariants[0]);
+    }
     setShowGenerator(false);
   };
 
@@ -85,6 +104,10 @@ export const VariantManager = ({
       isActive: true,
     };
     onVariantsChange([...variants, newVariant]);
+    // Set as default if no default exists
+    if (!defaultVariant) {
+      onDefaultVariantChange?.(newVariant);
+    }
   };
 
   const updateVariant = (index, updates) => {
@@ -96,6 +119,12 @@ export const VariantManager = ({
   const removeVariant = (index) => {
     const removed = variants[index];
     const nextVariants = variants.filter((_, i) => i !== index);
+
+    // Prevent removing the last variant
+    if (nextVariants.length === 0) {
+      return;
+    }
+
     onVariantsChange(nextVariants);
 
     if (defaultVariant?.sku === removed?.sku) {
@@ -118,6 +147,12 @@ export const VariantManager = ({
       setShowGenerator(true);
     }
   }, [variantDimensions]);
+
+  // Get dimension attribute options for dropdown
+  const getDimensionOptions = (dimKey) => {
+    const attr = attributeDefinitions.find((def) => def.key === dimKey);
+    return attr?.options || [];
+  };
 
   if (variantDimensions.length === 0) {
     return (
@@ -221,24 +256,56 @@ export const VariantManager = ({
                       className="w-full px-2 py-1 bg-(--color-background) border border-(--color-badge)/30 rounded text-sm focus:outline-none focus:border-(--color-primary)"
                     />
                   </td>
-                  {variantDimensions.map((dim) => (
-                    <td key={dim} className="px-3 py-2">
-                      <span className="text-sm text-(--color-primary-text)">
-                        {variant.attributeValues[dim] || "-"}
-                      </span>
-                    </td>
-                  ))}
+                  {variantDimensions.map((dim) => {
+                    const options = getDimensionOptions(dim);
+                    return (
+                      <td key={dim} className="px-3 py-2">
+                        {options.length > 0 ? (
+                          <select
+                            value={variant.attributeValues[dim] || ""}
+                            onChange={(e) =>
+                              updateVariant(index, {
+                                attributeValues: {
+                                  ...variant.attributeValues,
+                                  [dim]: e.target.value,
+                                },
+                              })
+                            }
+                            className="w-full px-2 py-1 bg-(--color-background) border border-(--color-badge)/30 rounded text-sm focus:outline-none focus:border-(--color-primary)"
+                          >
+                            <option value="">— Select —</option>
+                            {options.map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-sm text-(--color-secondary-text)">
+                            {variant.attributeValues[dim] || "-"}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
                   <td className="px-3 py-2">
                     <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={(variant.price / 100).toFixed(2)}
-                      onChange={(e) =>
-                        updateVariant(index, {
-                          price: Math.round(parseFloat(e.target.value) * 100),
-                        })
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        variant.price === 0
+                          ? ""
+                          : (variant.price / 100).toFixed(2)
                       }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        // Allow empty string and valid decimal input
+                        if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                          const parsed =
+                            raw === "" ? 0 : Math.round(parseFloat(raw) * 100);
+                          updateVariant(index, { price: parsed });
+                        }
+                      }}
                       className="w-24 px-2 py-1 bg-(--color-background) border border-(--color-badge)/30 rounded text-sm focus:outline-none focus:border-(--color-primary)"
                     />
                   </td>
