@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../apiConfig";
 import { apiClient } from "./axios";
-import serverApiClient from "./serverApi.js";
+import serverApiClient from "./serverApi";
+// import serverApiClient from "./serverApi.js";
 
 const USERS_LIMIT = 5;
 
@@ -26,10 +27,12 @@ export const updateMe = async (user) => {
 };
 
 export const getUsersStats = async () => {
-  // used in server component
-  const apiServer = await serverApiClient();
-  const response = await apiServer.get(`users/stats`);
-  return response.data;
+  // used in server component  
+  // const res = await apiClient.get("users/stats");
+  // return res.data;
+   const apiServer = await serverApiClient();
+   const response = await apiServer.get(`users/stats`);
+   return response.data;
 }
 
 export const getUsers = async (page, search, role, status) => {

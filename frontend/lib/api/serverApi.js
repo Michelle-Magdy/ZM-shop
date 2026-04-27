@@ -6,13 +6,21 @@ export default async function serverApiClient() {
     process.env.NODE_ENV === "production"
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
       : `${process.env.NEXT_PUBLIC_LOCAL_URL}/api/v1`;
-  //used with server components fetching to forward cookies to node server
+
   const cookieStore = await cookies();
+
+  // Get all cookies and format them properly
+  const allCookies = cookieStore.getAll();
+  const cookieHeader = allCookies
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+
   return axios.create({
     baseURL: url,
     headers: {
       "Content-Type": "application/json",
-      Cookie: cookieStore.toString(),
+      Cookie: cookieHeader,
     },
+    withCredentials: true,
   });
 }
