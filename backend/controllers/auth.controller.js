@@ -201,11 +201,10 @@ export const getCurrentUser = (req, res, next) => {
   });
 };
 
-
 export const forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
   const normailzedEmail = email.toLocaleLowerCase().trim();
-  const user = await User.findOne({ email:normailzedEmail });
+  const user = await User.findOne({ email: normailzedEmail });
   if (!user) {
     return next(new AppError("user not found", 404));
   }
@@ -214,12 +213,12 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  
-  console.log(resetToken);
 
-  user.passwordResetExpiresAt =
-    Date.now() + Number(process.env.RESET_PASSWORD_EXPRIRES_IN || 600000);
-  
+ const expiresIn =
+   parseInt(process.env.RESET_PASSWORD_EXPIRES_IN, 10) || 600000;
+ const passwordResetExpiresAt = new Date(Date.now() + expiresIn);
+  user.passwordResetExpiresAt = passwordResetExpiresAt;
+
   await user.save({ validateBeforeSave: false });
   await sendResetPasswordEmail(
     user.email,
@@ -242,7 +241,8 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     passwordResetToken: hashedResetToken,
     passwordResetExpiresAt: { $gte: Date.now() },
-  }).select("+passwordResetToken +passwordResetExpiresAt");
+  });
+
   if (!user) return next(new AppError("forbidden to go to this route", 401));
 
   user.password = password;
