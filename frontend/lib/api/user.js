@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../apiConfig";
 import { apiClient } from "./axios";
-import serverApiClient from "./serverApi.js";
+import serverApiClient from "./serverApi";
+// import serverApiClient from "./serverApi.js";
 
 const USERS_LIMIT = 5;
 
@@ -26,28 +27,33 @@ export const updateMe = async (user) => {
 };
 
 export const getUsersStats = async () => {
-  // used in server component
-  const apiServer = await serverApiClient();
-  const response = await apiServer.get(`users/stats`);
-  return response.data;
-}
+
+  const res = await apiClient.get("users/stats");
+  return res.data;
+  // const response = await fetch(
+  //   `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/stats`,
+  //   {
+  //     method: "GET",
+  //     credentials: "include",
+  //   },
+  // );
+  // return await response.json();
+};
 
 export const getUsers = async (page, search, role, status) => {
   let url = `users?page=${page}&limit=${USERS_LIMIT}`;
 
-  if (search)
-    url += `&search=${encodeURIComponent(search)}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
 
-  if (role)
-    url += `&role=${encodeURIComponent(role)}`;
+  if (role) url += `&role=${encodeURIComponent(role)}`;
 
-  if(status === "suspended"){
+  if (status === "suspended") {
     url += `&isSuspended=true`;
   }
-  if(status === "deleted"){
+  if (status === "deleted") {
     url += `&isDeleted=true`;
   }
-  if(status === "active"){
+  if (status === "active") {
     url += `&isSuspended=false&isDeleted=false`;
   }
 
@@ -58,9 +64,9 @@ export const getUsers = async (page, search, role, status) => {
 export const updateUser = async (id, data) => {
   const response = await apiClient.patch(`users/${id}`, data);
   return response.data;
-}
+};
 
 export const addUser = async (data) => {
   const response = await apiClient.post("users", data);
   return response.data;
-}
+};

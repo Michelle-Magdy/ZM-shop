@@ -19,8 +19,8 @@ export const createTokenAndSetCookie = (user, res, rememberMe = false) => {
     ),
     httpOnly: true, // prevent xss
     secure: process.env.NODE_ENV === "production",
-    sameSite:
-      process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: 
+      process.env.NODE_ENV === "production" ? "None" : "Lax",
     maxAge: 30 * 60 * 60 * 1000, //! edit this for refresh tokens
   };
 

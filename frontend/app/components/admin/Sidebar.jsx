@@ -49,11 +49,6 @@ const NAV_ITEMS = [
         label: "Reports",
         icon: Flag,
     },
-    {
-        href: "/admin/settings",
-        label: "Settings",
-        icon: Settings,
-    },
 ];
 
 export function Sidebar() {

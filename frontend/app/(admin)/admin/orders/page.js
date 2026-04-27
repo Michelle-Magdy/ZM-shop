@@ -19,9 +19,9 @@ export default function OrdersPage() {
             </div>
 
             {/* Stats Cards */}
-            <Suspense fallback={<LoadingSpinner />}>
+            {/* <Suspense fallback={<LoadingSpinner />}> */}
                 <OrdersStatsGridWrapper />
-            </Suspense>
+            {/* </Suspense> */}
 
             {/* Orders table */}
             <OrdersTable />
