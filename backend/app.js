@@ -40,6 +40,8 @@ app.use(
   }),
 );
 
+app.use("/api/v1/stripe", stripeRouter);
+
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
@@ -58,7 +60,6 @@ app.use("/api/v1/coupons", couponRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
-app.use("/api/v1/stripe", stripeRouter);
 app.use("/api/v1/admin/dashboard", dashboardRouter);
 app.use("/api/v1/admin/reviews/reports", reportsRouter);
 app.use(globalErrorHandler);
