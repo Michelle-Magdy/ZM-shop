@@ -1,6 +1,4 @@
 import OrdersStatsGridWrapper from "../../../components/admin/orders/OrdersStatsGridWrapper.jsx";
-import { Suspense } from "react";
-import LoadingSpinner from "../../../UI/LoadingSpinner.jsx";
 import OrdersTable from "../../../components/admin/orders/OrdersTable.jsx";
 
 export default function OrdersPage() {
