@@ -93,68 +93,116 @@ const refundWithIdempotency = (paymentIntentId, idempotencySuffix) => {
 
 export const stripeWebhook = async (req, res) => {
     const sig = req.headers["stripe-signature"];
+
     let event;
+
+    console.log("\n================ STRIPE WEBHOOK HIT ================");
+    console.log("🟢 Webhook received at:", new Date().toISOString());
+
+    console.log("📦 Raw body type:", typeof req.body);
+    console.log("📦 Is Buffer:", Buffer.isBuffer(req.body));
+    console.log("📦 Headers:", req.headers);
 
     try {
         event = stripe.webhooks.constructEvent(
-            req.body, // make sure raw body is available, not parsed JSON
+            req.body,
             sig,
-            process.env.STRIPE_WEBHOOK_SECRET // we get it from stipe after setting up webhook with our domain
+            process.env.STRIPE_WEBHOOK_SECRET
         );
+
+        console.log("✅ Signature verified");
+        console.log("📌 Event type:", event.type);
     } catch (err) {
-        console.log("⚠️ Webhook signature verification failed.", err.message);
+        console.log("❌ Signature verification failed:", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle only the event type you care about
-    if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-
-        // ✅ Only process if payment is confirmed
-        if (session.payment_status !== "paid") {
-            return res.status(200).send({ received: true });
-        }
-
-        const userId = session.metadata.userId;
-        const address = session.metadata.address;
-        const phone = session.metadata.phone;
-
-        // ✅ Prevent duplicate processing
-        const existingOrder = await Order.findOne({ stripeSessionId: session.id });
-        if (existingOrder) return res.status(200).send({ received: true });
-
-        // ✅ Fetch fresh cart
-        const cart = await Cart.findOne({ userId })
-            .populate("items.productId", "variant")
-            .populate("coupon.couponId");
-
-        if (!cart || cart.items.length === 0) {
-            // Optionally issue refund if cart empty
-            await refundWithIdempotency(session.payment_intent, "empty_cart");
-            return res.status(200).send({ error: "Cart empty, refund issued" });
-        }
-
-        // ✅ Revalidate stock & price
-        const { error } = await validateCartItems(cart);
-        if (error) {
-            // Refund if validation fails
-            await refundWithIdempotency(session.payment_intent, "cart_validation_failed");
-            return res.status(200).send({ error: error.message });
-        }
-
-        try {
-            // ✅ Transaction-safe order creation
-            console.log("Creating order");
-
-            await createOrderService(userId, { address, phone }, true, cart, session.id, session.payment_intent);
-        } catch (err) {
-            console.log("Error creating order from webhook:", err);
-            // refund on failure
-            await refundWithIdempotency(session.payment_intent, "order_creation_failed");
-            return res.status(200).send({ error: "Order creation failed, refund issued" });
-        }
+    // Only care about checkout success
+    if (event.type !== "checkout.session.completed") {
+        console.log("⚠️ Ignored event type:", event.type);
+        return res.status(200).send({ received: true });
     }
 
-    // Respond 200 to acknowledge receipt of webhook
+    const session = event.data.object;
+
+    console.log("\n========== SESSION INFO ==========");
+    console.log("🆔 Session ID:", session.id);
+    console.log("💳 Payment status:", session.payment_status);
+    console.log("📦 Metadata:", session.metadata);
+
+    if (!session.metadata) {
+        console.log("❌ NO METADATA FOUND");
+    }
+
+    const userId = session.metadata?.userId;
+    const address = session.metadata?.address;
+    const phone = session.metadata?.phone;
+
+    console.log("\n========== EXTRACTED DATA ==========");
+    console.log("👤 userId:", userId);
+    console.log("🏠 address:", address);
+    console.log("📞 phone:", phone);
+
+    if (session.payment_status !== "paid") {
+        console.log("❌ Payment not completed yet");
+        return res.status(200).send({ received: true });
+    }
+
+    console.log("\n========== CHECKING ORDER ==========");
+    const existingOrder = await Order.findOne({ stripeSessionId: session.id });
+    console.log("🔍 Existing order found:", !!existingOrder);
+
+    if (existingOrder) {
+        console.log("⚠️ Order already exists → skipping");
+        return res.status(200).send({ received: true });
+    }
+
+    console.log("\n========== FETCHING CART ==========");
+    const cart = await Cart.findOne({ userId })
+        .populate("items.productId", "variant")
+        .populate("coupon.couponId");
+
+    console.log("🛒 Cart found:", !!cart);
+    console.log("📦 Cart items:", cart?.items?.length);
+
+    if (!cart || cart.items.length === 0) {
+        console.log("❌ Cart missing or empty");
+        return res.status(200).send({ error: "Cart empty" });
+    }
+
+    console.log("\n========== VALIDATING CART ==========");
+    const { error } = await validateCartItems(cart);
+
+    console.log("⚠️ Validation error:", error || "none");
+
+    if (error) {
+        console.log("❌ Cart validation failed");
+        return res.status(200).send({ error: error.message });
+    }
+
+    console.log("\n========== CREATING ORDER ==========");
+
+    try {
+        await createOrderService(
+            userId,
+            { address, phone },
+            true,
+            cart,
+            session.id,
+            session.payment_intent
+        );
+
+        console.log("🎉 ORDER CREATED SUCCESSFULLY");
+    } catch (err) {
+        console.log("❌ ORDER CREATION FAILED:");
+        console.log(err);
+
+        return res.status(200).send({
+            error: "Order creation failed"
+        });
+    }
+
+    console.log("================ WEBHOOK DONE ================\n");
+
     res.status(200).send({ received: true });
 };
