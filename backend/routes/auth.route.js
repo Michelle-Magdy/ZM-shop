@@ -10,8 +10,6 @@ import {
   resetPassword,
 } from "../controllers/auth.controller.js";
 import {
-  googleAuth,
-  googleCallback,
   googleTokenAuth,
 } from "../controllers/googleAuth.controller.js";
 
@@ -24,12 +22,6 @@ router.post("/verify-email", verifyEmail);
 router.post("/forget-password", forgotPassword);
 router.post("/reset-password/:resetToken", resetPassword);
 router.get("/me", protect, getCurrentUser);
-
-// server sid redirect flow
-router.get("/google", googleAuth);
-router.get("/google/callback", googleCallback);
-
-// client sid roken flow
 router.post("/google/token", googleTokenAuth);
 
 export default router;
