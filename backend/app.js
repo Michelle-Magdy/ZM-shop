@@ -30,6 +30,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
   process.env.PRODUCTION_URL,
@@ -62,12 +63,14 @@ const corsOptions = {
   credentials: true,
 };
 
+// Add this BEFORE your cors() middleware
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
 
-app.use(
-  cors(corsOptions),
-);
-
-app.options("*", cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use("/api/v1/stripe", stripeRouter);
 
