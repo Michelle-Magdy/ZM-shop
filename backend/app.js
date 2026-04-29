@@ -30,12 +30,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
   process.env.PRODUCTION_URL,
   process.env.FRONTEND_URL,
   "https://zm-shop.vercel.app",
+  "https://zm-shop-my3x.vercel.app",
   "http://localhost:3000",
 ].filter(Boolean);
 
@@ -71,6 +71,9 @@ app.use((req, res, next) => {
 });
 
 app.use(cors(corsOptions));
+// Handle preflight
+app.options("/*splat", cors(corsOptions));
+
 
 app.use("/api/v1/stripe", stripeRouter);
 
