@@ -50,7 +50,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path",
+        source: "/:path*",
         headers: [
           {
             key: "Cross-Origin-Opener-Policy",
