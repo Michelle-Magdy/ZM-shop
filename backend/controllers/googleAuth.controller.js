@@ -62,6 +62,7 @@ export const googleTokenAuth = catchAsync(async (req, res, next) => {
       if (!user) {
         return next(new AppError("cannot find created user", 404));
       }
+      await sendWelcomeEmail(payload.email, payload.name);
     }
   }
 
@@ -72,12 +73,10 @@ export const googleTokenAuth = catchAsync(async (req, res, next) => {
       { upsert: true, new: true },
     ),
     Wishlist.findOneAndUpdate(
-      {userId:user._id},
-      {$setOnInsert:{items:[]}},
-      {upsert:true,new:true}
+      { userId: user._id },
+      { $setOnInsert: { items: [] } },
+      { upsert: true, new: true },
     ),
-
-    sendWelcomeEmail(payload.email, payload.name)
   ]);
 
   // create token and set cookie
