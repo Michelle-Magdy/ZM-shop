@@ -29,16 +29,45 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+const allowedOrigins = [
+  process.env.DEVELOPMENT_URL,
+  process.env.PRODUCTION_URL,
+  process.env.FRONTEND_URL,
+  "https://zm-shop.vercel.app",
+  "http://localhost:3000",
+].filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isAllowedOrigin = allowedOrigins.some((allowedOrigin) => {
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+
+      return origin === allowedOrigin;
+    });
+
+    if (isAllowedOrigin || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  credentials: true,
+};
+
+
 app.use(
-  cors({
-    origin:[
-      process.env.DEVELOPMENT_URL,
-      process.env.PRODUCTION_URL
-    ],   // Your Next.js URL
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-  }),
+  cors(corsOptions),
 );
+
+app.options("*", cors(corsOptions));
 
 app.use("/api/v1/stripe", stripeRouter);
 
