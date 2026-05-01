@@ -19,10 +19,6 @@ export const createTokenAndSetCookie = (user, res, rememberMe = false) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: expiresInDays * 24 * 60 * 60 * 1000,
-    domain:
-      process.env.NODE_ENV === "production"
-        ? "https://zm-shop-production.up.railway.app"
-        : undefined,
     path: "/",
   };
 
