@@ -113,6 +113,8 @@ export const googleTokenAuth = catchAsync(async (req, res, next) => {
 
     // Create token and set cookie
     createTokenAndSetCookie(user, res);
+    // Debug: Check if cookie was set
+    console.log("Response headers:", res.getHeaders());
 
     res.status(200).json({
       status: "success",
