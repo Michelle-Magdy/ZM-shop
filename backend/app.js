@@ -33,11 +33,12 @@ const app = express();
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
   process.env.PRODUCTION_URL,
-  process.env.FRONTEND_URL,
   "https://zm-shop.vercel.app",
   "https://zm-shop-my3x.vercel.app",
   "http://localhost:3000",
 ].filter(Boolean);
+
+console.log("Allowed origins:", allowedOrigins);
 
 const corsOptions = {
   origin(origin, callback) {
