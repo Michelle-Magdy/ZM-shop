@@ -1,26 +1,56 @@
 import mongoose from "mongoose";
 import app from "./app.js";
 
-let isConnected = false;
+const MONGO_URI = process.env.MONGO_URI;
 
-console.log("MONGO_URI exists?", !!process.env.MONGO_URI);
-console.log("MONGO_URI length:", process.env.MONGO_URI?.length);
-
-async function connectDb() {
-  if (isConnected) return;
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-
-    isConnected = conn.connections[0].readyState === 1;
-    console.log("DB connected");
-  } catch (err) {
-    console.error("DB connection error:", err);
-  }
+if (!MONGO_URI) {
+  throw new Error("MONGO_URI environment variable is required");
 }
 
-app.use(async (req, res, next) => {
-  await connectDb();
-  next();
-});
+// Global cache for serverless environment
+let cached = global.mongoose;
 
-export default app;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDb() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 10,
+    };
+
+    cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+      console.log("MongoDB connected");
+      return mongoose;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
+}
+
+// Create the handler for Vercel
+export default async function handler(req, res) {
+  try {
+    await connectDb();
+  } catch (err) {
+    console.error("DB connection failed:", err);
+    return res.status(500).json({ error: "Database connection failed" });
+  }
+
+  // Pass to Express
+  return app(req, res);
+}
