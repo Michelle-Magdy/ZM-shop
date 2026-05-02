@@ -155,6 +155,7 @@ export const protect = catchAsync(async (req, res, next) => {
   console.log("📋 All cookies raw:", req.headers.cookie);
   console.log("🍪 Parsed cookies:", req.cookies);
   console.log("🔑 Auth header:", req.headers.authorization);
+  console.log("headersssssssss:", req.headers);
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
