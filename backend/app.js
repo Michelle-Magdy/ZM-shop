@@ -74,11 +74,10 @@ app.use(cors(corsOptions));
 // Handle preflight
 app.options("/*splat", cors(corsOptions));
 
-
-app.use("/api/v1/stripe", stripeRouter);
-
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
+
+app.use("/api/v1/stripe", stripeRouter);
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 app.use(passport.initialize());
 
