@@ -33,48 +33,31 @@ const app = express();
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
   process.env.PRODUCTION_URL,
-  process.env.FRONTEND_URL,
-  "https://zm-shop.vercel.app",
-  "https://zm-shop-my3x.vercel.app",
+  "https://zm-shop.vercel.app",        // ✅ no trailing space
+  "https://zm-shop-my3x.vercel.app",   // ✅ no trailing space
   "http://localhost:3000",
 ].filter(Boolean);
 
-console.log("Allowed origins:", allowedOrigins);
-
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin) {
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.some(allowed =>
+      allowed instanceof RegExp ? allowed.test(origin) : origin === allowed
+    );
+
+    if (isAllowed || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
 
-    const isAllowedOrigin = allowedOrigins.some((allowedOrigin) => {
-      if (allowedOrigin instanceof RegExp) {
-        return allowedOrigin.test(origin);
-      }
-
-      return origin === allowedOrigin;
-    });
-
-    if (isAllowedOrigin || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(null, false)
+    callback(new Error(`CORS blocked: ${origin}`));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
-// Add this BEFORE your cors() middleware
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
-  next();
-});
-
 app.use(cors(corsOptions));
-// Handle preflight
-app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
