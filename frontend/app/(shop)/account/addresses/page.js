@@ -87,10 +87,9 @@ export default function Address() {
       </div>
 
       {/* Addresses List */}
-      {/* Addresses List */}
       {isSuccess &&
         data?.data?.length > 0 &&
-        data.data.map((add, index) => (
+        data?.data?.map((add, index) => (
           <AddressItem add={add} key={index} onDelete={handleDelete} />
         ))}
 
