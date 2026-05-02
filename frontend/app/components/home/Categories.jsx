@@ -4,10 +4,11 @@ import { useCategories } from "@/app/context/CategoriesProvider";
 
 export default function Categories({ handleClose }) {
   const categories = useCategories();
+  const categoryList = categories?.data || [];
 
   return (
     <ul className="mt-4">
-      {categories.data.map((category) => (
+      {categoryList.map((category) => (
         <CategoryListItem
           key={category._id}
           depth={0}

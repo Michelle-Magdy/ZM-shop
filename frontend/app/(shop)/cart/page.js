@@ -7,6 +7,8 @@ import LoadingSpinner from "../../UI/LoadingSpinner";
 import { useDispatch } from "react-redux";
 import { clearCart } from "@/features/cart/cartSlice";
 
+export const dynamic = "force-dynamic";
+
 export default function CartPage() {
   const { items, loading } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
