@@ -1,19 +1,23 @@
-import app from "./app.js";
+import express from "express";
 import mongoose from "mongoose";
-//db connection
+import app from "../app.js";
 
-const connectDb = async () => {
+let isConnected = false;
+
+async function connectDb() {
+  if (isConnected) return;
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connection successfull");
+    isConnected = conn.connections[0].readyState === 1;
+    console.log("DB connected");
   } catch (err) {
-    console.error("Couldn't connect to db");
-    console.log(err);
-    process.exit(1);
+    console.error("DB connection error:", err);
   }
-};
+}
 
-app.listen(process.env.PORT, () => {
-  console.log(`server initiated at port ${process.env.PORT}`);
-  connectDb();
+app.use(async (req, res, next) => {
+  await connectDb();
+  next();
 });
+
+export default app;
