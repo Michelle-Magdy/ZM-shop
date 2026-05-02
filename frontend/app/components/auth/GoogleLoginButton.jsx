@@ -17,7 +17,6 @@ export default function GoogleLoginButton() {
             if (res.data.user.roles.includes("admin"))
                 window.location.href = "/admin";
             else window.location.href = "/";
-            window.location.href = "/";
         } catch (error) {
             console.error("Login failed:", error);
             alert(
