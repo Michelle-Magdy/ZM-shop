@@ -12,18 +12,7 @@ export default function GoogleLoginButton() {
         token: credentialResponse.credential,
       });
 
-            console.log("Login successful!", res.data);
-            if (res.data.user.roles.includes('admin'))
-                window.location.href = "/admin";
-            else window.location.href = "/";
-        } catch (error) {
-            console.error("Login failed:", error);
-            alert(
-                "Login failed: " +
-                    (error.response?.data?.message || "Unknown error"),
-            );
-        }
-    };
+      console.log("Login successful!", res.data);
 
       window.location.href = "/";
     } catch (error) {
@@ -34,14 +23,19 @@ export default function GoogleLoginButton() {
     }
   };
 
-    return (
-        <div className="w-fit ">
-            <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
+  const handleError = () => {
+    console.log("Login Failed");
+    toast.error("error during login try again");
+  };
 
-            {/* <GoogleLogin
+  return (
+    <div className="w-fit ">
+      <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
+
+      {/* <GoogleLogin
         onSuccess={(res) => console.log(res)}
         onError={() => console.log("error")}
       /> */}
-        </div>
-    );
+    </div>
+  );
 }
