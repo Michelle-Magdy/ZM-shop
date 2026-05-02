@@ -3,6 +3,8 @@ import BestSellerSection from "../components/home/BestSellerSection";
 import FeaturedSection from "../components/home/FeaturedSection";
 import TopDiscountsSection from "../components/home/TopDiscountsSection";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   return (
     <>

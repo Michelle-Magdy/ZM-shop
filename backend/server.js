@@ -16,4 +16,8 @@ const connectDb = async () => {
 app.listen(process.env.PORT, () => {
   console.log(`server initiated at port ${process.env.PORT}`);
   connectDb();
+  console.log([
+        process.env.DEVELOPMENT_URL,
+        process.env.PRODUCTION_URL
+      ]);
 });

@@ -5,6 +5,7 @@ import Cart from "../models/cart.model.js";
 import catchAsync from "../util/catchAsync.js";
 import { createTokenAndSetCookie } from "../util/jwt.js";
 import AppError from "../util/appError.js";
+import { GOOGLE_REDIRECT_URI } from "../config/config.js";
 import { sendWelcomeEmail } from "../mailtrap/emails.js";
 
 // ✅ For ID token verification, just pass the client ID

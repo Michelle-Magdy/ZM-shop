@@ -6,6 +6,8 @@ import ProductGridSkeleton from "@/app/UI/Skeletons/ProductGridSkeletons";
 import FiltersSkeleton from "@/app/UI/Skeletons/FiltersSkeleton";
 import { parseCategoryFilters } from "@/lib/util/ParseCategoryFilters";
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoryPage({ params, searchParams }) {
   const { slug } = await params;
   const queryParams = await searchParams;

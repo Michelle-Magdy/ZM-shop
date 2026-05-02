@@ -9,6 +9,7 @@ import Link from "next/link";
 export default function Menu() {
   const [open, setOpen] = useState(false);
   const categories = useCategories();
+  const categoryList = categories?.data || [];
 
   return (
     <header className="p-3 flex sticky top-0 z-20 bg-white items-center gap-4 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]  dark:bg-card dark:shadow-[0_4px_6px_-1px_rgba(255,255,255,0.1)] dark:text-secondary-text">
@@ -27,7 +28,7 @@ export default function Menu() {
         </span>
       </div>
       <div className="hidden md:flex gap-10 ml-auto mr-auto">
-        {categories.data.map(
+        {categoryList.map(
           (cat, i) =>
             i < 5 && (
               <Link
