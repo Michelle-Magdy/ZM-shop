@@ -49,12 +49,12 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(cors(corsOptions));
+app.use("/api/v1/stripe", stripeRouter);
 
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-app.use("/api/v1/stripe", stripeRouter);
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 app.use(passport.initialize());
 
