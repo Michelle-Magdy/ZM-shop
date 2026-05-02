@@ -16,10 +16,7 @@ export const validateCart = catchAsync(async (req, res, next) => {
     const { error, hasChanges } = await validateCartItems(cart);
 
     if (error) {
-        return res.status(409).json({
-            status: "error",
-            message: error.message
-        });
+        return next(new AppError(error.message, 409));
     }
 
     req.cart = cart;

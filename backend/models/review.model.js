@@ -35,62 +35,53 @@ reviewSchema.statics.calcProductRatingStats = async function (productId) {
             ? mongoose.Types.ObjectId.createFromHexString(productId)
             : productId;
 
-    // Aggregate reviews for this product
     const stats = await this.aggregate([
         { $match: { productId: objectId } },
         {
             $group: {
-                _id: { $round: ["$rating", 0] }, // round rating to nearest integer
+                _id: { $round: ["$rating", 0] },
                 count: { $sum: 1 },
-                avgRating: { $avg: "$rating" },
             },
         },
-    ]);
-
-    // Initialize distribution map with all stars (percentages)
-    const distribution = new Map([
-        ["5", 0],
-        ["4", 0],
-        ["3", 0],
-        ["2", 0],
-        ["1", 0],
     ]);
 
     let totalReviews = 0;
     let totalRatingSum = 0;
 
-    // Fill distribution and calculate totals
     stats.forEach((item) => {
-        const rating = String(item._id); // Map key must be string
-        const count = item.count;
-
-        if (distribution.has(rating)) {
-            distribution.set(rating, count); // store raw counts for now
-        }
-
-        totalReviews += count;
-        totalRatingSum += item.avgRating * count; // weighted sum
+        totalReviews += item.count;
+        totalRatingSum += item._id * item.count;
     });
 
-    // Convert distribution counts to percentages
-    for (const [rating, count] of distribution) {
-        const percent = totalReviews ? Math.round((count / totalReviews) * 100) : 0;
-        distribution.set(rating, percent);
-    }
+    const distribution = {
+        "5": 0,
+        "4": 0,
+        "3": 0,
+        "2": 0,
+        "1": 0,
+    };
 
-    // Calculate average rating rounded to 1 decimal
-    const average = totalReviews ? Math.round((totalRatingSum / totalReviews) * 10) / 10 : 0;
+    stats.forEach((item) => {
+        const rating = String(item._id);
+        if (rating in distribution) {
+            distribution[rating] = totalReviews
+                ? Math.round((item.count / totalReviews) * 100)
+                : 0;
+        }
+    });
 
-    // Update the product
+    const average = totalReviews
+        ? Math.round((totalRatingSum / totalReviews) * 10) / 10
+        : 0;
+
     await Product.findByIdAndUpdate(objectId, {
-        ratingStats: {
-            average,
-            count: totalReviews,
-            distribution,
+        $set: {
+            "ratingStats.average": average,
+            "ratingStats.count": totalReviews,
+            "ratingStats.distribution": distribution,
         },
     });
 };
-
 
 reviewSchema.post('save', function () {
     this.constructor.calcProductRatingStats(this.productId);

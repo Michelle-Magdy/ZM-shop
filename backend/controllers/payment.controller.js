@@ -3,10 +3,11 @@ import { createOrderService } from "../services/order.service.js";
 import { validateCartItems } from "../services/cart.service.js";
 import Cart from "../models/cart.model.js";
 import stripe from "../stripeConfig.js";
+import Order from "../models/order.model.js";
+import AppError from "../util/appError.js";
 
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
     const cart = req.cart;
-
     const subtotal = cart.items.reduce((sum, item) =>
         sum + item.variant.price * item.quantity, 0
     );
@@ -92,68 +93,79 @@ const refundWithIdempotency = (paymentIntentId, idempotencySuffix) => {
 
 export const stripeWebhook = async (req, res) => {
     const sig = req.headers["stripe-signature"];
+
     let event;
 
     try {
         event = stripe.webhooks.constructEvent(
-            req.body, // make sure raw body is available, not parsed JSON
+            req.body,
             sig,
-            process.env.STRIPE_WEBHOOK_SECRET // we get it from stipe after setting up webhook with our domain
+            process.env.STRIPE_WEBHOOK_SECRET
         );
     } catch (err) {
-        console.log("⚠️ Webhook signature verification failed.", err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle only the event type you care about
-    if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-
-        // ✅ Only process if payment is confirmed
-        if (session.payment_status !== "paid") {
-            return res.status(200).send({ received: true });
-        }
-
-        const userId = session.metadata.userId;
-        const address = session.metadata.address;
-        const phone = session.metadata.phone;
-
-        // ✅ Prevent duplicate processing
-        const existingOrder = await Order.findOne({ stripeSessionId: session.id });
-        if (existingOrder) return res.status(200).send({ received: true });
-
-        // ✅ Fetch fresh cart
-        const cart = await Cart.findOne({ userId })
-            .populate("items.productId", "variant")
-            .populate("coupon.couponId");
-
-        if (!cart || cart.items.length === 0) {
-            // Optionally issue refund if cart empty
-            await refundWithIdempotency(session.payment_intent, "empty_cart");
-            return res.status(200).send({ error: "Cart empty, refund issued" });
-        }
-
-        // ✅ Revalidate stock & price
-        const { error } = await validateCartItems(cart);
-        if (error) {
-            // Refund if validation fails
-            await refundWithIdempotency(session.payment_intent, "cart_validation_failed");
-            return res.status(200).send({ error: error.message });
-        }
-
-        try {
-            // ✅ Transaction-safe order creation
-            console.log("Creating order");
-
-            await createOrderService(userId, { address, phone }, true, cart, session.id, session.payment_intent);
-        } catch (err) {
-            console.log("Error creating order from webhook:", err);
-            // refund on failure
-            await refundWithIdempotency(session.payment_intent, "order_creation_failed");
-            return res.status(200).send({ error: "Order creation failed, refund issued" });
-        }
+    if (event.type !== "checkout.session.completed") {
+        return res.status(200).send({ received: true });
     }
 
-    // Respond 200 to acknowledge receipt of webhook
-    res.status(200).send({ received: true });
+    const session = event.data.object;
+
+    const userId = session.metadata?.userId;
+    const address = session.metadata?.address;
+    const phone = session.metadata?.phone;
+
+    if (session.payment_status !== "paid") {
+        return res.status(200).send({ received: true });
+    }
+
+    const existingOrder = await Order.findOne({
+        stripeSessionId: session.id
+    });
+
+    if (existingOrder) {
+        return res.status(200).send({ received: true });
+    }
+
+    const cart = await Cart.findOne({ userId })
+        .populate("items.productId", "variants")
+        .populate("coupon.couponId");
+
+    if (!cart || cart.items.length === 0) {
+        await refundWithIdempotency(session.payment_intent, session.id);
+
+        return res.status(200).send({
+            error: "Cart empty, refunded"
+        });
+    }
+
+    const { error } = await validateCartItems(cart);
+
+    if (error) {
+        await refundWithIdempotency(session.payment_intent, session.id);
+
+        return res.status(200).send({
+            error: "Cart validation failed, refunded"
+        });
+    }
+
+    try {
+        await createOrderService(
+            userId,
+            { address, phone },
+            true,
+            cart,
+            session.id,
+            session.payment_intent
+        );
+
+        return res.status(200).send({ received: true });
+    } catch (err) {
+        await refundWithIdempotency(session.payment_intent, session.id);
+
+        return res.status(200).send({
+            error: "Order creation failed, refunded"
+        });
+    }
 };

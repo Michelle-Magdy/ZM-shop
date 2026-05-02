@@ -10,7 +10,6 @@ import ReviewDialog from "./ReviewDialogue.jsx";
 import ReviewDelete from "./ReviewDelete.jsx";
 import ReportReviewButton from "./ReportReviewButton.jsx";
 
-//Delete, edit, report not working yet
 
 export default function ReviewCard({ review, isUserReview }) {
   const {

@@ -4,6 +4,7 @@ import AppError from "../util/appError.js";
 import stripe from "../stripeConfig.js";
 import User from "../models/user.model.js";
 import { decrementVariantStock, restoreVariantStockAndSync } from "./product.service.js";
+import Address from "../models/address.model.js";
 
 export const createOrderService = async (
     userId,
@@ -36,18 +37,21 @@ export const createOrderService = async (
             totalPrice = totalPrice - discountAmount;
         }
 
+        //Getting full address data
+        const address = await Address.findById(data.address).session(session);
+
         //create full order data
         const orderData = {
             userId,
             items: cart.items.map(item => item.toObject()),
             address: {
-                label: data.address.label,
-                fullAddress: data.address.fullAddress,
+                label: address.label,
+                fullAddress: address.fullAddress,
                 location: {
                     type: "Point",
                     coordinates: [
-                        data.address.location.coordinates[0],
-                        data.address.location.coordinates[1]
+                        address.location.coordinates[0],
+                        address.location.coordinates[1]
                     ]
                 }
             },

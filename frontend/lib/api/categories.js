@@ -23,10 +23,10 @@ export const getCategories = async () => {
     });
     const categories = await res.json();
 
-    return categories;
+    return categories || { data: [] };
   } catch (error) {
     console.error("Error fetching categories:", error);
-    throw error;
+    return { data: [] };
   }
 };
 

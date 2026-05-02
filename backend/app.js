@@ -29,19 +29,55 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === "development"
-        ? process.env.DEVELOPMENT_URL
-        : process.env.PRODUCTION_URL, // Your Next.js URL
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-  }),
-);
+
+const allowedOrigins = [
+  process.env.DEVELOPMENT_URL,
+  process.env.PRODUCTION_URL,
+  process.env.FRONTEND_URL,
+  "https://zm-shop.vercel.app",
+  "https://zm-shop-my3x.vercel.app",
+  "http://localhost:3000",
+].filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isAllowedOrigin = allowedOrigins.some((allowedOrigin) => {
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+
+      return origin === allowedOrigin;
+    });
+
+    if (isAllowedOrigin || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  credentials: true,
+};
+
+// Add this BEFORE your cors() middleware
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
+
+app.use(cors(corsOptions));
+// Handle preflight
+app.options("/*splat", cors(corsOptions));
 
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
+
+app.use("/api/v1/stripe", stripeRouter);
 app.use("/images", express.static(path.join(__dirname, "public", "images")));
 app.use(passport.initialize());
 
@@ -58,7 +94,6 @@ app.use("/api/v1/coupons", couponRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/orders", orderRouter);
-app.use("/api/v1/stripe", stripeRouter);
 app.use("/api/v1/admin/dashboard", dashboardRouter);
 app.use("/api/v1/admin/reviews/reports", reportsRouter);
 app.use(globalErrorHandler);

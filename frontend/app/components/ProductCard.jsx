@@ -7,6 +7,7 @@ import AddToCartButton from "../UI/AddToCartButton";
 
 export default function ProductCard({ product }) {
   const selectedVariant = product.defaultVariant || null;
+  
   return (
     // Single flex container - removed nested wrapper div
     <div className="border dark:border-0 border-gray-300 rounded-lg cursor-pointer flex flex-col w-full h-full bg-white overflow-hidden">
@@ -58,8 +59,8 @@ export default function ProductCard({ product }) {
 
         <div className="bg-badge w-fit rounded-lg flex items-center gap-1 py-0.5 px-1.5 text-xs mb-1">
           <FaStar className="text-green-700 dark:text-button-label text-[10px]" />
-          <span className="font-bold">{product.avgRating || "0"}</span>
-          <span className="text-gray-500">({product.nReviews || "0"})</span>
+          <span className="font-bold">{product.ratingStats.average|| "0"}</span>
+          <span className="text-gray-500">({product.ratingStats.count || "0"})</span>
         </div>
 
         <div className="flex items-center gap-1 w-fit mb-2">

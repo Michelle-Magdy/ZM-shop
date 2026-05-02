@@ -114,15 +114,14 @@ const productSchema = new mongoose.Schema(
       average: { type: Number, default: 0, min: 0, max: 5 },
       count: { type: Number, default: 0 },
       distribution: {
-        type: Map,
-        of: Number,
-        default: new Map([
-          ["5", 0],
-          ["4", 0],
-          ["3", 0],
-          ["2", 0],
-          ["1", 0],
-        ]),
+        type: {
+          "5": { type: Number, default: 0 },
+          "4": { type: Number, default: 0 },
+          "3": { type: Number, default: 0 },
+          "2": { type: Number, default: 0 },
+          "1": { type: Number, default: 0 },
+        },
+        default: () => ({ "5": 0, "4": 0, "3": 0, "2": 0, "1": 0 }),
       },
     },
 

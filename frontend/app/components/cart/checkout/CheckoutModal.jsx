@@ -61,7 +61,7 @@ export default function CheckoutModal({
       return;
     }
 
-    onConfirm(paymentMethod, selectedAddress, phoneNumber);
+    onConfirm(paymentMethod, selectedAddressId, phoneNumber);
   };
 
   if (!isOpen) return null;
