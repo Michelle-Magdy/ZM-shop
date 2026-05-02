@@ -32,28 +32,20 @@ const app = express();
 
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
-  process.env.PRODUCTION_URL,
-  "https://zm-shop.vercel.app",        
-  "https://zm-shop-my3x.vercel.app",   
-  "http://localhost:3000",
+  "https://zm-shop.vercel.app",
+  "https://zm-shop-my3x.vercel.app",
 ].filter(Boolean);
 
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
 
-    const isAllowed = allowedOrigins.some(allowed =>
-      allowed instanceof RegExp ? allowed.test(origin) : origin === allowed
-    );
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app");
 
-    if (isAllowed || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-
-    callback(new Error(`CORS blocked: ${origin}`));
+    callback(null, isAllowed);
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
