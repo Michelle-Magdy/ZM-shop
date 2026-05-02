@@ -33,8 +33,8 @@ const app = express();
 const allowedOrigins = [
   process.env.DEVELOPMENT_URL,
   process.env.PRODUCTION_URL,
-  "https://zm-shop.vercel.app",        // ✅ no trailing space
-  "https://zm-shop-my3x.vercel.app",   // ✅ no trailing space
+  "https://zm-shop.vercel.app",        
+  "https://zm-shop-my3x.vercel.app",   
   "http://localhost:3000",
 ].filter(Boolean);
 
