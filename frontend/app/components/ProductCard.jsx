@@ -7,7 +7,6 @@ import AddToCartButton from "../UI/AddToCartButton";
 
 export default function ProductCard({ product }) {
   const selectedVariant = product.defaultVariant || null;
-  console.log(product);
   
   return (
     // Single flex container - removed nested wrapper div

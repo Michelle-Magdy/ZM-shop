@@ -150,12 +150,20 @@ export const logout = catchAsync((req, res) => {
 
 export const protect = catchAsync(async (req, res, next) => {
   let token;
+  // Debug: Log all cookies and headers
+  console.log("🔐 Protect middleware - Request from:", req.headers.origin);
+  console.log("📋 All cookies raw:", req.headers.cookie);
+  console.log("🍪 Parsed cookies:", req.cookies);
+  console.log("🔑 Auth header:", req.headers.authorization);
+   console.log("Headers",req.headers);
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
+
+  console.log("jwt:",req.cookies?.jwt);
 
   if (!token && req.cookies?.jwt) {
     token = req.cookies.jwt;
