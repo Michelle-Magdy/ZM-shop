@@ -62,6 +62,7 @@ export const updateAddress = async (id, data) => {
     throw err;
   }
 };
+
 export const deleteAddress = async (id) => {
   try {
     const res = await apiClient.delete(`${API_BASE_URL}/addresses/${id}`, {
@@ -73,3 +74,14 @@ export const deleteAddress = async (id) => {
     throw err;
   }
 };
+
+export const searchLocation = async(q,lat,lon)=>{
+  const res = await apiClient.get("/addresses/location",{
+    params:{
+      q,
+      lat,
+      lon
+    }
+  });
+  return res.data;
+}
