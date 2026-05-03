@@ -19,7 +19,6 @@ export default async function ProductPage({ params }) {
   if (!product || !product.data) {
     notFound();
   }
-
   return (
     <>
       <ProductView product={product.data} />

@@ -5,16 +5,12 @@ const productSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
+    asin: { type: String, index: true },
     olderPrice: Number,
     stock: { type: Number, default: 1, min: 0 },
     coverImage: { type: String, required: true },
     images: [String],
     description: String,
-    productTypeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProductType",
-      // required: true,
-    },
     categoryIds: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Category", index: true },
     ],
@@ -106,8 +102,7 @@ const productSchema = new mongoose.Schema(
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      index: true,
-      required: true,
+      index: true
     },
     // Ratings (denormalized)
     ratingStats: {

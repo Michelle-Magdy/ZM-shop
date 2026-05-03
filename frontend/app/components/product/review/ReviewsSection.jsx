@@ -14,7 +14,6 @@ export default function ReviewsSection() {
     queryKey: ["product-reviews", product._id],
     queryFn: () => getProductReviews(product._id),
   });
-
   const { isAuthenticated, user } = useAuth();
 
   const sortedReviews = useMemo(() => {
@@ -56,6 +55,7 @@ export default function ReviewsSection() {
       </div>
     );
   }
+
 
   return (
     <div className="w-full lg:w-2/3">

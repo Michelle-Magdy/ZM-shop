@@ -1,12 +1,14 @@
 // models/Category.js
 import mongoose from "mongoose";
 import slugify from "slugify";
-import Product from "./product.model.js";
 
 const categorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, lowercase: true, index: true },
+    amazonId: {
+      type: String
+    },
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",

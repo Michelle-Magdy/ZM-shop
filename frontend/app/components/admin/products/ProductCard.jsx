@@ -25,13 +25,19 @@ export const ProductCard = ({ product, onEdit, onDelete, onToggleFlag }) => {
   const totalStock = getTotalStock(product);
   const discount = calculateDiscount(product.price, product.olderPrice);
   const hasVariants = product.variants && product.variants.length > 0;
+  const image = product?.coverImage
+        ? product.coverImage.includes("media-amazon")
+            ? `${product.coverImage}`
+            : `${IMAGES_BASE_URL}/products/${product.coverImage}`
+        : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
+        
 
   return (
     <div className="bg-(--color-card) rounded-xl border border-(--color-badge)/30 overflow-hidden hover:border-(--color-primary)/50 transition-all duration-300 group">
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden bg-(--color-background)">
         <Image
-          src={`${IMAGES_BASE_URL}/products/${product.coverImage}`}
+          src={image}
           alt={product.title}
           fill
           unoptimized

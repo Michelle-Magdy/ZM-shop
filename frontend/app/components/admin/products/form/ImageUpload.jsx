@@ -27,7 +27,8 @@ export const ImageUpload = ({
   // Helper to get display URL
   const getDisplayUrl = (img) => {
     const normalized = normalizeImage(img);
-    if (normalized.url?.startsWith("blob:")) return normalized.url;
+    if (normalized.url?.startsWith("blob:") || normalized.url.includes("media-amazon")) 
+      return normalized.url;
     if (isEdit && normalized.url && !normalized.file) {
       return `${IMAGES_BASE_URL}/products/${normalized.url}`;
     }

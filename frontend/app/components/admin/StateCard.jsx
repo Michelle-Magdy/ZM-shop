@@ -45,7 +45,7 @@ export function StatCard({
                 {trend === "up" && <TrendingUp size={16} />}
                 {trend === "down" && <TrendingDown size={16} />}
                 {change > 0 ? "+" : ""}
-                {change}%
+                {change.toFixed(2)}%
               </span>
               <span className="text-xs text-secondary-text">{changeLabel}</span>
             </div>
