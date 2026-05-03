@@ -3,6 +3,29 @@ import Address from "../models/address.model.js";
 import AppError from "../util/appError.js";
 import { getOne } from "./factoryHandler.js";
 import mongoose from "mongoose";
+import axios from "axios";
+
+export const searchLocation = catchAsync(async (req,res,next)=>{
+  const {q,lat,lon} = req.query;
+  if(!q){
+    return next(new AppError("search query is required",400));
+  }
+  const apiRes = await axios.get("https://api.latlng.work/v1/places/search", {
+    headers: {
+      "X-Api-Key": process.env.LATLNG_API_KEY,
+    },
+    params: {
+      q,
+      country: "EG",
+      lat: lat,
+      lon: lon,
+      limit:5
+
+    },
+  });
+
+  return res.status(200).json(apiRes.data);
+})
 
 export const addAddress = catchAsync(async (req, res, next) => {
   let { userId, latitude, longitude, label, fullAddress, isDefault } = req.body;

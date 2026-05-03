@@ -6,6 +6,7 @@ import {
   getAddress,
   deleteAddress,
   updateAddress,
+  searchLocation,
 } from "../controllers/address.controller.js";
 import { protect } from "../controllers/auth.controller.js";
 
@@ -14,6 +15,7 @@ router.use(protect);
 
 // Good: static route before dynamic route
 router.get("/lookup", getAddressFromLocation);
+router.get("/location",searchLocation)
 
 // CRUD
 router.get("/", getAddresses);

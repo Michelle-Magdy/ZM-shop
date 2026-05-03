@@ -8,8 +8,10 @@ import LocationDetails from "./LocationDetails";
 import { useCurrentLocation } from "@/lib/hooks/useCurrentLocation";
 import { FaLocationDot } from "react-icons/fa6";
 import useDebounced from "@/lib/hooks/useDebounced";
-import { getAddressFromLocation } from "@/lib/api/address";
+import { getAddressFromLocation, searchLocation } from "@/lib/api/address";
 import AddressForm from "./AddressForm";
+import { useQuery } from "@tanstack/react-query";
+import SearchResults from "./SearchResults";
 
 export default function LocationPicker({
   isOpen,
@@ -18,7 +20,9 @@ export default function LocationPicker({
   defaultValues,
 }) {
   const [selectedLocation, setSelectedLocation] = useState(defaultValues);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const [query, setQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const { latitude, longitude, loading, error, getLocation } =
     useCurrentLocation();
@@ -28,6 +32,19 @@ export default function LocationPicker({
   const { lat, lng } = selectedLocation;
   const debouncedLat = useDebounced(lat);
   const debouncedLng = useDebounced(lng);
+  const debouncedQuery = useDebounced(query);
+
+  const {
+    data: locationsList,
+    isLoading,
+    isError,
+    error: searchError,
+  } = useQuery({
+    queryKey: ["address", debouncedQuery, longitude, latitude],
+    queryFn: () => searchLocation(debouncedQuery || "", longitude, latitude),
+    enabled: !!debouncedQuery && !!longitude && !!latitude && query.length > 2,
+    staleTime: 5 * 1000,
+  });
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -104,6 +121,30 @@ export default function LocationPicker({
     setSelectedLocation((prev) => ({ ...prev, lat, lng }));
   }, []);
 
+  const handlePlaceSelect = useCallback((place) => {
+    setSelectedPlaceId(place.id);
+    setShowSearchResults(false); // Hide results when location is selected
+    setQuery(place.name); // Optional: show selected place name in search
+    setSelectedLocation((prev) => ({
+      ...prev,
+      lat: place.lat,
+      lng: place.lon,
+      name: place.name,
+      state: place.region || "",
+      village: place.locality || "",
+      suburb: place.category === "suburb" ? place.name : prev.suburb,
+      displayName: `${place.name}, ${place.locality}, ${place.region}`,
+    }));
+  }, []);
+
+  const handleQueryChange = useCallback((newQuery) => {
+    setQuery(newQuery);
+    setShowSearchResults(true); // Show results when user starts typing
+    if (!newQuery) {
+      setSelectedPlaceId(null);
+    }
+  }, []);
+
   // Validation function for mobile button
   const validateForm = () => {
     const errors = {};
@@ -112,7 +153,6 @@ export default function LocationPicker({
       errors.label = "Label is required";
     }
 
-    // Validate lat/lng if needed
     if (selectedLocation.lat == null) {
       errors.lat = "Latitude is required";
     }
@@ -125,7 +165,6 @@ export default function LocationPicker({
   };
 
   const handleConfirm = () => {
-    // Validate before confirming
     if (!validateForm()) {
       return;
     }
@@ -146,22 +185,29 @@ export default function LocationPicker({
 
   if (!isOpen) return null;
 
+  const hasActiveSearch =
+    debouncedQuery && debouncedQuery.length > 2 && showSearchResults;
+
+  const handleClose =()=>{
+    onClose();
+    setShowSearchResults(false);
+  }
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 transition-opacity"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="relative w-full sm:w-[95%] sm:max-w-4xl h-[85vh] sm:h-auto sm:max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-card shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 shrink-0 bg-card">
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 shrink-0 bg-card z-20">
           <h2 className="text-lg sm:text-xl font-semibold text-primary-text truncate pr-4">
             Add new address
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full p-2 text-primary-text transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-primary dark:text-primary-text shrink-0"
             aria-label="Close"
           >
@@ -170,61 +216,79 @@ export default function LocationPicker({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pb-20 sm:pb-0">
+        <div className="flex-1 overflow-y-auto pb-20 sm:pb-0 relative">
           {/* Search Bar */}
-          <div className="px-4 sm:px-6 py-3 sm:py-4 sticky top-0 bg-card z-10 shadow-sm sm:shadow-none">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 sticky top-0 bg-card z-30 shadow-sm sm:shadow-none">
             <SearchBar
               onLocationSelect={handleLocationSelect}
               query={query}
-              setQuery={setQuery}
-            />
-          </div>
-          {/* Details & Form Sections */}
-          <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
-            <AddressForm
-              label={selectedLocation?.label}
-              isDefault={selectedLocation?.isDefault}
-              setSelectedLocation={setSelectedLocation}
-              onConfirm={handleFormConfirm}
-              errors={formErrors}
-              setErrors={setFormErrors}
-            />
-            <LocationDetails
-              state={selectedLocation.state}
-              village={selectedLocation.village}
-              suburb={selectedLocation.suburb}
-              displayName={selectedLocation.displayName}
+              setQuery={handleQueryChange}
             />
           </div>
 
-          {/* Map */}
-          <div className="relative h-64 sm:h-80 md:h-96 w-full">
-            <Map
-              center={[selectedLocation.lat, selectedLocation.lng]}
-              onLocationChange={handleLocationSelect}
-            />
+          {/* Search Results Overlay - Appears in front of map */}
+          {hasActiveSearch && (
+            <div className="inset-x-0 top-[72px] sm:top-[88px] bottom-0 z-50 bg-card overflow-hidden flex flex-col">
+              <div className="flex-1 h-full px-4 sm:px-6 pb-4 relative w-full">
+                <SearchResults
+                  data={locationsList}
+                  onLocationSelect={handlePlaceSelect}
+                  selectedPlaceId={selectedPlaceId}
+                  isLoading={isLoading}
+                  isError={isError}
+                  error={searchError}
+                  query={debouncedQuery}
+                />
+              </div>
+            </div>
+          )}
 
-            {/* Center Pin Overlay */}
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-1000">
-              <div className="relative -translate-y-4 sm:-translate-y-5">
-                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center text-primary drop-shadow-lg">
-                  <FaLocationDot className="w-8 h-8 sm:w-10 sm:h-10" />
+          {!hasActiveSearch && (
+            <>
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                <AddressForm
+                  label={selectedLocation?.label}
+                  isDefault={selectedLocation?.isDefault}
+                  setSelectedLocation={setSelectedLocation}
+                  onConfirm={handleFormConfirm}
+                  errors={formErrors}
+                  setErrors={setFormErrors}
+                />
+                <LocationDetails
+                  state={selectedLocation.state}
+                  village={selectedLocation.village}
+                  suburb={selectedLocation.suburb}
+                  displayName={selectedLocation.displayName}
+                />
+              </div>
+
+              <div className="relative h-64 sm:h-80 md:h-96 w-full">
+                <Map
+                  center={[selectedLocation.lat, selectedLocation.lng]}
+                  onLocationChange={handleLocationSelect}
+                />
+
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-[1000]">
+                  <div className="relative -translate-y-4 sm:-translate-y-5">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center text-primary drop-shadow-lg">
+                      <FaLocationDot className="w-8 h-8 sm:w-10 sm:h-10" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1000] -translate-x-1/2 -translate-y-16 sm:-translate-y-20">
+                  <div className="whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-lg">
+                    Your order will be delivered here
+                    <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-primary"></div>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Delivery Label */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 z-1000 -translate-x-1/2 -translate-y-16 sm:-translate-y-20">
-              <div className="whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-lg">
-                Your order will be delivered here
-                <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-primary"></div>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Mobile Fixed Bottom Button */}
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 border-t border-gray-100 p-4 bg-card z-50">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 border-t border-gray-100 p-4 bg-card z-[60]">
           <button
             onClick={handleConfirm}
             className="w-full rounded-lg bg-primary px-4 py-3.5 text-sm font-semibold text-white active:scale-95 transition-transform shadow-lg"

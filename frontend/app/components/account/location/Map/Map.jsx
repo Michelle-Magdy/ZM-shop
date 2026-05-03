@@ -74,7 +74,7 @@ export default function Map({ center, onLocationChange }) {
       </Marker> */}
 
       {/* Custom zoom controls */}
-      <div className="absolute right-4 top-4 z-1000 flex flex-col gap-2">
+      <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
         <button
           onClick={() => {
             const map = document.querySelector(".leaflet-container");
