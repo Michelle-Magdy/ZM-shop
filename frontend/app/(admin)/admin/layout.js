@@ -4,7 +4,6 @@ import { Sidebar } from "@/app/components/admin/Sidebar";
 import { useAuth } from "@/app/context/AuthenticationProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import toast from "react-hot-toast";
 
 export default function AdminLayout({ children }) {
   const { user, isLoading } = useAuth();
