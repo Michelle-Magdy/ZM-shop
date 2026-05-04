@@ -12,7 +12,7 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
         sum + item.variant.price * item.quantity, 0
     );
 
-    let discountAmount = 0;
+     let discountPercentage = 0;
     if (cart.coupon?.couponId) {
         const coupon = cart.coupon.couponId;
         const isValid = coupon.isActive && coupon.expirationDate > new Date();
@@ -21,16 +21,19 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
             return next(new AppError("Coupon is no longer valid", 400));
         }
 
-        discountAmount = subtotal * (cart.coupon.discountPercentage / 100);
+        discountPercentage = cart.coupon.discountPercentage / 100;
     }
 
+    const discountMultiplier = 1 - discountPercentage;
 
     const line_items = cart.items.map(item => {
         let variantDescription = "";
-        if (item.variant.attributeValues && item.variant.attributeValues.size > 0) {
+        if (item.variant.attributeValues?.size > 0) {
             const attrs = Array.from(item.variant.attributeValues.entries());
-            variantDescription = attrs.map(([key, value]) => `${key}: ${value}`).join(", ");
+            variantDescription = attrs.map(([k, v]) => `${k}: ${v}`).join(", ");
         }
+
+        const discountedUnitPrice = item.variant.price * discountMultiplier;
 
         return {
             price_data: {
@@ -38,28 +41,17 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
                 product_data: {
                     name: item.title,
                     description: variantDescription ? `Variant - ${variantDescription}` : undefined,
-                    images: item.coverImage ? process.env.NODE_ENV === "development" ? [`${process.env.BACK_DEVELOPMENT_URL}/images/products/${item.coverImage}`] : [`${process.env.BACK_PRODUCTION_URL}/images/products/${item.coverImage}`] : []
+                    images: item.coverImage ? [
+                        `${process.env.NODE_ENV === "development"
+                            ? process.env.BACK_DEVELOPMENT_URL
+                            : process.env.BACK_PRODUCTION_URL}/images/products/${item.coverImage}`
+                    ] : []
                 },
-                unit_amount: Math.round(item.variant.price * 100), // cents
+                unit_amount: Math.round(discountedUnitPrice * 100),
             },
             quantity: item.quantity
-
         };
     });
-
-
-    if (discountAmount > 0) {
-        line_items.push({
-            price_data: {
-                currency: "usd",
-                product_data: {
-                    name: `Discount (${cart.coupon.code})`,
-                },
-                unit_amount: -Math.round(discountAmount * 100),
-            },
-            quantity: 1,
-        });
-    }
 
     const redirectionURL = process.env.NODE_ENV === "development" ? process.env.DEVELOPMENT_URL : process.env.PRODUCTION_URL;
 
