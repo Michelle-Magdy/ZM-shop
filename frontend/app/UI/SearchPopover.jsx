@@ -9,7 +9,6 @@ export default function SearchPopover({
   isOpen,
   onClose,
   query,
-  onSelect,
   results,
   isLoading,
   isError,

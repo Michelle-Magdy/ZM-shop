@@ -1,7 +1,6 @@
 "use client";
 import {
   FaBox,
-  FaRotateLeft,
   FaHeart,
   FaUser,
   FaLocationDot,
@@ -19,7 +18,6 @@ export default function Sidebar({ user, setUser, onNavigate }) {
   const router = useRouter();
   const menuItems = [
     { icon: FaBox, label: "Orders", href: "/account/track-orders" },
-    { icon: FaRotateLeft, label: "Returns", href: "/account/returns" },
     { icon: FaHeart, label: "Wishlist", href: "/account/wishlist" },
   ];
 

@@ -76,9 +76,12 @@ export const getAllProducts = async (query = "") => {
     console.log(error);
   }
 };
+
+const neededFields = ["defaultVariant", "ratingStats", "title", "coverImage", "slug", "isBestSeller", "isFeatured"]
+
 export const getBestSellerProducts = async () => {
   try {
-    const res = await apiClient.get("/product/bestsellers");
+    const res = await apiClient.get(`/product/bestsellers?fields=${neededFields.join(",")}`);
     return res.data;
   } catch (error) {
     console.log(error);
@@ -87,7 +90,7 @@ export const getBestSellerProducts = async () => {
 
 export const getFeaturedProducts = async () => {
   try {
-    const res = await apiClient.get("/product/featured");
+    const res = await apiClient.get(`/product/featured?fields=${neededFields.join(",")}`);
     return res.data;
   } catch (error) {
     console.log(error);
@@ -96,7 +99,7 @@ export const getFeaturedProducts = async () => {
 
 export const getTopDiscountedProducts = async () => {
   try {
-    const res = await apiClient.get("/product/topDiscounts");
+    const res = await apiClient.get(`/product/topDiscounts?fields=${neededFields.join(",")}`);
     return res.data;
   } catch (err) {
     console.log(err);
@@ -105,13 +108,10 @@ export const getTopDiscountedProducts = async () => {
 };
 
 export const searchProducts = async (query) => {
-  try {
-    const res = await apiClient.get(`/product?search=${query}`);
-    return res.data;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+  const res = await apiClient.get(
+    `product?search=where&fields=${neededFields.join(",")}`
+  );
+  return res.data;
 };
 
 export const getProductsByCategory = async (categorySlug, queryParams) => {

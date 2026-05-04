@@ -1,15 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import getImageSrc from "../../../lib/util/ImageHelper.js";
 
 export default function DiscountCard({ data }) {
-    const backgroundImage = data?.coverImage
-        ? data.coverImage.includes("media-amazon")
-            ? `${data.coverImage}`
-            : `${IMAGES_BASE_URL}/products/${data.coverImage}`
-        : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
-
+    const backgroundImage = getImageSrc(data?.coverImage);
     return (
         <div
             className="relative w-full bg-cover bg-center bg-no-repeat flex items-center"

@@ -4,15 +4,11 @@ import LikeButton from "./home/LikeButton";
 import { FaStar } from "react-icons/fa";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import AddToCartButton from "../UI/AddToCartButton";
+import getImageSrc from "../../lib/util/ImageHelper.js";
 
 export default function ProductCard({ product }) {
     const selectedVariant = product.defaultVariant || null;
-    const coverImage = product?.coverImage
-        ? product.coverImage.includes("media-amazon")
-            ? `${product.coverImage}`
-            : `${IMAGES_BASE_URL}/products/${product.coverImage}`
-        : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
-        
+    const coverImage = getImageSrc(product?.coverImage)
     return (
         // Single flex container - removed nested wrapper div
         <div className="border dark:border-0 border-gray-300 rounded-lg cursor-pointer flex flex-col w-full h-full bg-white overflow-hidden">
