@@ -28,18 +28,8 @@ export const login = async (data) => {
 };
 
 export const getMe = async () => {
-  try {
-    const res = await apiClient.get(`${API_BASE_URL}/auth/me`, {
-      withCredentials: true,
-    });
-    return res.data;
-  } catch (err) {
-    if (err.response?.status === 401) {
-      return null; // Return null instead of throwing
-    }
-    console.log(err);
-    throw err;
-  }
+  const res = await apiClient.get(`${API_BASE_URL}/auth/me`);
+  return res.data;
 };
 
 export const logout = async () => {

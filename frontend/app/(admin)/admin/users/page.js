@@ -1,6 +1,4 @@
-import { Suspense } from 'react';
 import UsersStatsGridWrapper from '../../../components/admin/users/UsersStatsGridWrapper.jsx';
-import LoadingSpinner from '../../../components/LoadingSpinner.jsx';
 import UsersTable from '../../../components/admin/users/UsersTable.jsx';
 import AddUserButton from '../../../components/admin/users/AddUserButton.jsx';
 
@@ -22,9 +20,7 @@ export default function UsersPage() {
             </div>
 
             {/* Stats Cards */}
-            {/* <Suspense fallback={<LoadingSpinner/>}> */}
-                <UsersStatsGridWrapper />
-            {/* </Suspense> */}
+            <UsersStatsGridWrapper />
 
             {/* Users table */}
             <UsersTable />

@@ -1,7 +1,7 @@
 // src/app/(admin)/admin/page.js
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Users,
   Calendar,
@@ -18,6 +18,7 @@ import { SalesChart } from "../../components/admin/SalesChart";
 import { RecentOrders } from "../../components/admin/RecentOrders";
 import { cn } from "../../../lib/utils.js";
 import StatsGrid from "@/app/components/admin/StatsGrid";
+import { useRouter } from "next/navigation.js";
 
 const CHART_TYPES = [
   { type: "area", icon: AreaChart, label: "Area" },
@@ -50,6 +51,7 @@ export default function AdminDashboardPage() {
   const [chartType, setChartType] = useState("area");
   const [activeMetric, setActiveMetric] = useState("sales");
   const [groupBy, setGroupBy] = useState("day");
+  const router = useRouter();
 
   return (
     <div className="space-y-8 animate-enter">
@@ -168,7 +170,7 @@ export default function AdminDashboardPage() {
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-(--color-primary)/10 text-(--color-primary) hover:bg-(--color-primary)/20 transition-colors text-left">
               <Package size={20} />
               <div>
-                <p className="font-medium">Add New Product</p>
+                <p className="font-medium" onClick={() => router.push('/admin/products')}>Add New Product</p>
                 <p className="text-xs opacity-80">
                   Create a new product listing
                 </p>
@@ -177,7 +179,7 @@ export default function AdminDashboardPage() {
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-badge/20 text-(--color-primary-text) hover:bg-badge/30 transition-colors text-left">
               <Users size={20} />
               <div>
-                <p className="font-medium">Manage Users</p>
+                <p className="font-medium" onClick={() => router.push('/admin/users')}>Manage Users</p>
                 <p className="text-xs text-secondary-text">
                   View and edit user accounts
                 </p>
@@ -186,7 +188,7 @@ export default function AdminDashboardPage() {
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-badge/20 text-(--color-primary-text) hover:bg-badge/30 transition-colors text-left">
               <Calendar size={20} />
               <div>
-                <p className="font-medium">View Reports</p>
+                <p className="font-medium" onClick={() => router.push('/admin/reports')}>View Reports</p>
                 <p className="text-xs text-secondary-text">
                   Generate detailed reports
                 </p>

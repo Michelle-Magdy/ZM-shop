@@ -13,6 +13,7 @@ import {
   AlertCircle, // Added for Unpaid
   HelpCircle, // Fallback icon
 } from "lucide-react";
+import { useRouter } from "next/navigation.js";
 import LoadingSpinner from "../LoadingSpinner";
 
 // 1. Updated Icon Map to include payment statuses
@@ -47,14 +48,15 @@ export function RecentOrders() {
     return <div className="p-4 text-red-500">Error loading orders</div>;
 
   const orders = data?.data || [];
-
+  const router = useRouter();
+  
   return (
     <div className="bg-(--color-card) rounded-xl shadow-sm border border-badge/30 overflow-hidden">
       <div className="px-6 py-4 border-b border-badge/30 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-(--color-primary-text)">
           Recent Orders
         </h3>
-        <button className="text-sm text-(--color-primary) hover:text-primary-hover font-medium">
+        <button onClick={() => router.push('/admin/orders')} className="text-sm text-(--color-primary) hover:text-primary-hover font-medium">
           View All
         </button>
       </div>

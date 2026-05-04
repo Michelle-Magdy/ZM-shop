@@ -8,14 +8,12 @@ import {
     Users,
     Package,
     ShoppingCart,
-    Settings,
     LogOut,
     ChevronRight,
     Flag,
     LayoutGrid,
 } from "lucide-react";
 import { useAuth } from "@/app/context/AuthenticationProvider";
-// import { cn } from "@/lib/utils";
 import { logout } from "@/lib/api/auth";
 import ReportsButton from "./reports/ReportsButton.jsx";
 const NAV_ITEMS = [
@@ -60,6 +58,7 @@ export function Sidebar() {
         setUser(null);
         router.push("/login");
     }
+
 
     return (
         <aside className="fixed left-0 top-0 h-full w-64 bg-(--color-primary) text-button-label flex flex-col z-50">
