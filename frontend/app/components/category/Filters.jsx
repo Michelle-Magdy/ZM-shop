@@ -40,6 +40,7 @@ export default function Filters({ slug, initialFilters }) {
     async function loadData() {
       try {
         setIsLoading(true);
+
         const category = await getCategoryBySlug(slug);
 
         if (category?.data?._id) {

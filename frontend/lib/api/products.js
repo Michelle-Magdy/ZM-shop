@@ -109,7 +109,7 @@ export const getTopDiscountedProducts = async () => {
 
 export const searchProducts = async (query) => {
   const res = await apiClient.get(
-    `product?search=where&fields=${neededFields.join(",")}`
+    `product?search=${query}&fields=${neededFields.join(",")}`
   );
   return res.data;
 };

@@ -7,6 +7,7 @@ import { searchProducts } from "@/lib/api/products";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SearchPopover from "@/app/UI/SearchPopover";
+import useDebounced from "../../lib/hooks/useDebounced.js";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
@@ -14,15 +15,19 @@ export default function SearchBar() {
   const inputRef = useRef(null);
   const router = useRouter();
 
+  // Debounce the query value
+  const debouncedQuery = useDebounced(query, 500);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["searchProducts", query],
-    queryFn: () => searchProducts(query),
-    enabled: query.length >= 3,
+    queryKey: ["searchProducts", debouncedQuery],
+    queryFn: () => searchProducts(debouncedQuery),
+    enabled: debouncedQuery.length >= 3,
   });
 
   const handleInputChange = (e) => {
-    setQuery(e.target.value);
-    if (e.target.value === "") setIsOpen(false);
+    const value = e.target.value;
+    setQuery(value);
+    if (value === "") setIsOpen(false);
     else setIsOpen(true);
   };
 
@@ -53,7 +58,7 @@ export default function SearchBar() {
       <SearchPopover
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        query={query}
+        query={debouncedQuery}  // pass debounced query for consistent results display
         results={data}
         isLoading={isLoading}
         isError={isError}
