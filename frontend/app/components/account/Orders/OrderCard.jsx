@@ -10,9 +10,9 @@ import {
 import OrderStatusTimeline from "@/app/components/account/Orders/OrderStatusTimeline";
 import { formatPrice } from "@/lib/util/formatPrice";
 import { formatDate } from "@/lib/util/formatDate";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import Image from "next/image";
 import getImageSrc from "../../../../lib/util/ImageHelper.js";
+import CancelOrderButton from "./CancelOrderButton.jsx";
 
 export default function OrderCard({ order }) {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -90,6 +90,10 @@ export default function OrderCard({ order }) {
                     </div>
                 </div>
 
+                <CancelOrderButton
+                    orderStatus={order.orderStatus}
+                    orderId={order._id}
+                />
                 {/* Product Preview */}
                 <div className="flex items-center gap-4 p-4 bg-background/50 rounded-xl border border-badge/30">
                     <div className="relative w-16 h-16 rounded-lg bg-badge/20 flex items-center justify-center shrink-0 overflow-hidden">

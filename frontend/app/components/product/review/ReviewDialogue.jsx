@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useProduct from "./ProductContext.js";
 
 import toast from "react-hot-toast";
+import getImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export default function ReviewDialog({
   isOpen,
@@ -92,7 +93,7 @@ export default function ReviewDialog({
               <div className="relative shrink-0">
                 <div className="w-14 h-14 rounded-lg overflow-hidden ring-2 ring-white/20">
                   <Image
-                    src={`${IMAGES_BASE_URL}/products/${product.coverImage}`}
+                    src={getImageSrc(product?.coverImage)}
                     alt={product.title}
                     fill
                     className="w-full h-full object-cover"

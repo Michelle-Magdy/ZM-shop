@@ -107,20 +107,19 @@ export const getTopDiscountedProducts = async () => {
   }
 };
 
-export const searchProducts = async (query) => {
+export const searchProducts = async (query, page = 1, limit = 20) => {
   const res = await apiClient.get(
-    `product?search=${query}&fields=${neededFields.join(",")}`
+    `product?search=${query}&fields=${neededFields.join(",")}&page=${page}&limit=${limit}`
   );
   return res.data;
 };
 
-export const getProductsByCategory = async (categorySlug, queryParams) => {
+export const getProductsByCategory = async (categorySlug, queryParams, page = 1, limit = 20) => {
   try {
     const searchParams = buildCategorySearchParams(queryParams);
     const searchString = searchParams.toString();
-
     if (typeof window === "undefined") {
-      const url = `${API_BASE_URL}/product/category/${categorySlug}${searchString ? `?${searchString}` : ""}`;
+      const url = `${API_BASE_URL}/product/category/${categorySlug}${searchString ? `?${searchString}&page=${page}&limit=${limit}` : `?page=${page}`}&limit=${limit}`;
       const res = await fetch(url, { cache: "no-store" });
 
       if (!res.ok) {

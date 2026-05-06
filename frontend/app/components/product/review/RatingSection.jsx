@@ -31,7 +31,7 @@ export default function RatingSection({ product }) {
                                 {avgRating?.toFixed(1) || "0.0"}
                             </div>
                             <div className="flex justify-center mb-2">
-                                <StarRating rating={avgRating} size="lg" />
+                                <StarRating rating={avgRating} size="md" />
                             </div>
                             <p className="text-sm text-secondary-text">
                                 Based on {nReviews || 0} reviews

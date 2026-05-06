@@ -1,15 +1,10 @@
 import { apiClient } from "./axios";
 import { API_BASE_URL } from "../apiConfig.js";
 
-export const getProductReviews = async (productId) => {
-    try {
-        const res = await apiClient.get(`${API_BASE_URL}/reviews/product/${productId}`);
-        console.log(res.data);
-        return res.data;
-    } catch (err) {
-        console.log(err);
-        throw err;
-    }
+export const getProductReviews = async (productId, page = 1, limit = 10) => {
+    const res = await apiClient.get(`${API_BASE_URL}/reviews/product/${productId}?page=${page}&limit=${limit}`);
+    return res.data;
+
 }
 
 export const handleHelpfulReview = async (reviewId) => {

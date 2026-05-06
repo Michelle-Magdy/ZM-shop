@@ -1,6 +1,5 @@
 import { API_BASE_URL } from "../apiConfig";
 import { apiClient } from "./axios";
-import serverApiClient from "./serverApi.js";
 
 const ORDERS_LIMIT = 5;
 
