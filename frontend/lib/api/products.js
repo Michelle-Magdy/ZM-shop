@@ -114,27 +114,32 @@ export const searchProducts = async (query, page = 1, limit = 20) => {
   return res.data;
 };
 
-export const getProductsByCategory = async (categorySlug, queryParams, page = 1, limit = 20) => {
+export const getProductsByCategory = async (
+  categorySlug,
+  queryParams,
+) => {
   try {
     const searchParams = buildCategorySearchParams(queryParams);
+    searchParams.set("page", queryParams.page.toString());
+    searchParams.set("limit", queryParams.limit.toString());
+    searchParams.set("search", queryParams.search.toString());
+    
     const searchString = searchParams.toString();
+    const url = `${API_BASE_URL}/product/category/${categorySlug}?${searchString}`;
+
     if (typeof window === "undefined") {
-      const url = `${API_BASE_URL}/product/category/${categorySlug}${searchString ? `?${searchString}&page=${page}&limit=${limit}` : `?page=${page}`}&limit=${limit}`;
       const res = await fetch(url, { cache: "no-store" });
-
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error(`Failed to fetch category products (${res.status})`);
-      }
-
       return await res.json();
     }
 
     const res = await apiClient.get(
-      `/product/category/${categorySlug}${searchString ? `?${searchString}` : ""}`,
+      `/product/category/${categorySlug}?${searchString}`,
     );
     return res.data;
   } catch (err) {
-    console.log(err);
+    console.error(err);
     throw err;
   }
 };

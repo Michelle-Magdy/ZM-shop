@@ -10,7 +10,6 @@ import { ProductStats } from "../../../components/admin/products/ProductStats";
 import { FilterBar } from "../../../components/admin/products/FilterBar";
 import { ProductCard } from "../../../components/admin/products/ProductCard";
 import { ProductTableRow } from "../../../components/admin/products/ProductTableRow";
-import { Pagination } from "../../../components/admin/products/Pagination";
 import { DeleteModal } from "../../../components/admin/products/DeleteModal";
 
 // API
@@ -18,11 +17,11 @@ import {
   toggleProductFlag,
   bulkUpdateProducts,
 } from "../../../../lib/api/products";
-import { useProduct } from "@/lib/hooks/products/useProduct";
 import { useProducts } from "@/lib/hooks/products/useProducts";
 import { useProductMutations } from "@/lib/hooks/products/useProdcutMutations";
 import toast from "react-hot-toast";
 import { useBulkActions } from "@/lib/hooks/products/useBulkActions";
+import PaginationClient from "@/app/components/PaginationClient";
 
 // ============================================
 // MAIN PRODUCTS PAGE COMPONENT
@@ -37,7 +36,7 @@ export default function ProductsPage() {
     category: "all",
     search: "",
     page: 1,
-    limit: 10,
+    limit: 12,
   });
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -143,7 +142,6 @@ export default function ProductsPage() {
   const handlePageChange = (newPage) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
   };
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -177,7 +175,7 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="animate-spin text-(--color-primary)" size={40} />
         </div>
-      ) : products.length === 0 ? (
+      ) : products.data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-(--color-secondary-text)">
           <Package size={64} className="mb-4 opacity-30" />
           <h3 className="text-lg font-medium text-(--color-primary-text)">
@@ -262,16 +260,12 @@ export default function ProductsPage() {
 
       {/* Pagination */}
       {!isLoading && products.data.length > 0 && (
-        <Pagination
-          pagination={{
-            page: products.currentPage,
-            totalPages: products.totalPages,
-            total: products.totalCount,
-          }}
+        <PaginationClient
+          currentPage={products.currentPage}
+          totalPages={products.totalPages}
           onPageChange={handlePageChange}
         />
       )}
-
       {/* Delete Modal */}
       <DeleteModal
         product={productToDelete}
