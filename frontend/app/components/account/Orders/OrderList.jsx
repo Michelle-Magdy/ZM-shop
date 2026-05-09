@@ -22,7 +22,6 @@ export default function OrderList({ user }) {
             }),
         enabled: !!user?.id,
         staleTime: 1000 * 60 * 5,
-        placeholderData: (previousData) => previousData,
     });
 
     const handlePageChange = (page) => {
@@ -85,7 +84,7 @@ export default function OrderList({ user }) {
             )}
 
             {/* Orders List */}
-            {isFetching && !data ? (
+            {isFetching ? (
                 <LoadingSpinner />
             ) : (
                 <div className="space-y-6">
