@@ -23,17 +23,17 @@ router
 
 router.get("/stats", protect, authorize("admin"), getCategoryStats);
 router.get("/:categoryId/filters", getAvailableFilters);
-router.get("/:id", getOneCategory);
-router.use(protect, authorize("admin", "vendor"));
 router
   .route("/:id")
+  .get(getOneCategory)
   .patch(
+    protect, authorize("admin", "vendor"),
     uploadImage,
     resizeImage,
     validateCategoryUpdate,
     deleteOldImage,
     updateCategoryHandler,
   )
-  .delete(deleteCategory);
+  .delete(protect, authorize("admin", "vendor"),deleteCategory);
 
 export default router;

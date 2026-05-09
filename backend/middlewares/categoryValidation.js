@@ -1,5 +1,6 @@
 import AppError from "../util/appError.js";
 import Category from "../models/category.model.js";
+import { deleteFile } from "../util/deleteFile.js";
 export const validateCategoryUpdate = async (req, res, next) => {
   const { id } = req.params;
   const { parent, name } = req.body;
@@ -7,6 +8,8 @@ export const validateCategoryUpdate = async (req, res, next) => {
   // find category
   const category = await Category.findById(id);
   if (!category) {
+    // delete uploaded image if the category doesn't exist
+    if(req.body.image) deleteFile("categories",req.body.image);
     return next(new AppError("Category not found", 404));
   }
 
@@ -37,8 +40,10 @@ export const validateCategoryUpdate = async (req, res, next) => {
     });
     if (existingCategory) {
       return next(
-        new AppError(`Category with name ${name} already exists at this level`),
-        400,
+        new AppError(
+          `Category with name ${name} already exists at this level`,
+          400,
+        ),
       );
     }
   }
