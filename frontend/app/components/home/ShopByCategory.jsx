@@ -5,14 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaArrowRight, FaArrowLeft } from "react-icons/fa";
 import { useCategories } from "@/app/context/CategoriesProvider";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import { getCategoryImageSrc } from "@/lib/util/ImageHelper.js";
 
 import "swiper/css";
 
 export default function ShopByCategory() {
   const categories = useCategories();
-
-  const CATEGORY_IMAGE_URL = `${IMAGES_BASE_URL}/categories`;
   return (
     <section className="px-4 py-8 my-12 bg-primary -mx-3 md:-mx-6 lg:-mx-14">
       <div className="container mx-auto px-3 md:px-6 lg:px-14">
@@ -57,7 +55,7 @@ export default function ShopByCategory() {
                 >
                   <div className="relative w-32 h-32 rounded-full bg-white shadow-md overflow-hidden transition-transform hover:scale-105">
                     <Image
-                      src={`${CATEGORY_IMAGE_URL}/${cat.image}`}
+                      src={getCategoryImageSrc(cat.image)}
                       alt={cat.name}
                       fill
                       sizes="128px"

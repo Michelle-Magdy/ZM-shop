@@ -8,7 +8,7 @@ import {
     increaseQuantity,
     decreaseQuantity,
 } from "@/features/cart/cartSlice";
-import getImageSrc from "../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../lib/util/ImageHelper.js";
 
 export default function CartItem({ item }) {
     const dispatch = useDispatch();
@@ -43,7 +43,7 @@ export default function CartItem({ item }) {
                 className="shrink-0 relative w-36 h-36"
             >
                 <Image
-                    src={getImageSrc(item?.coverImage)}
+                    src={getProductImageSrc(item?.coverImage)}
                     alt={item.title}
                     className="object-cover rounded-md"
                     fill

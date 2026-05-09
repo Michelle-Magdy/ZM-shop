@@ -17,43 +17,18 @@ const getRequestConfig = (payload) => {
 };
 
 export const getCategories = async () => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/category`, {
-      next: { revalidate: 3600 },
-    });
-    const categories = await res.json();
-
-    return categories || { data: [] };
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    return { data: [] };
-  }
+  const res = await apiClient.get(`category`);
+  return res.data;
 };
 
 export const getCategoryBySlug = async (slug) => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/category/${slug}`);
-    const category = await res.json();
-    return category;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+  const res = await apiClient.get(`category/${slug}`);
+  return res.data;
 };
 
 export const getFilters = async (id) => {
-  try {
-    const res = await fetch(
-      `${API_BASE_URL}/category/${id.toString()}/filters`,
-      {
-        next: { revalidate: 3600 },
-      },
-    );
-    return await res.json();
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw error;
-  }
+  const res = await apiClient.get(`category/${id.toString()}/filters`);
+  return res.data;
 };
 
 export const deleteCategory = async (id) => {

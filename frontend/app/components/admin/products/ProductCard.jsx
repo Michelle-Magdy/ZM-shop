@@ -20,13 +20,13 @@ import {
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";
-import getImageSrc from "../../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export const ProductCard = ({ product, onEdit, onDelete, onToggleFlag }) => {
   const totalStock = getTotalStock(product);
   const discount = calculateDiscount(product.price, product.olderPrice);
   const hasVariants = product.variants && product.variants.length > 0;
-  const image = getImageSrc(product?.coverImage);
+  const image = getProductImageSrc(product?.coverImage);
 
   return (
     <div className="bg-(--color-card) rounded-xl border border-(--color-badge)/30 overflow-hidden hover:border-(--color-primary)/50 transition-all duration-300 group">

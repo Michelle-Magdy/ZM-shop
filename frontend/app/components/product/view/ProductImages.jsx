@@ -1,14 +1,10 @@
 import Image from "next/image";
 import { useState, memo } from "react";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import getProductImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export default memo(function ProductImages({ product, selectedVariant }) {
     const [selectedImage, setSelectedImage] = useState(0);
-    const imagePath = product.images[selectedImage]
-        ? product.images[selectedImage].includes("media-amazon")
-            ? `${product.images[selectedImage]}`
-            : `${IMAGES_BASE_URL}/products/${product.images[selectedImage]}`
-        : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
+    const imagePath = getProductImageSrc(product.images[selectedImage]);
 
     return (
         <>
@@ -32,11 +28,7 @@ export default memo(function ProductImages({ product, selectedVariant }) {
 
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {product.images.map((img, i) => {
-                        const thumbPath = img
-                            ? img.includes("media-amazon")
-                                ? img
-                                : `${IMAGES_BASE_URL}/products/${img}`
-                            : "https://coderplace.net/prestashop/PRS02/PRS02045/demo1/24-home_default/apple-iphone-14-pro-max-64gb-white-fully-unlocked.jpg";
+                        const thumbPath = getProductImageSrc(img);
 
                         return (
                             <button

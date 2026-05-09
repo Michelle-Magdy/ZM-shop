@@ -4,7 +4,7 @@
 import { useRef, useState } from "react";
 import { Upload, X, Star, GripVertical } from "lucide-react";
 import Image from "next/image";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import getProductImageSrc from "@/lib/util/ImageHelper.js";
 
 export const ImageUpload = ({
   images, // Array of { file?: File, url: string, id?: string } or string (legacy)
@@ -27,12 +27,9 @@ export const ImageUpload = ({
   // Helper to get display URL
   const getDisplayUrl = (img) => {
     const normalized = normalizeImage(img);
-    if (normalized.url?.startsWith("blob:") || normalized.url.includes("media-amazon")) 
+    if (normalized.url?.startsWith("blob:")) 
       return normalized.url;
-    if (isEdit && normalized.url && !normalized.file) {
-      return `${IMAGES_BASE_URL}/products/${normalized.url}`;
-    }
-    return normalized.url;
+    return getProductImageSrc(normalized.url);
   };
 
   const handleFilesSelect = (e) => {

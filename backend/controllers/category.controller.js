@@ -13,13 +13,12 @@ import {
 import Product from "../models/product.model.js";
 import sharp from "sharp";
 import { upload } from "../config/multer.config.js";
-import { deleteFile } from "../util/deleteFile.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+  extractPublicId,
+} from "../config/cloudinary.config.js";
 import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const uploadImage = upload.single("image");
 
@@ -28,21 +27,20 @@ export const resizeImage = catchAsync(async (req, res, next) => {
     return next();
   }
 
-  const imagePath = `category-${Date.now()}.jpg`;
-  const outputPath = path.join(
-    __dirname,
-    "../public/images/categories",
-    imagePath,
-  );
-
-  await sharp(req.file.buffer)
+  // Resize in memory, then upload to Cloudinary
+  const resizedBuffer = await sharp(req.file.buffer)
     .resize(1000, 1000)
     .toFormat("jpeg")
-    .jpeg({
-      quality: 90,
-    })
-    .toFile(outputPath);
-  req.body.image = imagePath;
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  const result = await uploadToCloudinary(resizedBuffer, {
+    folder: "zm-shop/categories",
+    public_id: `category-${Date.now()}`,
+    format: "jpeg",
+  });
+
+  req.body.image = result.secure_url;
   next();
 });
 
@@ -50,7 +48,10 @@ export const deleteOldImage = catchAsync(async (req, res, next) => {
   const category = req.currentCategory;
 
   if (!category) {
-    if (req.body.image) deleteFile("categories", req.body.image);
+    if (req.body.image) {
+      const publicId = extractPublicId(req.body.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     return next(new AppError("category not found", 404));
   }
 
@@ -61,24 +62,28 @@ export const deleteOldImage = catchAsync(async (req, res, next) => {
 
   // Uploading an image onto a subcategory is not allowed
   if (parentIsBeingSet && req.body.image) {
-    deleteFile("categories", req.body.image);
+    const publicId = extractPublicId(req.body.image);
+    if (publicId) await deleteFromCloudinary(publicId);
     return next(new AppError("cannot add image to subcategory", 400));
   }
 
   // Category already is a subcategory and has an image — clear it
   if (category.parent && category.image) {
-    deleteFile("categories", category.image);
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
     req.body.image = "";
   }
 
   // A new image replaces the old one — delete the old one
   if (req.body.image && category.image && req.body.image !== category.image) {
-    deleteFile("categories", category.image);
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
   }
 
   // Category is being moved under a parent and currently has an image — clear it
   if (parentIsBeingSet && category.image) {
-    deleteFile("categories", category.image);
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
     req.body.image = "";
   }
 
@@ -130,7 +135,9 @@ export const createCategory = catchAsync(async (req, res, next) => {
   if (!parent) {
     newCategory.image = image;
   } else if (image) {
-    deleteFile("categories", image);
+    // Subcategories shouldn't have images — delete the uploaded one
+    const publicId = extractPublicId(image);
+    if (publicId) await deleteFromCloudinary(publicId);
   }
 
   return createOne(Category, newCategory)(req, res, next);
@@ -180,8 +187,11 @@ export const updateCategoryHandler = async (req, res, next) => {
     });
   } catch (err) {
     await session.abortTransaction();
-    // Also clean up the newly uploaded file if the DB write failed
-    if (req.body.image) deleteFile("categories", req.body.image);
+    // Also clean up the newly uploaded file from Cloudinary if the DB write failed
+    if (req.body.image) {
+      const publicId = extractPublicId(req.body.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     next(err);
   } finally {
     session.endSession();

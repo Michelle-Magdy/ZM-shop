@@ -1,6 +1,9 @@
 import AppError from "../util/appError.js";
 import Category from "../models/category.model.js";
-import { deleteFile } from "../util/deleteFile.js";
+import {
+  deleteFromCloudinary,
+  extractPublicId,
+} from "../config/cloudinary.config.js";
 export const validateCategoryUpdate = async (req, res, next) => {
   const { id } = req.params;
   const { parent, name } = req.body;
@@ -8,8 +11,11 @@ export const validateCategoryUpdate = async (req, res, next) => {
   // find category
   const category = await Category.findById(id);
   if (!category) {
-    // delete uploaded image if the category doesn't exist
-    if(req.body.image) deleteFile("categories",req.body.image);
+    // delete uploaded image from Cloudinary if the category doesn't exist
+    if (req.body.image) {
+      const publicId = extractPublicId(req.body.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     return next(new AppError("Category not found", 404));
   }
 

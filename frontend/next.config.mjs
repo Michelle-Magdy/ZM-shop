@@ -23,6 +23,11 @@ const remotePatterns = [
     pathname: "/prestashop/PRS02/PRS02045/demo1/**",
   },
   {
+    protocol: "https",
+    hostname: "res.cloudinary.com",
+    pathname: "/**",
+  },
+  {
     protocol: "http",
     hostname: "localhost",
     port: "5000",

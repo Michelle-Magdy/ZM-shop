@@ -2,10 +2,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FaStar } from "react-icons/fa";
-import getImageSrc from "../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../lib/util/ImageHelper.js";
 
 export default function ProductSearchItem({ product }) {
-    const productImageSrc = getImageSrc(product?.coverImage);
+    const productImageSrc = getProductImageSrc(product?.coverImage);
     return (
         <Link
             href={`/product/${product.slug}`}

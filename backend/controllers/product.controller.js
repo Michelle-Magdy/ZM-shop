@@ -10,12 +10,14 @@ import {
 import { upload } from "../config/multer.config.js";
 import sharp from "sharp";
 import catchAsync from "../util/catchAsync.js";
-import { deleteFile } from "../util/deleteFile.js";
 import { findCategoryDescendantsIDs } from "../util/category.utils.js";
 import Category from "../models/category.model.js";
 import AppError from "../util/appError.js";
-import path from "path";
-import { fileURLToPath } from "url";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+  extractPublicId,
+} from "../config/cloudinary.config.js";
 
 const safeJsonParse = (value) => {
   if (typeof value !== "string") {
@@ -138,71 +140,33 @@ export const productSanitizer = (req, res, next) => {
     });
 
     // === 5. Handle multer files — MERGE with existing images ===
-    // Multer puts: single file in req.file, multiple in req.files (array or object)
-
-    // Keep any resized/stored filename already set by previous middleware.
-    // If missing, try to derive it from uploaded files.
+    // coverImage: use the Cloudinary URL set by resizeImages middleware
     if (
       typeof normalizedBody.coverImage === "string" &&
       normalizedBody.coverImage
     ) {
-      // keep as-is (could be URL or local filename like product-*.jpeg)
-    } else if (req.file && req.file.fieldname === "coverImage") {
-      // Single upload middleware was used for cover
-      normalizedBody.coverImage =
-        req.file.path || req.file.location || req.file.filename || null;
-    } else if (req.files?.coverImage?.[0]) {
-      // .fields() middleware shape
-      const coverFile = req.files.coverImage[0];
-      normalizedBody.coverImage =
-        coverFile.path || coverFile.location || coverFile.filename || null;
+      // keep as-is (could be Cloudinary URL or local filename)
     }
+    // If resizeImages already set req.body.coverImage to a Cloudinary URL, it's handled
 
     // Handle gallery images: merge existing URLs + new uploaded files
-    const uploadedImages = [];
-    if (normalizedBody.images) {
-      if (req.files) {
-        // Multer .array() or .fields() was used
-        if (Array.isArray(req.files)) {
-          // .array('images') — all files in one array
-          uploadedImages.push(
-            ...req.files
-              .filter((f) => f.fieldname === "images")
-              .map((f) => f.path || f.location || f.filename),
-          );
-        } else if (typeof req.files === "object") {
-          // .fields([...]) — files grouped by fieldname
-          if (req.files.images) {
-            uploadedImages.push(
-              ...req.files.images.map(
-                (f) => f.path || f.location || f.filename,
-              ),
-            );
-          }
-        }
-      }
+    // Merge: existing image URLs (Cloudinary URLs kept by frontend) + newly uploaded URLs
+    const existingImageUrls = Array.isArray(normalizedBody.existingImages)
+      ? normalizedBody.existingImages
+      : [];
 
-      // Preserve filenames already set by resize middleware, then merge with
-      // existing image URLs and any uploaded file paths that can be resolved.
-      const resizedImages = normalizeToArray(normalizedBody.images).filter(
-        (image) => typeof image === "string" && image,
-      );
+    const resizedImages = normalizeToArray(normalizedBody.images).filter(
+      (image) => typeof image === "string" && image,
+    );
 
-      // Merge: existing image URLs + newly uploaded file paths + resized names
-      const existingImageUrls = Array.isArray(normalizedBody.existingImages)
-        ? normalizedBody.existingImages
-        : [];
+    normalizedBody.images = [
+      ...existingImageUrls,
+      ...resizedImages,
+    ].filter((image) => typeof image === "string" && image);
+    normalizedBody.images = uniqueStrings(normalizedBody.images);
 
-      normalizedBody.images = [
-        ...existingImageUrls,
-        ...resizedImages,
-        ...uploadedImages,
-      ].filter((image) => typeof image === "string" && image);
-      normalizedBody.images = uniqueStrings(normalizedBody.images);
-
-      // === 6. Clean up temporary fields not in schema ===
-      delete normalizedBody.existingImages; // internal field, not in schema
-    }
+    // === 6. Clean up temporary fields not in schema ===
+    delete normalizedBody.existingImages; // internal field, not in schema
 
     // === 7. Filter to allowed fields only ===
     const allowedFields = [
@@ -257,59 +221,57 @@ export const resizeImages = catchAsync(async (req, res, next) => {
     (image) => typeof image === "string" && image,
   );
 
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
   const uploadedImages = [];
 
+  // Upload cover image to Cloudinary
   if (req.files?.coverImage) {
-    const coverImageName = `product-${Date.now()}-cover.jpeg`;
-    const outputPath = path.join(
-      __dirname,
-      "../public/images/products",
-      coverImageName,
-    );
-
-    await sharp(req.files.coverImage[0].buffer)
+    const resizedBuffer = await sharp(req.files.coverImage[0].buffer)
       .resize(1000, 1000)
       .toFormat("jpeg")
-      .jpeg({
-        quality: 90,
-      })
-      .toFile(outputPath);
-    req.body.coverImage = coverImageName;
-  }
+      .jpeg({ quality: 90 })
+      .toBuffer();
 
+    const result = await uploadToCloudinary(resizedBuffer, {
+      folder: "zm-shop/products",
+      public_id: `product-${Date.now()}-cover`,
+      format: "jpeg",
+    });
+
+    req.body.coverImage = result.secure_url;
+  }
+  
+  
+
+  // Upload gallery images to Cloudinary
   if (req.files?.images) {
-    await Promise.all(
-      req.files.images.map(async (image, index) => {
-        const imageName = `product-${Date.now()}-${index}.jpeg`;
-
-        const outputPath = path.join(
-          __dirname,
-          "../public/images/products",
-          imageName,
-        );
-        await sharp(image.buffer)
-          .resize(900, 900)
-          .toFormat("jpeg")
-          .jpeg({
-            quality: 90,
-          })
-          .toFile(outputPath);
-        uploadedImages.push(imageName);
-      }),
-    );
-  }
-
-  const mergedImages = [...existingImages, ...uploadedImages];
+     const mergedImages = [...existingImages, ...req.files.images];
   if (mergedImages.length > 5) {
-    uploadedImages.forEach((imageName) => deleteFile("products", imageName));
     return next(new AppError("Each Product can have only 5 images", 400));
   }
 
   if (mergedImages.length > 0) {
     req.body.images = mergedImages;
   }
+    await Promise.all(
+      req.files.images.map(async (image, index) => {
+        const resizedBuffer = await sharp(image.buffer)
+          .resize(900, 900)
+          .toFormat("jpeg")
+          .jpeg({ quality: 90 })
+          .toBuffer();
+
+        const result = await uploadToCloudinary(resizedBuffer, {
+          folder: "zm-shop/products",
+          public_id: `product-${Date.now()}-${index}`,
+          format: "jpeg",
+        });
+
+        uploadedImages.push(result.secure_url);
+      }),
+    );
+  }
+
+ 
 
   next();
 });
@@ -329,35 +291,46 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
 
   // Clean up newly uploaded files if product not found
   if (!product) {
-    if (req.body.coverImage) deleteFile("products", req.body.coverImage);
+    if (req.body.coverImage) {
+      const publicId = extractPublicId(req.body.coverImage);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     if (Array.isArray(req.body.images)) {
-      req.body.images.forEach((imageName) => deleteFile("products", imageName));
+      for (const imageUrl of req.body.images) {
+        const publicId = extractPublicId(imageUrl);
+        if (publicId) await deleteFromCloudinary(publicId);
+      }
     }
     return next(new AppError("Product not found", 404));
   }
 
-  // 2. Delete old cover image if new one uploaded
+  // 2. Delete old cover image from Cloudinary if new one uploaded
   if (
     req.body.coverImage &&
     product?.coverImage &&
     req.body.coverImage !== product.coverImage
   ) {
-    deleteFile("products", product.coverImage);
+    const publicId = extractPublicId(product.coverImage);
+    if (publicId) await deleteFromCloudinary(publicId);
   }
 
   // 3. Validate total gallery images and remove dropped old images
   if (Array.isArray(req.body.images) && req.body.images.length > 5) {
-    req.body.images.forEach((imageName) => deleteFile("products", imageName));
+    for (const imageUrl of req.body.images) {
+      const publicId = extractPublicId(imageUrl);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     return next(new AppError("Each Product can have only 5 images", 400));
   }
 
   if (Array.isArray(req.body.images)) {
     const nextImages = new Set(req.body.images);
-    (product.images || []).forEach((oldImage) => {
+    for (const oldImage of product.images || []) {
       if (!nextImages.has(oldImage)) {
-        deleteFile("products", oldImage);
+        const publicId = extractPublicId(oldImage);
+        if (publicId) await deleteFromCloudinary(publicId);
       }
-    });
+    }
   }
 
   next();
