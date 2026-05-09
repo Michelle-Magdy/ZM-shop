@@ -12,6 +12,7 @@ import {
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import getImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export const ProductTableRow = ({
   product,
@@ -38,7 +39,7 @@ export const ProductTableRow = ({
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-(--color-background) flex-shrink-0">
             <Image
-              src={`${IMAGES_BASE_URL}/products/${product.coverImage}`}
+              src={getImageSrc(product.coverImage)}
               alt={product.title}
               fill
               className="object-cover"

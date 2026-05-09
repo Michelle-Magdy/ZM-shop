@@ -68,13 +68,7 @@ export default function AdminDashboardPage() {
 
         <div className="flex items-center gap-3">
           <DateRangePicker value={dateRange} onChange={setDateRange} />
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-(--color-primary) text-button-label rounded-lg hover:bg-primary-hover transition-colors">
-            <Download size={18} />
-            <span className="text-sm font-medium">Export</span>
-          </button>
-          <button className="p-2.5 border border-badge/50 rounded-lg text-secondary-text hover:text-(--color-primary) hover:border-(--color-primary)/50 transition-colors">
-            <RefreshCw size={18} />
-          </button>
+
         </div>
       </div>
 
@@ -170,7 +164,7 @@ export default function AdminDashboardPage() {
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-(--color-primary)/10 text-(--color-primary) hover:bg-(--color-primary)/20 transition-colors text-left">
               <Package size={20} />
               <div>
-                <p className="font-medium" onClick={() => router.push('/admin/products')}>Add New Product</p>
+                <p className="font-medium" onClick={() => router.push('/admin/products/new')}>Add New Product</p>
                 <p className="text-xs opacity-80">
                   Create a new product listing
                 </p>

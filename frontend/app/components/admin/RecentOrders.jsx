@@ -123,9 +123,6 @@ export function RecentOrders() {
                                 >
                                     {order.orderStatus}
                                 </span>
-                                <button className="text-secondary-text hover:text-(--color-primary-text)">
-                                    <MoreHorizontal size={18} />
-                                </button>
                             </div>
                         </div>
                     );
