@@ -17,6 +17,7 @@ import {
 import useAddToCart from "@/lib/hooks/useAddToCart";
 import useRemoveFromWishlist from "@/lib/hooks/useRemoveFromWishlist";
 import LoadingSpinner from "../../../UI/LoadingSpinner";
+import getImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export default function WishlistPage() {
   const dispatch = useDispatch();
@@ -92,75 +93,77 @@ export default function WishlistPage() {
 
       {/* Wishlist Items */}
       <div className="space-y-4">
-        {items.map((item) => (
-          <div
-            key={item.productId}
-            className="bg-card rounded-xl shadow-sm border border-badge/30 p-4 flex flex-col sm:flex-row gap-4 hover:shadow-md transition-shadow"
-          >
-            {/* Product Image */}
-            <Link
-              href={`/product/${item.slug}`}
-              className="relative w-full sm:w-24 h-48 sm:h-24 shrink-0 rounded-lg overflow-hidden bg-badge/20"
+        {items.map((item) => {
+          const image = getImageSrc(item?.coverImage);
+          return (
+            <div
+              key={item.productId}
+              className="bg-card rounded-xl shadow-sm border border-badge/30 p-4 flex flex-col sm:flex-row gap-4 hover:shadow-md transition-shadow"
             >
-              <Image
-                src={`${IMAGES_BASE_URL}/products/${item.coverImage}`}
-                alt={item.title}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </Link>
-
-            {/* Product Info */}
-            <div className="flex-1 min-w-0">
-              <Link href={`/product/${item.slug}`} className="block">
-                <h3 className="text-lg font-semibold text-primary-text truncate hover:text-primary-hover transition-colors">
-                  {item.title}
-                </h3>
+              {/* Product Image */}
+              <Link
+                href={`/product/${item.slug}`}
+                className="relative w-full sm:w-24 h-48 sm:h-24 shrink-0 rounded-lg overflow-hidden bg-badge/20"
+              >
+                <Image
+                  src={image}
+                  alt={item.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
               </Link>
 
-              {item.variant && (
-                <div className="mt-2 space-y-1 text-sm text-secondary-text">
-                  <p>SKU: {item.variant.sku}</p>
-                  <p className="text-lg font-bold text-primary dark:text-secondary-text">
-                    ${item.variant.price?.toFixed(2)}
-                  </p>
-                  <p
-                    className={`${
-                      item.variant.stock > 0
+              {/* Product Info */}
+              <div className="flex-1 min-w-0">
+                <Link href={`/product/${item.slug}`} className="block">
+                  <h3 className="text-lg font-semibold text-primary-text truncate hover:text-primary-hover transition-colors">
+                    {item.title}
+                  </h3>
+                </Link>
+
+                {item.variant && (
+                  <div className="mt-2 space-y-1 text-sm text-secondary-text">
+                    <p>SKU: {item.variant.sku}</p>
+                    <p className="text-lg font-bold text-primary dark:text-secondary-text">
+                      ${item.variant.price?.toFixed(2)}
+                    </p>
+                    <p
+                      className={`${item.variant.stock > 0
                         ? "text-primary font-semibold dark:text-secondary-text"
                         : "text-secondary-text/60"
-                    }`}
-                  >
-                    {item.variant.stock > 0
-                      ? `In Stock (${item.variant.stock})`
-                      : "Out of Stock"}
-                  </p>
-                </div>
-              )}
-            </div>
+                        }`}
+                    >
+                      {item.variant.stock > 0
+                        ? `In Stock (${item.variant.stock})`
+                        : "Out of Stock"}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-            {/* Actions */}
-            <div className="flex sm:flex-col gap-2 justify-center">
-              <button
-                onClick={() => handleMoveToCart(item)}
-                disabled={!item.variant?.stock}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-button-label rounded-lg hover:bg-primary-hover disabled:bg-badge disabled:text-secondary-text/50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-              >
-                <FaShoppingCart title="Move to cart" />
-                <span className="sm:hidden">Move to Cart</span>
-              </button>
+              {/* Actions */}
+              <div className="flex sm:flex-col gap-2 justify-center">
+                <button
+                  onClick={() => handleMoveToCart(item)}
+                  disabled={!item.variant?.stock}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-button-label rounded-lg hover:bg-primary-hover disabled:bg-badge disabled:text-secondary-text/50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  <FaShoppingCart title="Move to cart" />
+                  <span className="sm:hidden">Move to Cart</span>
+                </button>
 
-              <button
-                onClick={() => handleRemoveFromWishlist(item.productId)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-secondary-text hover:text-red-500 hover:bg-badge/30 rounded-lg transition-colors text-sm font-medium"
-              >
-                <FaTrash title="Remove Item" />
-                <span className="sm:hidden">Remove</span>
-              </button>
+                <button
+                  onClick={() => handleRemoveFromWishlist(item.productId)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-secondary-text hover:text-red-500 hover:bg-badge/30 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <FaTrash title="Remove Item" />
+                  <span className="sm:hidden">Remove</span>
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Continue Shopping */}

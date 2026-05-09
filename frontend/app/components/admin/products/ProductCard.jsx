@@ -20,18 +20,20 @@ import {
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
 import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import getImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export const ProductCard = ({ product, onEdit, onDelete, onToggleFlag }) => {
   const totalStock = getTotalStock(product);
   const discount = calculateDiscount(product.price, product.olderPrice);
   const hasVariants = product.variants && product.variants.length > 0;
+  const image = getImageSrc(product?.coverImage);
 
   return (
     <div className="bg-(--color-card) rounded-xl border border-(--color-badge)/30 overflow-hidden hover:border-(--color-primary)/50 transition-all duration-300 group">
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden bg-(--color-background)">
         <Image
-          src={`${IMAGES_BASE_URL}/products/${product.coverImage}`}
+          src={image}
           alt={product.title}
           fill
           unoptimized

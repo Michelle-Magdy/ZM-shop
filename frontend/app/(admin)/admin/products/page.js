@@ -139,19 +139,6 @@ export default function ProductsPage() {
     execute(action);
   };
 
-  // Handle export
-  const handleExport = () => {
-    // TODO: Implement CSV export
-    const csv = products.map((p) => ({
-      id: p._id,
-      title: p.title,
-      price: p.price,
-      stock: p.stock,
-      status: p.status,
-    }));
-    console.log("Export data:", csv);
-  };
-
   // Handle page change
   const handlePageChange = (newPage) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
@@ -181,7 +168,6 @@ export default function ProductsPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onAddNew={handleAddNew}
-        onExport={handleExport}
         selectedCount={selectedProducts.length}
         onBulkAction={handleBulkAction}
       />

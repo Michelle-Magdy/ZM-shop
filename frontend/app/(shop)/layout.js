@@ -1,38 +1,18 @@
-import "../globals.css";
-import CategoriesWrapper from "../providers/CategoriesWrapper";
-import { Provider } from "../providers/Providers";
 import TopHeader from "@/app/components/TopHeader";
-import Menu from "../components/Menu";
-import { Toaster } from "react-hot-toast";
-import { config } from "@fortawesome/fontawesome-svg-core";
-import "@fortawesome/fontawesome-svg-core/styles.css";
-import Footer from "../components/Footer";
-import AuthLoadingOverlay from "../components/AuthLoadingOverlay";
-import AppEventListener from "../components/AppEventListener";
-config.autoAddCss = false;
-export const metadata = {
-  title: "Zm Shop",
-  description: "Shop as you like",
-};
+import Menu from "@/app/components/Menu";
+import Footer from "@/app/components/Footer";
 
-export default function RootLayout({ children }) {
+export default function ShopLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
-      <body suppressHydrationWarning={true} className="bg-background">
-        <CategoriesWrapper>
-          <Provider>
-            <AppEventListener />
-            <AuthLoadingOverlay />
-            <TopHeader />
-            <Menu />
-            <main className="px-3 m-0 md:px-6 lg:px-14">
-              <div className="container mx-auto">{children}</div>
-              <Toaster position="top-center" />
-            </main>
-            <Footer />
-          </Provider>
-        </CategoriesWrapper>
-      </body>
-    </html>
+    <>
+      <TopHeader />
+      <Menu />
+
+      <main className="px-3 m-0 md:px-6 lg:px-14">
+        <div className="container mx-auto">{children}</div>
+      </main>
+
+      <Footer />
+    </>
   );
 }

@@ -3,7 +3,6 @@ import globalErrorHandler from "./controllers/errorController.js";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/user.route.js";
 import FAQRouter from "./routes/faq.route.js";
-import productTypeRouter from "./routes/product.type.route.js";
 import productRouter from "./routes/product.route.js";
 import reviewRouter from "./routes/review.route.js";
 import categoryRouter from "./routes/category.route.js";
@@ -49,9 +48,9 @@ const corsOptions = {
   credentials: true,
 };
 
+app.use(cors(corsOptions));
 app.use("/api/v1/stripe", stripeRouter);
 
-app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
@@ -61,7 +60,6 @@ app.use(passport.initialize());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/FAQ", FAQRouter);
-app.use("/api/v1/product-type", productTypeRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/reviews", reviewRouter);
 app.use("/api/v1/category", categoryRouter);

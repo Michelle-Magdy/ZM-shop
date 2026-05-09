@@ -9,10 +9,10 @@ export default function SearchPopover({
   isOpen,
   onClose,
   query,
-  onSelect,
   results,
   isLoading,
   isError,
+  totalResults
 }) {
   const containerRef = useRef(null);
 
@@ -63,7 +63,7 @@ export default function SearchPopover({
           <div className="px-4 py-2 text-center text-md text-black dark:text-primary-text border-t border-gray-100 dark:border-primary bg-gray-50 dark:bg-card">
             The result search for &quot;{query}&quot;
             <span className="text-xs ml-2 block md:inline">
-              ({results?.data?.length || 0} results have been found.)
+              ({totalResults|| 0} results have been found.)
             </span>
           </div>
         )}

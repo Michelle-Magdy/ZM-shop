@@ -17,20 +17,21 @@ export default function RatingSection({ product }) {
     return (
         <>
             <div className="mt-8 bg-(--color-card) rounded-2xl p-6 sm:p-8 border border-badge">
-                <h2 className="text-2xl font-bold text-(--color-primary-text) mb-6">
-                    Product Ratings & Reviews
-                </h2>
-
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                    {/* Left Column - Ratings Summary */}
-                    <div className="w-full lg:w-1/3 space-y-6">
+                    {/* Left Column - Sticky Wrapper */}
+                    <div className="w-full lg:w-1/3 lg:sticky lg:top-24 lg:self-start space-y-6">
+                        {/* Heading now inside the sticky column */}
+                        <h2 className="text-2xl font-bold text-(--color-primary-text)">
+                            Product Ratings & Reviews
+                        </h2>
+
                         {/* Big Rating Display */}
                         <div className="text-center p-6 bg-(--color-background) rounded-xl border border-badge">
                             <div className="text-5xl font-bold text-(--color-primary-text) mb-2">
                                 {avgRating?.toFixed(1) || "0.0"}
                             </div>
                             <div className="flex justify-center mb-2">
-                                <StarRating rating={avgRating} size="lg" />
+                                <StarRating rating={avgRating} size="md" />
                             </div>
                             <p className="text-sm text-secondary-text">
                                 Based on {nReviews || 0} reviews

@@ -26,10 +26,12 @@ export default function ProductView({ product }) {
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                     {/* Left Column - Images */}
-                    <ProductImages
-                        product={product}
-                        selectedVariant={selectedVariant}
-                    />
+                    <div className="w-full lg:w-1/2">
+                        <ProductImages
+                            product={product}
+                            selectedVariant={selectedVariant}
+                        />
+                    </div>
 
                     {/* Right Column - Product Info */}
                     <div className="w-full lg:w-1/2 flex flex-col gap-6">

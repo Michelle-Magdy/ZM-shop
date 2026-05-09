@@ -1,5 +1,6 @@
 import Product from "../models/product.model.js";
 import { findCategoryDescendantsIDs } from "../util/category.utils.js";
+import AppError from "../util/appError.js";
 
 export const getProductsByCategory = async (categoryId, filters = {}) => {
   const subcategoryIds = await findCategoryDescendantsIDs(categoryId);
