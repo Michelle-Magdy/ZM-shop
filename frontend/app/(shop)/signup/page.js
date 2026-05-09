@@ -11,6 +11,7 @@ import { FaGoogle, FaEyeSlash, FaEye } from "react-icons/fa";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { baseUserSchema as formSchema } from "../../../lib/validation/user.js";
+import GoogleLoginButton from "@/app/components/auth/GoogleLoginButton";
 
 
 export default function SignUp() {
@@ -195,11 +196,8 @@ export default function SignUp() {
         </div>
 
         {/* Social Login */}
-        <div className="mt-6 ">
-          <button className="flex items-center justify-center px-4 py-2 border border-badge rounded-lg bg-background w-full text-primary-text hover:bg-badge/30 transition-colors cursor-pointer">
-            <FaGoogle className="mr-2" />
-            Google
-          </button>
+        <div className="mt-6 mx-auto w-fit">
+          <GoogleLoginButton/>
         </div>
 
         {/* Footer */}
