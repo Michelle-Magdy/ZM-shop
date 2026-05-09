@@ -3,8 +3,15 @@ import { apiClient } from "./axios";
 
 const ORDERS_LIMIT = 5;
 
-export const getUserOrders = async () => {
-  const res = await apiClient.get(`${API_BASE_URL}/orders`);
+export const getUserOrders = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.page) searchParams.set("page", params.page.toString());
+  if (params.status) searchParams.set("orderStatus", params.status);
+  searchParams.set("limit", ORDERS_LIMIT);
+  const query = searchParams.toString();
+
+  const res = await apiClient.get(`orders${query ? `?${query}` : ""}`);
   return res.data;
 };
 

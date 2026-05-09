@@ -10,7 +10,14 @@ import APIFeatures from "../util/apiFeatures.js";
 
 export const getUserOrders = catchAsync(async (req, res, next) => {
   const userId = req.user._id;
-  const orders = await Order.find({ userId });
+  req.query.sort = "-createdAt";
+
+  const features = new APIFeatures(Order, req.query)
+    .filter()
+    .sort()
+    .paginate();
+
+  const orders = await features.execute(Order, { userId });
 
   res.status(200).json({
     status: "success",
@@ -284,9 +291,9 @@ export const updateOrderStatus = catchAsync(async (req, res, next) => {
   }
 
   order.orderStatus = orderStatus;
-  if(orderStatus === "DELIVERED" && order.paymentMethod === "CASH")
+  if (orderStatus === "DELIVERED" && order.paymentMethod === "CASH")
     order.paymentStatus = "PAID";
-  
+
   await order.save();
 
   res.status(200).json({
