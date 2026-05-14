@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star, Edit2, Trash2, MoreHorizontal, Check } from "lucide-react";
+import { Star, Edit2, Trash2, Check } from "lucide-react";
 import {
   formatPrice,
   calculateDiscount,
@@ -11,7 +11,6 @@ import {
 } from "../../../../lib/util/productUtils";
 import { StatusBadge } from "./StatusBadge";
 import { StockIndicator } from "./StockIndicator";
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
 import getImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export const ProductTableRow = ({

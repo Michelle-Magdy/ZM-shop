@@ -455,7 +455,7 @@ export const getTopDiscounts = catchAsync(async (req, res, next) => {
   });
 });
 
-export const bulkUpdateProductsHandler = catchAsync(async (req, res, next) => {
+export const bulkUpdateProductsHandler = catchAsync(async (req, res) => {
   const { slugs, updates } = req.body;
   if (!slugs || slugs.length <= 0) {
     return new AppError("slugs array required", 400);

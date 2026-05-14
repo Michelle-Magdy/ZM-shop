@@ -61,6 +61,8 @@ export default function ReviewsSection() {
         );
     }
 
+    console.log(sortedReviews);
+
     return (
         <div className="w-full lg:w-2/3">
             <div className="space-y-6">
@@ -69,7 +71,8 @@ export default function ReviewsSection() {
                         key={review._id || review.id}
                         review={review}
                         isUserReview={
-                            review.userId._id.toString() ===
+                            review.userId && 
+                            review.userId?._id.toString() ===
                             user?.id?.toString()
                         }
                     />
