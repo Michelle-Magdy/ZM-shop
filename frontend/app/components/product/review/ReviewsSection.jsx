@@ -18,7 +18,6 @@ export default function ReviewsSection() {
         queryFn: () => getProductReviews(product._id, page),
     });
     const { isAuthenticated, user } = useAuth();
-
     const sortedReviews = useMemo(() => {
         if (!reviews?.data) return [];
 
@@ -29,8 +28,13 @@ export default function ReviewsSection() {
         }
 
         return [...reviews.data].sort((a, b) => {
-            const isUserA = a.userId._id.toString() === user.id.toString();
-            const isUserB = b.userId._id.toString() === user.id.toString();
+            const reviewUserAId = a.userId?._id?.toString();
+            const reviewUserBId = b.userId?._id?.toString();
+
+            const currentUserId = user.id.toString();
+
+            const isUserA = reviewUserAId === currentUserId;
+            const isUserB = reviewUserBId === currentUserId;
 
             if (isUserA === isUserB) {
                 return new Date(b.createdAt) - new Date(a.createdAt);
@@ -39,7 +43,6 @@ export default function ReviewsSection() {
             return isUserA ? -1 : 1;
         });
     }, [reviews?.data, user?.id, isAuthenticated]);
-
     if (isLoading) {
         return (
             <div className="w-full lg:w-2/3 py-12 text-center text-secondary-text">
@@ -61,8 +64,6 @@ export default function ReviewsSection() {
         );
     }
 
-    console.log(sortedReviews);
-
     return (
         <div className="w-full lg:w-2/3">
             <div className="space-y-6">
@@ -71,9 +72,9 @@ export default function ReviewsSection() {
                         key={review._id || review.id}
                         review={review}
                         isUserReview={
-                            review.userId && 
+                            review.userId &&
                             review.userId?._id.toString() ===
-                            user?.id?.toString()
+                                user?.id?.toString()
                         }
                     />
                 ))}
