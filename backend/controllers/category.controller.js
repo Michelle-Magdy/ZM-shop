@@ -13,13 +13,12 @@ import {
 import Product from "../models/product.model.js";
 import sharp from "sharp";
 import { upload } from "../config/multer.config.js";
-import { deleteFile } from "../util/deleteFile.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+  extractPublicId,
+} from "../config/cloudinary.config.js";
 import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const uploadImage = upload.single("image");
 
@@ -28,21 +27,20 @@ export const resizeImage = catchAsync(async (req, res, next) => {
     return next();
   }
 
-  const imagePath = `category-${Date.now()}.jpg`;
-  const outputPath = path.join(
-    __dirname,
-    "../public/images/categories",
-    imagePath,
-  );
-
-  await sharp(req.file.buffer)
+  // Resize in memory, then upload to Cloudinary
+  const resizedBuffer = await sharp(req.file.buffer)
     .resize(1000, 1000)
     .toFormat("jpeg")
-    .jpeg({
-      quality: 90,
-    })
-    .toFile(outputPath);
-  req.body.image = imagePath;
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  const result = await uploadToCloudinary(resizedBuffer, {
+    folder: "zm-shop/categories",
+    public_id: `category-${Date.now()}`,
+    format: "jpeg",
+  });
+
+  req.body.image = result.secure_url;
   next();
 });
 
@@ -50,32 +48,48 @@ export const deleteOldImage = catchAsync(async (req, res, next) => {
   const category = req.currentCategory;
 
   if (!category) {
-    if (req.body.image) deleteFile("categories", req.body.image);
+    if (req.body.image) {
+      const publicId = extractPublicId(req.body.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     return next(new AppError("category not found", 404));
   }
 
-  // check if add image to subcategory
-  if (req.body.parent !== "" && req.body.image) {
-    deleteFile("categories", req.body.image);
-    return next(new AppError("cannot add image to subcategory", 500));
+  const parentIsBeingSet =
+    req.body.parent !== undefined &&
+    req.body.parent !== null &&
+    req.body.parent !== "";
+
+  // Uploading an image onto a subcategory is not allowed
+  if (parentIsBeingSet && req.body.image) {
+    const publicId = extractPublicId(req.body.image);
+    if (publicId) await deleteFromCloudinary(publicId);
+    return next(new AppError("cannot add image to subcategory", 400));
   }
 
-  // check if the category become sub and has image
-  if (
-    (req.body.image && category.image) ||
-    (req.body.parent !== "" && category.image) ||
-    (category.image && category.parent)
-  ) {
-    deleteFile("categories", category.image);
-  }
-
-  if (req.body.parent !== "" && category.image) {
+  // Category already is a subcategory and has an image — clear it
+  if (category.parent && category.image) {
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
     req.body.image = "";
   }
-  req.currentCategory = category;
+
+  // A new image replaces the old one — delete the old one
+  if (req.body.image && category.image && req.body.image !== category.image) {
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
+  }
+
+  // Category is being moved under a parent and currently has an image — clear it
+  if (parentIsBeingSet && category.image) {
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
+    req.body.image = "";
+  }
 
   next();
 });
+
 
 export const getOneCategory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
@@ -121,16 +135,17 @@ export const createCategory = catchAsync(async (req, res, next) => {
   if (!parent) {
     newCategory.image = image;
   } else if (image) {
-    deleteFile("categories", image);
+    // Subcategories shouldn't have images — delete the uploaded one
+    const publicId = extractPublicId(image);
+    if (publicId) await deleteFromCloudinary(publicId);
   }
 
   return createOne(Category, newCategory)(req, res, next);
 });
 
-export const updateCategoryHandler = catchAsync(async (req, res, next) => {
+export const updateCategoryHandler = async (req, res, next) => {
   const { id } = req.params;
 
-  // initiate a transaction ACID
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -139,15 +154,16 @@ export const updateCategoryHandler = catchAsync(async (req, res, next) => {
     const oldParent = category.parent;
     const newParent =
       req.body.parent !== undefined
-        ? req.body.parent === ""
+        ? req.body.parent === "" || req.body.parent === null
           ? null
           : req.body.parent
         : oldParent;
     const oldName = category.name;
     const newName = req.body.name !== undefined ? req.body.name : oldName;
 
-    const parentChanged = oldParent?.toString() !== newParent;
+    const parentChanged = String(oldParent) !== String(newParent);
 
+    // Bug 6 fixed: pass { session } so the write is part of the transaction
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
       {
@@ -156,10 +172,7 @@ export const updateCategoryHandler = catchAsync(async (req, res, next) => {
         description: req.body.description,
         image: req.body.image,
       },
-      {
-        new: true,
-        runValidators: true,
-      },
+      { new: true, runValidators: true, session },
     );
 
     if (parentChanged || newName !== oldName) {
@@ -174,12 +187,16 @@ export const updateCategoryHandler = catchAsync(async (req, res, next) => {
     });
   } catch (err) {
     await session.abortTransaction();
+    // Also clean up the newly uploaded file from Cloudinary if the DB write failed
+    if (req.body.image) {
+      const publicId = extractPublicId(req.body.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
     next(err);
   } finally {
     session.endSession();
   }
-});
-
+};
 export const deleteCategory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   let result;

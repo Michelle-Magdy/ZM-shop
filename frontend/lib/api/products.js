@@ -77,11 +77,21 @@ export const getAllProducts = async (query = "") => {
   }
 };
 
-const neededFields = ["defaultVariant", "ratingStats", "title", "coverImage", "slug", "isBestSeller", "isFeatured"]
+const neededFields = [
+  "defaultVariant",
+  "ratingStats",
+  "title",
+  "coverImage",
+  "slug",
+  "isBestSeller",
+  "isFeatured",
+];
 
 export const getBestSellerProducts = async () => {
   try {
-    const res = await apiClient.get(`/product/bestsellers?fields=${neededFields.join(",")}`);
+    const res = await apiClient.get(
+      `/product/bestsellers?fields=${neededFields.join(",")}`,
+    );
     return res.data;
   } catch (error) {
     console.log(error);
@@ -90,7 +100,9 @@ export const getBestSellerProducts = async () => {
 
 export const getFeaturedProducts = async () => {
   try {
-    const res = await apiClient.get(`/product/featured?fields=${neededFields.join(",")}`);
+    const res = await apiClient.get(
+      `/product/featured?fields=${neededFields.join(",")}`,
+    );
     return res.data;
   } catch (error) {
     console.log(error);
@@ -99,7 +111,9 @@ export const getFeaturedProducts = async () => {
 
 export const getTopDiscountedProducts = async () => {
   try {
-    const res = await apiClient.get(`/product/topDiscounts?fields=${neededFields.join(",")}`);
+    const res = await apiClient.get(
+      `/product/topDiscounts?fields=${neededFields.join(",")}`,
+    );
     return res.data;
   } catch (err) {
     console.log(err);
@@ -109,32 +123,40 @@ export const getTopDiscountedProducts = async () => {
 
 export const searchProducts = async (query, page = 1, limit = 20) => {
   const res = await apiClient.get(
-    `product?search=${query}&fields=${neededFields.join(",")}&page=${page}&limit=${limit}`
+    `product?search=${query}&fields=${neededFields.join(",")}&page=${page}&limit=${limit}`,
   );
   return res.data;
 };
 
-export const getProductsByCategory = async (categorySlug, queryParams, page = 1, limit = 20) => {
+export const getProductsByCategory = async (categorySlug, queryParams = {}) => {
   try {
     const searchParams = buildCategorySearchParams(queryParams);
-    const searchString = searchParams.toString();
-    if (typeof window === "undefined") {
-      const url = `${API_BASE_URL}/product/category/${categorySlug}${searchString ? `?${searchString}&page=${page}&limit=${limit}` : `?page=${page}`}&limit=${limit}`;
-      const res = await fetch(url, { cache: "no-store" });
 
-      if (!res.ok) {
-        throw new Error(`Failed to fetch category products (${res.status})`);
-      }
+    // Safe defaults
+    searchParams.set("page", (queryParams?.page || 1).toString());
+    searchParams.set("limit", (queryParams?.limit || 20).toString());
 
-      return await res.json();
+    // Only add search if it exists (though search should probably use searchProducts)
+    if (queryParams?.search) {
+      searchParams.set("search", queryParams.search.toString());
     }
 
-    const res = await apiClient.get(
-      `/product/category/${categorySlug}${searchString ? `?${searchString}` : ""}`,
-    );
-    return res.data;
+    const searchString = searchParams.toString();
+    const url = `${API_BASE_URL}/product/category/${categorySlug}?${searchString}`;
+
+    // Since this runs in Server Component, window is always undefined
+    const res = await fetch(url, {
+      cache: "no-store",
+      // Add headers if your API requires auth
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch category products (${res.status})`);
+    }
+
+    return await res.json();
   } catch (err) {
-    console.log(err);
+    console.error(err);
     throw err;
   }
 };

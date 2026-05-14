@@ -1,4 +1,4 @@
-import { IMAGES_BASE_URL } from "@/lib/apiConfig";
+import { getCategoryImageSrc } from "@/lib/util/ImageHelper.js";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
@@ -88,16 +88,13 @@ function renderTree(
           </button>
 
           <div className="w-10 h-10 rounded-lg bg-(--color-primary)/10 flex items-center justify-center text-xl">
-            {(node.image && (
-              <Image
-                src={`${IMAGES_BASE_URL}/categories/${node.image}`}
-                alt={node.name}
-                height={40}
-                width={40}
-                unoptimized
-              />
-            )) ||
-              "📁"}
+            <Image
+              src={getCategoryImageSrc(node.image)}
+              alt={node.name}
+              height={40}
+              width={40}
+              unoptimized
+            />
           </div>
 
           <div className="flex-1 min-w-0">

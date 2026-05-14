@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import getImageSrc from "../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../lib/util/ImageHelper.js";
 
 export default function DiscountCard({ data }) {
-    const backgroundImage = getImageSrc(data?.coverImage);
+    const backgroundImage = getProductImageSrc(data?.coverImage);
     return (
         <div
             className="relative w-full bg-cover bg-center bg-no-repeat flex items-center"

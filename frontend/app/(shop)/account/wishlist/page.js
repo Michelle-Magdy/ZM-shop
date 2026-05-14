@@ -17,7 +17,7 @@ import {
 import useAddToCart from "@/lib/hooks/useAddToCart";
 import useRemoveFromWishlist from "@/lib/hooks/useRemoveFromWishlist";
 import LoadingSpinner from "../../../UI/LoadingSpinner";
-import getImageSrc from "../../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../../lib/util/ImageHelper.js";
 
 export default function WishlistPage() {
   const dispatch = useDispatch();
@@ -94,7 +94,7 @@ export default function WishlistPage() {
       {/* Wishlist Items */}
       <div className="space-y-4">
         {items.map((item) => {
-          const image = getImageSrc(item?.coverImage);
+          const image = getProductImageSrc(item?.coverImage);
           return (
             <div
               key={item.productId}

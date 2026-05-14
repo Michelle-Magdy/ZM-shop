@@ -8,7 +8,7 @@ export default async function ProductsSection({ slug, filters, search, page }) {
 
     try {
         if (search) products = await searchProducts(search, page);
-        else products = await getProductsByCategory(slug, filters, page);
+        else products = await getProductsByCategory(slug, {...filters,page: page} );
     } catch (error) {
         console.error(error.message);
         return (

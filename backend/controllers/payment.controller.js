@@ -42,9 +42,11 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
                     name: item.title,
                     description: variantDescription ? `Variant - ${variantDescription}` : undefined,
                     images: item.coverImage ? [
-                        `${process.env.NODE_ENV === "development"
-                            ? process.env.BACK_DEVELOPMENT_URL
-                            : process.env.BACK_PRODUCTION_URL}/images/products/${item.coverImage}`
+                        item.coverImage.startsWith("http")
+                            ? item.coverImage
+                            : `${process.env.NODE_ENV === "development"
+                                ? process.env.BACK_DEVELOPMENT_URL
+                                : process.env.BACK_PRODUCTION_URL}/images/products/${item.coverImage}`
                     ] : []
                 },
                 unit_amount: Math.round(discountedUnitPrice * 100),

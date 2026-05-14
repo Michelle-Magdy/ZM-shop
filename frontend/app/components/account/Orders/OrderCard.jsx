@@ -11,7 +11,7 @@ import OrderStatusTimeline from "@/app/components/account/Orders/OrderStatusTime
 import { formatPrice } from "@/lib/util/formatPrice";
 import { formatDate } from "@/lib/util/formatDate";
 import Image from "next/image";
-import getImageSrc from "../../../../lib/util/ImageHelper.js";
+import getProductImageSrc from "../../../../lib/util/ImageHelper.js";
 import CancelOrderButton from "./CancelOrderButton.jsx";
 
 export default function OrderCard({ order }) {
@@ -98,7 +98,7 @@ export default function OrderCard({ order }) {
                 <div className="flex items-center gap-4 p-4 bg-background/50 rounded-xl border border-badge/30">
                     <div className="relative w-16 h-16 rounded-lg bg-badge/20 flex items-center justify-center shrink-0 overflow-hidden">
                         <Image
-                            src={getImageSrc(mainItem?.coverImage)}
+                            src={getProductImageSrc(mainItem?.coverImage)}
                             fill
                             sizes="64px"
                             alt={mainItem.title || "Product"}
@@ -169,7 +169,7 @@ export default function OrderCard({ order }) {
                             <div className="flex items-center gap-3">
                                 <div className="relative w-10 h-10 rounded-lg bg-badge/20 flex items-center justify-center shrink-0 overflow-hidden">
                                     <Image
-                                        src={getImageSrc(mainItem?.coverImage)}
+                                        src={getProductImageSrc(mainItem?.coverImage)}
                                         fill
                                         sizes="40px"
                                         alt={mainItem.title || "Product"}
