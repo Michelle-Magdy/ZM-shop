@@ -244,6 +244,11 @@ productSchema.pre("save", async function (next) {
   next();
 });
 
+productSchema.pre(/^find/, function (next) {
+  this.where({ isDeleted: false });
+  next();
+});
+
 productSchema.pre("findOneAndUpdate", async function (next) {
   const update = this.getUpdate();
   if (update.isDeleted !== undefined) {

@@ -18,6 +18,7 @@ import {
   deleteFromCloudinary,
   extractPublicId,
 } from "../config/cloudinary.config.js";
+import { redis } from "../redis/client.js";
 
 const safeJsonParse = (value) => {
   if (typeof value !== "string") {
@@ -239,19 +240,19 @@ export const resizeImages = catchAsync(async (req, res, next) => {
 
     req.body.coverImage = result.secure_url;
   }
-  
-  
+
+
 
   // Upload gallery images to Cloudinary
   if (req.files?.images) {
-     const mergedImages = [...existingImages, ...req.files.images];
-  if (mergedImages.length > 5) {
-    return next(new AppError("Each Product can have only 5 images", 400));
-  }
+    const mergedImages = [...existingImages, ...req.files.images];
+    if (mergedImages.length > 5) {
+      return next(new AppError("Each Product can have only 5 images", 400));
+    }
 
-  if (mergedImages.length > 0) {
-    req.body.images = mergedImages;
-  }
+    if (mergedImages.length > 0) {
+      req.body.images = mergedImages;
+    }
     await Promise.all(
       req.files.images.map(async (image, index) => {
         const resizedBuffer = await sharp(image.buffer)
@@ -271,7 +272,7 @@ export const resizeImages = catchAsync(async (req, res, next) => {
     );
   }
 
- 
+
 
   next();
 });
@@ -336,13 +337,40 @@ export const deleteOldImagesOnUpdate = catchAsync(async (req, res, next) => {
   next();
 });
 
-export const createProduct = createOne(Product);
-export const updateProduct = updateOne(Product);
-export const deleteProduct = softDeleteOne(Product);
-export const getProduct = getOne(Product, null, [
-  { path: "vendorId", select: "name" },
-  // { path: "categoryIds", select: "name" },
-]);
+export const createProduct = createOne(Product,null, {
+  afterCreate: async (product) => {
+    if (product.isBestSeller) {
+      await redis.del("products:bestSellers");
+    }
+
+    if (product.isFeatured) {
+      await redis.del("products:featured");
+    }
+  },
+});
+export const updateProduct = updateOne(Product, {
+  afterUpdate: async (_, req) => {
+    if ("isBestSeller" in req.body) {
+      await redis.del("products:bestSellers");
+    }
+
+    if ("isFeatured" in req.body) {
+      await redis.del("products:featured");
+    }
+  },
+});
+export const deleteProduct = softDeleteOne(Product, {
+  afterDelete: async (product) => {
+    if (product.isBestSeller) {
+      await redis.del("products:bestSellers");
+    }
+
+    if (product.isFeatured) {
+      await redis.del("products:featured");
+    }
+  },
+});
+export const getProduct = getOne(Product);
 export const getAllProducts = getAll(Product);
 
 export const getProductsByCategory = catchAsync(async (req, res, next) => {
@@ -378,12 +406,26 @@ export const getProductsByCategory = catchAsync(async (req, res, next) => {
 });
 
 export const getBestSellerProducts = catchAsync(async (req, res, next) => {
-  const bestSellers = await Product.find({ isBestSeller: true });
+  let bestSellers;
+  const cached = await redis.get("products:bestSellers");
+  if (!cached) {
+    bestSellers = await Product.find({ isBestSeller: true });
+    redis.setEx("products:bestSellers", 300, JSON.stringify(bestSellers));
+  }
+  else
+    bestSellers = JSON.parse(cached);
   res.json({ data: bestSellers });
 });
 
 export const getFeaturedProducts = catchAsync(async (req, res, next) => {
-  const featured = await Product.find({ isFeatured: true });
+  let featured;
+  const cached = await redis.get("products:featured");
+  if (!cached) {
+    featured = await Product.find({ isFeatured: true });
+    redis.setEx("products:featured", 300, JSON.stringify(featured));
+  }
+  else
+    featured = JSON.parse(cached);
   res.json({ data: featured });
 });
 

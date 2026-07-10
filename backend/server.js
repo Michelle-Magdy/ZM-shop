@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import app from "./app.js";
+import { connectRedis } from "./redis/client.js";
 
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -26,8 +27,12 @@ async function connectDb() {
       maxPoolSize: 10,
     };
 
-    cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGO_URI, opts).then(async (mongoose) => {
       console.log("MongoDB connected");
+
+      await connectRedis();
+      console.log("Redis connected");
+
       return mongoose;
     });
   }
